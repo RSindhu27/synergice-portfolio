@@ -1,68 +1,36 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, SafeAreaView, Dimensions, useWindowDimensions,
+  TextInput, SafeAreaView, useWindowDimensions,
 } from 'react-native';
-import Svg, { Polyline, Circle, Path } from 'react-native-svg';
-import { Search, X, Globe, FlaskConical, Heart } from 'lucide-react-native';
+import { Search, X, ChevronLeft, ChevronRight, FlaskConical, Building2, Globe, Pill, Tag, MapPin } from 'lucide-react-native';
 import {
   COLORS, COMPANY_COLORS, productPortfolio, companyMetrics,
   rdData, goLanzarData, monthlyRevenue, customerViewData,
 } from '@/data/mockData';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Polyline, Circle, Path } from 'react-native-svg';
 import DrawerModal from '@/components/ui/DrawerModal';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FilterChip from '@/components/ui/FilterChip';
 import CustomerStatusTab from '@/components/ui/CustomerStatusTab';
 
 const TOP_TABS = ['Product Portfolio', 'Customer Details'];
-const TABS = ['Region', 'Country', 'Molecule', 'Therapeutic', 'Partner Status'];
-const COMPANIES = ['All', 'Strides', 'Instapill', 'One Source', 'Naari', 'Solara'];
+const PAGE_SIZE = 6;
 
-const THERAPEUTIC_COLORS = ['#3a7d44', '#4a90a4', '#df6d14', '#c9a84c', '#8a5fa8', '#c0392b'];
-
-const COMPANY_FOCUS: Record<string, {
-  primary: string; riskLevel: string; risk: string;
-  insights: string[];
-  regions: { label: string; pct: number }[];
-  countries: string[];
-}> = {
-  Strides: {
-    primary: 'Cardiovascular & GI', riskLevel: 'Medium',
-    risk: 'Regulatory shifts in European markets may impact timeline for Q4 launches.',
-    insights: ['Generic portfolio expansion in EU', 'GI franchise strengthening in ME', 'Biosimilar pipeline diversification'],
-    regions: [{ label: 'Europe', pct: 45 }, { label: 'Africa', pct: 20 }, { label: 'Asia Pacific', pct: 18 }, { label: 'Others', pct: 17 }],
-    countries: ['Germany', 'France', 'Nigeria', 'Australia', 'UAE'],
-  },
-  Instapill: {
-    primary: 'Diabetes & Metabolic', riskLevel: 'High',
-    risk: 'Biosimilar price erosion in insulin segment may compress margins.',
-    insights: ['Biosimilar insulin market leadership', 'SGLT2 inhibitor launch pipeline', 'Expansion into GLP-1 agonist space'],
-    regions: [{ label: 'Asia Pacific', pct: 40 }, { label: 'North America', pct: 28 }, { label: 'ME', pct: 18 }, { label: 'Others', pct: 14 }],
-    countries: ['India', 'Canada', 'Saudi Arabia', 'Spain', 'Kenya'],
-  },
-  'One Source': {
-    primary: 'Antiretroviral', riskLevel: 'Medium',
-    risk: 'Donor funding dependency creates revenue concentration risk.',
-    insights: ['WHO PQ portfolio broadening', 'TLD FDC launch readiness', 'Sub-Saharan tender dominance'],
-    regions: [{ label: 'Africa', pct: 62 }, { label: 'Asia Pacific', pct: 18 }, { label: 'Latin America', pct: 12 }, { label: 'Others', pct: 8 }],
-    countries: ['South Africa', 'Ethiopia', 'Ghana', 'Philippines', 'Brazil'],
-  },
-  Naari: {
-    primary: "Women's Health", riskLevel: 'Low',
-    risk: 'Regulatory approval delays in key markets may push revenue recognition.',
-    insights: ["Women's health specialist positioning", 'ME market penetration accelerating', 'FDC sachet innovation pipeline'],
-    regions: [{ label: 'Asia Pacific', pct: 38 }, { label: 'Middle East', pct: 30 }, { label: 'Africa', pct: 20 }, { label: 'Europe', pct: 12 }],
-    countries: ['India', 'Kuwait', 'Indonesia', 'Tanzania', 'Italy'],
-  },
-  Solara: {
-    primary: 'CNS & Psychiatry', riskLevel: 'Medium',
-    risk: 'Generic competition intensifying in US CNS segment post-patent cliff.',
-    insights: ['CNS extended-release portfolio', 'LATAM market entry strategy', 'Japan partnership for Donepezil'],
-    regions: [{ label: 'North America', pct: 40 }, { label: 'Europe', pct: 28 }, { label: 'Asia Pacific', pct: 18 }, { label: 'Latin America', pct: 14 }],
-    countries: ['USA', 'Netherlands', 'Japan', 'Mexico', 'Israel'],
-  },
+const THERAPEUTIC_COLORS: Record<string, string> = {
+  'Diabetes': '#3a7d44',
+  'Cardiovascular': '#c0392b',
+  'Anti-infective': '#df6d14',
+  'GI': '#4a90a4',
+  'Antiretroviral': '#c9a84c',
+  "Women's Health": '#e91e8c',
+  'CNS': '#8a5fa8',
 };
+
+function therapeuticColor(t: string) {
+  return THERAPEUTIC_COLORS[t] || '#607D8B';
+}
 
 function fmt(v: number) {
   if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
@@ -70,37 +38,34 @@ function fmt(v: number) {
   return `$${v}`;
 }
 
-function SparkLine({ data, color, w = 0, h = 56 }: { data: number[]; color: string; w?: number; h?: number }) {
-  const [containerW, setContainerW] = React.useState(w || 0);
-  const effectiveW = w > 0 ? w : containerW;
-
+function SparkLine({ data, color, h = 44 }: { data: number[]; color: string; h?: number }) {
+  const [w, setW] = React.useState(0);
   if (!data || data.length < 2) return null;
-  const mx = Math.max(...data), range = mx - Math.min(...data) || 1, pad = 4;
-
-  if (effectiveW === 0) {
-    return <View style={{ height: h, width: '100%' }} onLayout={e => setContainerW(e.nativeEvent.layout.width)} />;
+  const mx = Math.max(...data), range = mx - Math.min(...data) || 1, pad = 3;
+  if (w === 0) {
+    return <View style={{ height: h, width: '100%' }} onLayout={e => setW(e.nativeEvent.layout.width)} />;
   }
-
-  const pts = data.map((v, i) => `${pad + (i / (data.length - 1)) * (effectiveW - pad * 2)},${pad + ((mx - v) / range) * (h - pad * 2)}`);
+  const pts = data.map((v, i) => `${pad + (i / (data.length - 1)) * (w - pad * 2)},${pad + ((mx - v) / range) * (h - pad * 2)}`);
   const [lx, ly] = pts[pts.length - 1].split(',');
   return (
-    <View style={{ width: '100%' }} onLayout={e => { if (!w) setContainerW(e.nativeEvent.layout.width); }}>
-      <Svg width={effectiveW} height={h}>
-        <Polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    <View style={{ width: '100%' }} onLayout={e => setW(e.nativeEvent.layout.width)}>
+      <Svg width={w} height={h}>
+        <Polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
         <Circle cx={lx} cy={ly} r={3} fill={color} />
       </Svg>
     </View>
   );
 }
 
-function DonutChart({ segments, size = 68 }: { segments: { value: number; color: string }[]; size?: number }) {
-  const r = size / 2 - 5, cx = size / 2, cy = size / 2, total = segments.reduce((s, g) => s + g.value, 0);
+function DonutMini({ segments, size = 56 }: { segments: { value: number; color: string }[]; size?: number }) {
+  const r = size / 2 - 5, cx = size / 2, cy = size / 2;
+  const total = segments.reduce((s, g) => s + g.value, 0);
   let cum = -Math.PI / 2;
   const arcs = segments.map(seg => {
     const a = (seg.value / total) * Math.PI * 2;
     const x1 = cx + r * Math.cos(cum), y1 = cy + r * Math.sin(cum);
     const x2 = cx + r * Math.cos(cum + a), y2 = cy + r * Math.sin(cum + a);
-    const ir = r - 16;
+    const ir = r - 13;
     const xi1 = cx + ir * Math.cos(cum), yi1 = cy + ir * Math.sin(cum);
     const xi2 = cx + ir * Math.cos(cum + a), yi2 = cy + ir * Math.sin(cum + a);
     const lg = a > Math.PI ? 1 : 0;
@@ -111,287 +76,362 @@ function DonutChart({ segments, size = 68 }: { segments: { value: number; color:
   return <Svg width={size} height={size}>{arcs.map((a, i) => <Path key={i} d={a.d} fill={a.color} />)}</Svg>;
 }
 
-function CompanyOverview({ companyName }: { companyName: string }) {
-  const m = companyMetrics[companyName as keyof typeof companyMetrics];
-  const focus = COMPANY_FOCUS[companyName];
-  const allProducts = productPortfolio.filter(p => p.company === companyName);
-  const pipeline = [...rdData, ...goLanzarData].filter(d => d.company === companyName);
-  const customers = customerViewData.filter(c => c.company === companyName);
+type ProductEntry = typeof productPortfolio[0];
 
-  const avgDifot = customers.length > 0
-    ? (customers.reduce((s, c) => s + c.difotPercent, 0) / customers.length).toFixed(1) : 'N/A';
-  const pipelineRev = pipeline.reduce((s, p) => s + p.totalRevenue, 0);
-
-  const therapeutic: Record<string, number> = {};
-  allProducts.forEach(p => { therapeutic[p.therapeutic] = (therapeutic[p.therapeutic] || 0) + 1; });
-  const tSegs = Object.entries(therapeutic).map(([label, count], i) => ({
-    label, count, color: THERAPEUTIC_COLORS[i % THERAPEUTIC_COLORS.length],
-  }));
-
-  const keyName = companyName === 'One Source' ? 'oneSource'
-    : companyName === 'Instapill' ? 'instapill'
-    : companyName === 'Strides' ? 'strides'
-    : companyName === 'Naari' ? 'naari' : 'solara';
-  const sparkData = monthlyRevenue.slice(-6).map(row => (row as any)[keyName] as number);
-  const months = monthlyRevenue.slice(-6).map(row => row.month.replace(' 24', ''));
-
-  const riskColor = focus?.riskLevel === 'High' ? COLORS.error : focus?.riskLevel === 'Medium' ? COLORS.warning : COLORS.success;
-
-  return (
-    <View style={ov.root}>
-      <View style={[ov.banner, { backgroundColor: m.color + '12' }]}>
-        <View style={[ov.logo, { backgroundColor: m.color + '22' }]}>
-          <Text style={[ov.logoText, { color: m.color }]}>{companyName.substring(0, 2).toUpperCase()}</Text>
-        </View>
-        <View>
-          <Text style={ov.companyName}>{companyName}</Text>
-          <Text style={ov.companyRegion}>Primary Region: {m.topRegion} · {focus?.primary}</Text>
-        </View>
-      </View>
-
-      <View style={ov.kpiRow}>
-        <View style={ov.kpi}>
-          <Text style={ov.kpiLabel}>Annual Revenue</Text>
-          <Text style={[ov.kpiVal, { color: m.color }]}>{fmt(m.revenue)}</Text>
-          <Text style={[ov.kpiSub, { color: COLORS.success }]}>+{m.growth}% vs LY</Text>
-        </View>
-        <View style={ov.kpi}>
-          <Text style={ov.kpiLabel}>Products</Text>
-          <Text style={[ov.kpiVal, { color: COLORS.info }]}>{m.products}</Text>
-          <Text style={ov.kpiSub}>Active</Text>
-        </View>
-        <View style={ov.kpi}>
-          <Text style={ov.kpiLabel}>Pipeline</Text>
-          <Text style={[ov.kpiVal, { color: COLORS.warning }]}>{fmt(pipelineRev)}</Text>
-          <Text style={ov.kpiSub}>{pipeline.length} Projects</Text>
-        </View>
-        <View style={ov.kpi}>
-          <Text style={ov.kpiLabel}>Avg DIFOT</Text>
-          <Text style={[ov.kpiVal, { color: COLORS.success }]}>{avgDifot}%</Text>
-          <Text style={ov.kpiSub}>On-time</Text>
-        </View>
-      </View>
-
-      <View style={ov.card}>
-        <Text style={[ov.cardTitle, { color: m.color }]}>Revenue Growth Trend</Text>
-        <SparkLine data={sparkData} color={m.color} />
-        <View style={ov.sparkLabels}>
-          {months.map((mn, i) => <Text key={i} style={ov.sparkLabel}>{mn}</Text>)}
-        </View>
-      </View>
-
-      <View style={ov.card}>
-        <Text style={[ov.cardTitle, { color: COLORS.warning }]}>Therapeutic Areas</Text>
-        <View style={ov.donutRow}>
-          <DonutChart segments={tSegs.map(t => ({ value: t.count, color: t.color }))} />
-          <View style={ov.legend}>
-            {tSegs.map((t, i) => (
-              <View key={i} style={ov.legendItem}>
-                <View style={[ov.dot, { backgroundColor: t.color }]} />
-                <Text style={ov.legendLabel} numberOfLines={1}>{t.label}</Text>
-                <Text style={[ov.legendCount, { color: t.color }]}>{t.count}P</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      <View style={ov.card}>
-        <Text style={[ov.cardTitle, { color: COLORS.info }]}>Geographic Footprint</Text>
-        <View style={ov.geoRow}>
-          <View style={ov.geoLeft}>
-            {focus?.regions.map((r, i) => (
-              <View key={i} style={ov.geoItem}>
-                <Text style={ov.geoLabel}>{r.label}</Text>
-                <View style={ov.barWrap}>
-                  <View style={[ov.bar, { width: `${r.pct}%`, backgroundColor: m.color }]} />
-                </View>
-                <Text style={ov.geoPct}>{r.pct}%</Text>
-              </View>
-            ))}
-          </View>
-          <View style={ov.geoRight}>
-            <Text style={ov.geoSubtitle}>Key Countries</Text>
-            {focus?.countries.map((c, i) => (
-              <View key={i} style={[ov.chip, { borderColor: m.color + '50' }]}>
-                <Text style={[ov.chipText, { color: m.color }]}>{c}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      <View style={ov.card}>
-        <Text style={[ov.cardTitle, { color: COLORS.primary }]}>Pipeline ({pipeline.length} Projects)</Text>
-        {pipeline.map((p, i) => (
-          <View key={i} style={ov.pipeRow}>
-            <View style={ov.pipeLeft}>
-              <Text style={ov.pipeTitle} numberOfLines={1}>{p.summary}</Text>
-              <Text style={ov.pipeMeta}>{p.currentStatus} · GM {p.gm}%</Text>
-            </View>
-            <View style={ov.pipeRight}>
-              <Text style={[ov.pipeRev, { color: m.color }]}>{fmt(p.totalRevenue)}</Text>
-              <StatusBadge label={p.priority} type={p.priority === 'Critical' ? 'error' : p.priority === 'High' ? 'warning' : 'neutral'} size="sm" />
-            </View>
-          </View>
-        ))}
-      </View>
-
-      <View style={ov.card}>
-        <Text style={[ov.cardTitle, { color: COLORS.gold }]}>Strategic Insights</Text>
-        <Text style={ov.insightCat}>STRATEGIC FOCUS</Text>
-        {focus?.insights.map((ins, i) => (
-          <View key={i} style={ov.insightRow}>
-            <View style={[ov.dot, { backgroundColor: COLORS.success }]} />
-            <Text style={ov.insightText}>{ins}</Text>
-          </View>
-        ))}
-        <Text style={[ov.insightCat, { marginTop: 10 }]}>RISK ASSESSMENT</Text>
-        <View style={[ov.riskBox, { borderColor: riskColor + '40', backgroundColor: riskColor + '0D' }]}>
-          <Text style={[ov.riskLevel, { color: riskColor }]}>{focus?.riskLevel} Risk</Text>
-          <Text style={ov.riskText}>{focus?.risk}</Text>
-        </View>
-      </View>
-    </View>
-  );
+interface MoleculeGroup {
+  molecule: string;
+  therapeutic: string;
+  companies: string[];
+  products: ProductEntry[];
+  regions: string[];
+  dosageForms: string[];
+  strengths: string[];
 }
 
-const ov = StyleSheet.create({
-  root: { gap: 10 },
-  banner: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 12, gap: 12 },
-  logo: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 14, fontFamily: 'Poppins-Bold' },
-  companyName: { fontSize: 16, fontFamily: 'Poppins-Bold', color: COLORS.dark },
-  companyRegion: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  kpiRow: { flexDirection: 'row', gap: 6 },
-  kpi: { flex: 1, backgroundColor: COLORS.cream, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: COLORS.border },
-  kpiLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500, textTransform: 'uppercase', marginBottom: 3 },
-  kpiVal: { fontSize: 16, fontFamily: 'Poppins-Bold', marginBottom: 1 },
-  kpiSub: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  card: { backgroundColor: COLORS.cardBg, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: COLORS.border },
-  cardTitle: { fontSize: 12, fontFamily: 'Poppins-SemiBold', marginBottom: 10 },
-  sparkLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, width: '100%' },
-  sparkLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray400, flex: 1, textAlign: 'center' },
-  twoCol: {},
-  donutRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  legend: { flex: 1, gap: 5 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dot: { width: 7, height: 7, borderRadius: 4 },
-  legendLabel: { flex: 1, fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.dark },
-  legendCount: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  geoRow: { flexDirection: 'row', gap: 10 },
-  geoLeft: { flex: 1.4 },
-  geoRight: { flex: 1 },
-  geoSubtitle: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, textTransform: 'uppercase', marginBottom: 6 },
-  geoItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 7, gap: 6 },
-  geoLabel: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.dark, width: 72 },
-  barWrap: { flex: 1, height: 6, backgroundColor: COLORS.gray100, borderRadius: 3, overflow: 'hidden' },
-  bar: { height: 6, borderRadius: 3 },
-  geoPct: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: COLORS.dark, width: 28, textAlign: 'right' },
-  chip: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 3, marginBottom: 5, alignSelf: 'flex-start' },
-  chipText: { fontSize: 10, fontFamily: 'Poppins-Medium' },
-  pipeRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: COLORS.gray100, gap: 8 },
-  pipeLeft: { flex: 1 },
-  pipeTitle: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.dark, marginBottom: 2 },
-  pipeMeta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  pipeRight: { alignItems: 'flex-end', gap: 3 },
-  pipeRev: { fontSize: 11, fontFamily: 'Poppins-Bold' },
-  insightCat: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, letterSpacing: 0.6, marginBottom: 6, textTransform: 'uppercase' },
-  insightRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 },
-  insightText: { flex: 1, fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.dark },
-  riskBox: { borderRadius: 8, borderWidth: 1, padding: 10, gap: 3 },
-  riskLevel: { fontSize: 12, fontFamily: 'Poppins-SemiBold' },
-  riskText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray600 },
-});
+function buildMoleculeGroups(items: ProductEntry[]): MoleculeGroup[] {
+  const map: Record<string, MoleculeGroup> = {};
+  items.forEach(item => {
+    if (!map[item.molecules]) {
+      map[item.molecules] = {
+        molecule: item.molecules,
+        therapeutic: item.therapeutic,
+        companies: [],
+        products: [],
+        regions: [],
+        dosageForms: [],
+        strengths: [],
+      };
+    }
+    const g = map[item.molecules];
+    g.products.push(item);
+    if (!g.companies.includes(item.company)) g.companies.push(item.company);
+    if (!g.regions.includes(item.region)) g.regions.push(item.region);
+    if (!g.dosageForms.includes(item.dosage)) g.dosageForms.push(item.dosage);
+    if (!g.strengths.includes(item.strength)) g.strengths.push(item.strength);
+  });
+  return Object.values(map).sort((a, b) => a.molecule.localeCompare(b.molecule));
+}
 
-function ProductCard({ item, onPress, isTablet }: { item: typeof productPortfolio[0]; onPress: () => void; isTablet?: boolean }) {
-  const color = COMPANY_COLORS[item.company] || COLORS.primary;
+function CompanyRow({ entry, onPress }: { entry: ProductEntry; onPress: () => void }) {
+  const color = COMPANY_COLORS[entry.company] || COLORS.primary;
+  const statusType = entry.partnerStatus === 'In-House' ? 'success' : entry.partnerStatus === 'Partner' ? 'primary' : 'info';
   return (
-    <TouchableOpacity style={[styles.productCard, isTablet && { width: '48%' }]} onPress={onPress} activeOpacity={0.8}>
-      <View style={[styles.cardLeftBorder, { backgroundColor: color }]} />
-      <View style={styles.cardContent}>
-        <View style={styles.cardTop}>
-          <View style={styles.cardTitleRow}>
-            <Text style={styles.cardProduct}>{item.product}</Text>
-            <Text style={[styles.cardStrength, { color }]}>{item.strength}</Text>
-          </View>
-          <StatusBadge label={item.partnerStatus} type={item.partnerStatus === 'In-House' ? 'success' : item.partnerStatus === 'Partner' ? 'primary' : 'info'} size="sm" />
+    <TouchableOpacity style={cr.row} onPress={onPress} activeOpacity={0.75}>
+      <View style={[cr.dot, { backgroundColor: color }]} />
+      <View style={cr.left}>
+        <View style={cr.topRow}>
+          <Text style={[cr.company, { color }]}>{entry.company}</Text>
+          <StatusBadge label={entry.partnerStatus} type={statusType} size="sm" />
         </View>
-        <Text style={styles.cardMolecule}>{item.molecules}</Text>
-        <View style={styles.cardMeta}>
-          <View style={styles.cardMetaItem}><Globe size={10} color={COLORS.gray500} /><Text style={styles.cardMetaText}>{item.country}</Text></View>
-          <View style={styles.cardMetaItem}><FlaskConical size={10} color={COLORS.gray500} /><Text style={styles.cardMetaText}>{item.dosage}</Text></View>
-          <View style={styles.cardMetaItem}><Heart size={10} color={COLORS.gray500} /><Text style={styles.cardMetaText}>{item.therapeutic}</Text></View>
-        </View>
-        <View style={styles.cardFooter}>
-          <View style={[styles.companyTag, { backgroundColor: color + '18' }]}>
-            <Text style={[styles.companyTagText, { color }]}>{item.company}</Text>
-          </View>
-          <Text style={styles.productCode}>{item.productCode}</Text>
+        <Text style={cr.product}>{entry.product} · {entry.strength}</Text>
+        <View style={cr.meta}>
+          <View style={cr.metaItem}><Pill size={9} color={COLORS.gray500} /><Text style={cr.metaText}>{entry.dosage}</Text></View>
+          <View style={cr.metaItem}><MapPin size={9} color={COLORS.gray500} /><Text style={cr.metaText}>{entry.country}</Text></View>
+          <View style={cr.metaItem}><Globe size={9} color={COLORS.gray500} /><Text style={cr.metaText}>{entry.region}</Text></View>
         </View>
       </View>
+      <Text style={[cr.code, { color: COLORS.gray400 }]}>{entry.productCode}</Text>
     </TouchableOpacity>
   );
 }
 
-function GroupedList({ items, groupKey, onSelect, isTablet }: { items: typeof productPortfolio; groupKey: keyof typeof productPortfolio[0]; onSelect: (item: typeof productPortfolio[0]) => void; isTablet: boolean }) {
-  const groups = useMemo(() => {
-    const map: Record<string, typeof productPortfolio> = {};
-    items.forEach(item => {
-      const key = String(item[groupKey]);
-      if (!map[key]) map[key] = [];
-      map[key].push(item);
-    });
-    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
-  }, [items, groupKey]);
+const cr = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.gray100 },
+  dot: { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
+  left: { flex: 1 },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
+  company: { fontSize: 12, fontFamily: 'Poppins-SemiBold' },
+  product: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.dark, marginBottom: 3 },
+  meta: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  metaText: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
+  code: { fontSize: 9, fontFamily: 'Poppins-Regular', marginTop: 3 },
+});
+
+function MoleculeCard({ group, onSelectProduct }: { group: MoleculeGroup; onSelectProduct: (p: ProductEntry) => void }) {
+  const tColor = therapeuticColor(group.therapeutic);
+  const companyColors = group.companies.map(c => COMPANY_COLORS[c] || COLORS.gray400);
 
   return (
-    <View style={styles.groupedContent}>
-      {groups.map(([group, products]) => (
-        <View key={group} style={styles.group}>
-          <View style={styles.groupHeader}>
-            <Text style={styles.groupTitle}>{group}</Text>
-            <View style={styles.groupCount}><Text style={styles.groupCountText}>{products.length}</Text></View>
+    <View style={mc.card}>
+      <View style={[mc.topBar, { backgroundColor: tColor + '12' }]}>
+        <View style={mc.topLeft}>
+          <View style={[mc.iconWrap, { backgroundColor: tColor + '20' }]}>
+            <FlaskConical size={16} color={tColor} />
           </View>
-          <View style={[styles.groupItems, isTablet && { flexDirection: 'row', flexWrap: 'wrap' }]}>
-            {products.map(p => <ProductCard key={p.productCode} item={p} onPress={() => onSelect(p)} isTablet={isTablet} />)}
+          <View>
+            <Text style={mc.molecule}>{group.molecule}</Text>
+            <View style={[mc.taTag, { backgroundColor: tColor + '18' }]}>
+              <Text style={[mc.taText, { color: tColor }]}>{group.therapeutic}</Text>
+            </View>
           </View>
         </View>
-      ))}
+        <View style={mc.topRight}>
+          <DonutMini segments={group.companies.map((c, i) => ({ value: 1, color: companyColors[i] }))} size={48} />
+          <Text style={mc.companyCount}>{group.companies.length} co.</Text>
+        </View>
+      </View>
+
+      <View style={mc.statsRow}>
+        <View style={mc.stat}>
+          <Text style={mc.statVal}>{group.products.length}</Text>
+          <Text style={mc.statLabel}>SKUs</Text>
+        </View>
+        <View style={mc.statDiv} />
+        <View style={mc.stat}>
+          <Text style={mc.statVal}>{group.regions.length}</Text>
+          <Text style={mc.statLabel}>Regions</Text>
+        </View>
+        <View style={mc.statDiv} />
+        <View style={mc.stat}>
+          <Text style={mc.statVal}>{group.dosageForms.length}</Text>
+          <Text style={mc.statLabel}>Forms</Text>
+        </View>
+        <View style={mc.statDiv} />
+        <View style={mc.stat}>
+          <Text style={mc.statVal}>{group.strengths.length}</Text>
+          <Text style={mc.statLabel}>Strengths</Text>
+        </View>
+      </View>
+
+      <View style={mc.tagsSection}>
+        <View style={mc.tagRow}>
+          <Building2 size={10} color={COLORS.gray500} />
+          <Text style={mc.tagLabel}>Companies</Text>
+        </View>
+        <View style={mc.chips}>
+          {group.companies.map(c => {
+            const cc = COMPANY_COLORS[c] || COLORS.primary;
+            return (
+              <View key={c} style={[mc.chip, { backgroundColor: cc + '15', borderColor: cc + '40' }]}>
+                <View style={[mc.chipDot, { backgroundColor: cc }]} />
+                <Text style={[mc.chipText, { color: cc }]}>{c}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={mc.tagsSection}>
+        <View style={mc.tagRow}>
+          <Pill size={10} color={COLORS.gray500} />
+          <Text style={mc.tagLabel}>Dosage Forms</Text>
+        </View>
+        <View style={mc.chips}>
+          {group.dosageForms.map(d => (
+            <View key={d} style={[mc.chip, { backgroundColor: COLORS.gray100, borderColor: COLORS.border }]}>
+              <Text style={[mc.chipText, { color: COLORS.gray600 }]}>{d}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={mc.tagsSection}>
+        <View style={mc.tagRow}>
+          <Globe size={10} color={COLORS.gray500} />
+          <Text style={mc.tagLabel}>Regions</Text>
+        </View>
+        <View style={mc.chips}>
+          {group.regions.map(r => (
+            <View key={r} style={[mc.chip, { backgroundColor: COLORS.gray100, borderColor: COLORS.border }]}>
+              <Text style={[mc.chipText, { color: COLORS.gray600 }]}>{r}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={mc.dividerRow}>
+        <View style={mc.divLine} />
+        <Text style={mc.divText}>Products by Company</Text>
+        <View style={mc.divLine} />
+      </View>
+
+      <View style={mc.productList}>
+        {group.products.map(p => (
+          <CompanyRow key={p.productCode} entry={p} onPress={() => onSelectProduct(p)} />
+        ))}
+      </View>
     </View>
   );
 }
 
+const mc = StyleSheet.create({
+  card: { backgroundColor: COLORS.cardBg, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, marginBottom: 12, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 },
+  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, paddingBottom: 10 },
+  topLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  iconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  molecule: { fontSize: 15, fontFamily: 'Poppins-Bold', color: COLORS.dark, marginBottom: 3 },
+  taTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  taText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
+  topRight: { alignItems: 'center', gap: 2 },
+  companyCount: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500 },
+  statsRow: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white },
+  stat: { flex: 1, alignItems: 'center', paddingVertical: 10 },
+  statVal: { fontSize: 18, fontFamily: 'Poppins-Bold', color: COLORS.dark },
+  statLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.4 },
+  statDiv: { width: 1, backgroundColor: COLORS.border, marginVertical: 8 },
+  tagsSection: { paddingHorizontal: 14, paddingTop: 10 },
+  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 6 },
+  tagLabel: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.5 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
+  chipDot: { width: 6, height: 6, borderRadius: 3 },
+  chipText: { fontSize: 10, fontFamily: 'Poppins-Medium' },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 14, marginTop: 12, marginBottom: 0 },
+  divLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
+  divText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: COLORS.gray400 },
+  productList: { paddingHorizontal: 14, paddingBottom: 4 },
+});
+
+function ProductDetailDrawer({ product, onClose, visible }: { product: ProductEntry; onClose: () => void; visible: boolean }) {
+  const color = COMPANY_COLORS[product.company] || COLORS.primary;
+  const tColor = therapeuticColor(product.therapeutic);
+  const m = companyMetrics[product.company];
+  const keyName = product.company === 'One Source' ? 'oneSource'
+    : product.company === 'Instapill' ? 'instapill'
+    : product.company === 'Strides' ? 'strides'
+    : product.company === 'Naari' ? 'naari' : 'solara';
+  const sparkData = monthlyRevenue.slice(-6).map(row => (row as any)[keyName] as number);
+  const months = monthlyRevenue.slice(-6).map(row => row.month.replace(' 24', ''));
+
+  return (
+    <DrawerModal visible={visible} onClose={onClose} title={`${product.product} — ${product.company}`}>
+      <View style={dd.root}>
+        <View style={[dd.hero, { backgroundColor: color + '10' }]}>
+          <View style={dd.heroTop}>
+            <View>
+              <Text style={dd.heroProduct}>{product.product}</Text>
+              <Text style={[dd.heroStrength, { color }]}>{product.strength}</Text>
+            </View>
+            <StatusBadge
+              label={product.partnerStatus}
+              type={product.partnerStatus === 'In-House' ? 'success' : product.partnerStatus === 'Partner' ? 'primary' : 'info'}
+            />
+          </View>
+          <View style={dd.grid}>
+            {([
+              { label: 'Molecule', value: product.molecules },
+              { label: 'Dosage Form', value: product.dosage },
+              { label: 'Therapeutic', value: product.therapeutic },
+              { label: 'Country', value: product.country },
+              { label: 'Region', value: product.region },
+              { label: 'Product Code', value: product.productCode },
+            ] as { label: string; value: string }[]).map(({ label, value }) => (
+              <View key={label} style={dd.gridItem}>
+                <Text style={dd.gridLabel}>{label}</Text>
+                <Text style={dd.gridVal}>{value}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={[dd.section, { backgroundColor: color + '08', borderColor: color + '25' }]}>
+          <View style={dd.sectionHead}>
+            <View style={[dd.sectionDot, { backgroundColor: color }]} />
+            <Text style={[dd.sectionTitle, { color }]}>{product.company} — Company Overview</Text>
+          </View>
+          <View style={dd.kpiRow}>
+            <View style={dd.kpi}><Text style={[dd.kpiVal, { color }]}>{fmt(m.revenue)}</Text><Text style={dd.kpiLabel}>Revenue</Text></View>
+            <View style={dd.kpi}><Text style={[dd.kpiVal, { color: COLORS.success }]}>+{m.growth}%</Text><Text style={dd.kpiLabel}>Growth</Text></View>
+            <View style={dd.kpi}><Text style={[dd.kpiVal, { color: COLORS.info }]}>{m.products}</Text><Text style={dd.kpiLabel}>Products</Text></View>
+          </View>
+          <Text style={dd.sparkTitle}>Revenue Trend (6M)</Text>
+          <SparkLine data={sparkData} color={color} />
+          <View style={dd.sparkLabels}>
+            {months.map((mn, i) => <Text key={i} style={dd.sparkLabel}>{mn}</Text>)}
+          </View>
+        </View>
+      </View>
+    </DrawerModal>
+  );
+}
+
+const dd = StyleSheet.create({
+  root: { gap: 12 },
+  hero: { borderRadius: 12, padding: 14 },
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+  heroProduct: { fontSize: 18, fontFamily: 'Poppins-Bold', color: COLORS.dark },
+  heroStrength: { fontSize: 13, fontFamily: 'Poppins-SemiBold', marginTop: 2 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  gridItem: { width: '47%', backgroundColor: COLORS.white + 'CC', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: COLORS.border },
+  gridLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500, textTransform: 'uppercase', marginBottom: 2 },
+  gridVal: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
+  section: { borderRadius: 12, padding: 14, borderWidth: 1 },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  sectionDot: { width: 8, height: 8, borderRadius: 4 },
+  sectionTitle: { fontSize: 12, fontFamily: 'Poppins-SemiBold' },
+  kpiRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  kpi: { flex: 1, alignItems: 'center', backgroundColor: COLORS.white + 'BB', borderRadius: 8, paddingVertical: 10, borderWidth: 1, borderColor: COLORS.border },
+  kpiVal: { fontSize: 15, fontFamily: 'Poppins-Bold' },
+  kpiLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500, marginTop: 2 },
+  sparkTitle: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, marginBottom: 6 },
+  sparkLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  sparkLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray400, flex: 1, textAlign: 'center' },
+});
+
+function Pagination({ page, total, onPrev, onNext }: { page: number; total: number; onPrev: () => void; onNext: () => void }) {
+  return (
+    <View style={pg.row}>
+      <TouchableOpacity style={[pg.btn, page === 1 && pg.btnDisabled]} onPress={onPrev} disabled={page === 1}>
+        <ChevronLeft size={16} color={page === 1 ? COLORS.gray300 : COLORS.dark} />
+        <Text style={[pg.btnText, page === 1 && pg.btnTextDisabled]}>Prev</Text>
+      </TouchableOpacity>
+      <View style={pg.center}>
+        <Text style={pg.pageText}>Page <Text style={pg.pageNum}>{page}</Text> of <Text style={pg.pageNum}>{total}</Text></Text>
+      </View>
+      <TouchableOpacity style={[pg.btn, page === total && pg.btnDisabled]} onPress={onNext} disabled={page === total}>
+        <Text style={[pg.btnText, page === total && pg.btnTextDisabled]}>Next</Text>
+        <ChevronRight size={16} color={page === total ? COLORS.gray300 : COLORS.dark} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const pg = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: COLORS.white, borderTopWidth: 1, borderTopColor: COLORS.border },
+  btn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white },
+  btnDisabled: { borderColor: COLORS.gray100, backgroundColor: COLORS.gray100 },
+  btnText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
+  btnTextDisabled: { color: COLORS.gray300 },
+  center: { alignItems: 'center' },
+  pageText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
+  pageNum: { fontFamily: 'Poppins-Bold', color: COLORS.dark },
+});
+
+const ALL_MOLECULES = Array.from(new Set(productPortfolio.map(p => p.molecules))).sort();
+
 function ProductPortfolioView() {
-  const { width: screenWidth } = useWindowDimensions();
-  const isTablet = screenWidth >= 768;
-  const [activeTab, setActiveTab] = useState(0);
   const [search, setSearch] = useState('');
-  const [companyFilter, setCompanyFilter] = useState('All');
-  const [selectedProduct, setSelectedProduct] = useState<typeof productPortfolio[0] | null>(null);
+  const [moleculeFilter, setMoleculeFilter] = useState('All');
+  const [page, setPage] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState<ProductEntry | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
 
-  const filtered = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     let items = productPortfolio;
-    if (companyFilter !== 'All') items = items.filter(p => p.company === companyFilter);
+    if (moleculeFilter !== 'All') items = items.filter(p => p.molecules === moleculeFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
       items = items.filter(p =>
-        p.product.toLowerCase().includes(q) ||
         p.molecules.toLowerCase().includes(q) ||
-        p.country.toLowerCase().includes(q) ||
+        p.product.toLowerCase().includes(q) ||
+        p.company.toLowerCase().includes(q) ||
         p.therapeutic.toLowerCase().includes(q) ||
-        p.productCode.toLowerCase().includes(q)
+        p.country.toLowerCase().includes(q)
       );
     }
     return items;
-  }, [search, companyFilter]);
+  }, [search, moleculeFilter]);
 
-  const groupKeyMap: Record<number, keyof typeof productPortfolio[0]> = {
-    0: 'region', 1: 'country', 2: 'molecules', 3: 'therapeutic', 4: 'partnerStatus',
-  };
+  const groups = useMemo(() => buildMoleculeGroups(filteredProducts), [filteredProducts]);
+  const totalPages = Math.max(1, Math.ceil(groups.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageGroups = groups.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  const openProduct = (item: typeof productPortfolio[0]) => {
+  const handleSearchChange = (v: string) => { setSearch(v); setPage(1); };
+  const handleMoleculeFilter = (m: string) => { setMoleculeFilter(m); setPage(1); };
+
+  const openProduct = (item: ProductEntry) => {
     setSelectedProduct(item);
     setDrawerVisible(true);
   };
@@ -401,7 +441,7 @@ function ProductPortfolioView() {
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, '#4a8f55']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
           <Text style={styles.headerTitle}>Product Portfolio</Text>
-          <Text style={styles.headerSub}>{filtered.length} products · {companyFilter === 'All' ? '5 companies' : companyFilter}</Text>
+          <Text style={styles.headerSub}>{groups.length} molecules · {filteredProducts.length} SKUs across {new Set(filteredProducts.map(p => p.company)).size} companies</Text>
           <View style={styles.headerGoldLine} />
         </LinearGradient>
 
@@ -410,79 +450,64 @@ function ProductPortfolioView() {
             <Search size={15} color={COLORS.gray500} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search products, molecules, countries..."
+              placeholder="Search molecules, products, companies..."
               placeholderTextColor={COLORS.gray400}
               value={search}
-              onChangeText={setSearch}
+              onChangeText={handleSearchChange}
             />
             {search.length > 0 && (
-              <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}>
+              <TouchableOpacity onPress={() => handleSearchChange('')} hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}>
                 <X size={14} color={COLORS.gray400} />
               </TouchableOpacity>
             )}
           </View>
         </View>
 
-        <View style={styles.companyFilterRow}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.companyFilterContent}>
-            {COMPANIES.map(c => (
-              <FilterChip key={c} label={c} active={companyFilter === c} onPress={() => setCompanyFilter(c)} color={c === 'All' ? COLORS.dark : COMPANY_COLORS[c] || COLORS.primary} />
+        <View style={styles.filterSection}>
+          <View style={styles.filterLabel}>
+            <FlaskConical size={12} color={COLORS.gray500} />
+            <Text style={styles.filterLabelText}>Filter by Molecule</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
+            <FilterChip label="All" active={moleculeFilter === 'All'} onPress={() => handleMoleculeFilter('All')} color={COLORS.dark} />
+            {ALL_MOLECULES.map(m => (
+              <FilterChip key={m} label={m} active={moleculeFilter === m} onPress={() => handleMoleculeFilter(m)} color={therapeuticColor(productPortfolio.find(p => p.molecules === m)?.therapeutic || '')} />
             ))}
           </ScrollView>
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll} contentContainerStyle={styles.tabsContent}>
-          {TABS.map((tab, i) => (
-            <TouchableOpacity key={tab} style={[styles.tab, activeTab === i && styles.tabActive]} onPress={() => setActiveTab(i)} activeOpacity={0.8}>
-              <Text style={[styles.tabText, activeTab === i && styles.tabTextActive]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <GroupedList items={filtered} groupKey={groupKeyMap[activeTab]} onSelect={openProduct} isTablet={isTablet} />
+        {groups.length === 0 ? (
+          <View style={styles.empty}>
+            <FlaskConical size={36} color={COLORS.gray300} />
+            <Text style={styles.emptyText}>No molecules found</Text>
+          </View>
+        ) : (
+          <View style={styles.listContent}>
+            <View style={styles.pageInfo}>
+              <Text style={styles.pageInfoText}>Showing {pageGroups.length} of {groups.length} molecules</Text>
+            </View>
+            {pageGroups.map(group => (
+              <MoleculeCard key={group.molecule} group={group} onSelectProduct={openProduct} />
+            ))}
+          </View>
+        )}
       </ScrollView>
 
+      {groups.length > 0 && (
+        <Pagination
+          page={safePage}
+          total={totalPages}
+          onPrev={() => setPage(p => Math.max(1, p - 1))}
+          onNext={() => setPage(p => Math.min(totalPages, p + 1))}
+        />
+      )}
+
       {selectedProduct && (
-        <DrawerModal
+        <ProductDetailDrawer
+          product={selectedProduct}
           visible={drawerVisible}
           onClose={() => setDrawerVisible(false)}
-          title={`${selectedProduct.product} — ${selectedProduct.company}`}
-        >
-          <View style={styles.drawerInner}>
-            <View style={[styles.productHero, { backgroundColor: (COMPANY_COLORS[selectedProduct.company] || COLORS.primary) + '12' }]}>
-              <View style={styles.productHeroTop}>
-                <View>
-                  <Text style={styles.heroProduct}>{selectedProduct.product}</Text>
-                  <Text style={[styles.heroStrength, { color: COMPANY_COLORS[selectedProduct.company] || COLORS.primary }]}>{selectedProduct.strength}</Text>
-                </View>
-                <StatusBadge label={selectedProduct.partnerStatus} type={selectedProduct.partnerStatus === 'In-House' ? 'success' : selectedProduct.partnerStatus === 'Partner' ? 'primary' : 'info'} />
-              </View>
-              <View style={styles.productMetaGrid}>
-                {[
-                  { label: 'Molecule', value: selectedProduct.molecules },
-                  { label: 'Dosage Form', value: selectedProduct.dosage },
-                  { label: 'Therapeutic', value: selectedProduct.therapeutic },
-                  { label: 'Country', value: selectedProduct.country },
-                  { label: 'Region', value: selectedProduct.region },
-                  { label: 'Code', value: selectedProduct.productCode },
-                ].map(({ label, value }) => (
-                  <View key={label} style={styles.metaItem}>
-                    <Text style={styles.metaLabel}>{label}</Text>
-                    <Text style={styles.metaValue}>{value}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.divider}>
-              <View style={[styles.dividerLine, { backgroundColor: (COMPANY_COLORS[selectedProduct.company] || COLORS.primary) + '30' }]} />
-              <Text style={[styles.dividerText, { color: COMPANY_COLORS[selectedProduct.company] || COLORS.primary }]}>Company Overview · {selectedProduct.company}</Text>
-              <View style={[styles.dividerLine, { backgroundColor: (COMPANY_COLORS[selectedProduct.company] || COLORS.primary) + '30' }]} />
-            </View>
-
-            <CompanyOverview companyName={selectedProduct.company} />
-          </View>
-        </DrawerModal>
+        />
       )}
     </View>
   );
@@ -511,61 +536,28 @@ export default function PortfolioExplorer() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
-  topTabBar: { flexDirection: 'row', backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 0 },
+  topTabBar: { flexDirection: 'row', backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingHorizontal: 16, paddingTop: 8 },
   topTab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   topTabActive: { borderBottomColor: COLORS.primary },
   topTabText: { fontSize: 14, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500 },
   topTabTextActive: { color: COLORS.primary },
   root: { flex: 1, backgroundColor: COLORS.bg },
-  scroll: { flex: 1, backgroundColor: COLORS.bg },
-  scrollContent: { paddingBottom: 24 },
-  header: { paddingHorizontal: 20, paddingTop: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 6 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 16 },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 6 },
   headerGoldLine: { height: 2, backgroundColor: COLORS.gold, opacity: 0.5, marginTop: 10 },
   headerTitle: { fontSize: 18, fontFamily: 'Poppins-Bold', color: COLORS.white },
-  headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.goldLight, marginTop: 1, opacity: 0.85 },
+  headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.goldLight, marginTop: 2, opacity: 0.85 },
   searchRow: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: COLORS.bg, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, gap: 10, borderWidth: 1, borderColor: COLORS.border },
   searchInput: { flex: 1, fontSize: 14, fontFamily: 'Poppins-Regular', color: COLORS.dark, padding: 0 },
-  companyFilterRow: { backgroundColor: COLORS.bg, borderBottomWidth: 1, borderBottomColor: COLORS.border, marginBottom: 0 },
-  companyFilterContent: { paddingHorizontal: 16, paddingVertical: 8 },
-  tabsScroll: { backgroundColor: COLORS.bg, maxHeight: 46, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  tabsContent: { paddingHorizontal: 14, paddingVertical: 7, gap: 6, alignItems: 'center' },
-  tab: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 8 },
-  tabActive: { backgroundColor: COLORS.primary },
-  tabText: { fontSize: 13, fontFamily: 'Poppins-Medium', color: COLORS.gray600 },
-  tabTextActive: { color: COLORS.white },
-  groupedContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
-  group: { marginBottom: 10 },
-  groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  groupTitle: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  groupCount: { backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 1 },
-  groupCountText: { fontSize: 10, fontFamily: 'Poppins-Bold', color: COLORS.white },
-  groupItems: { gap: 6 },
-  productCard: { backgroundColor: COLORS.cardBg, borderRadius: 10, flexDirection: 'row', overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  cardLeftBorder: { width: 4 },
-  cardContent: { flex: 1, padding: 10 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 },
-  cardTitleRow: { flex: 1, marginRight: 8 },
-  cardProduct: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  cardStrength: { fontSize: 11, fontFamily: 'Poppins-Medium' },
-  cardMolecule: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.gray600, marginBottom: 4 },
-  cardMeta: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 },
-  cardMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  cardMetaText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  companyTag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  companyTagText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  productCode: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
-  drawerInner: { gap: 12 },
-  productHero: { borderRadius: 12, padding: 14 },
-  productHeroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  heroProduct: { fontSize: 18, fontFamily: 'Poppins-Bold', color: COLORS.dark },
-  heroStrength: { fontSize: 14, fontFamily: 'Poppins-SemiBold', marginTop: 2 },
-  productMetaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  metaItem: { width: '47%', backgroundColor: COLORS.white + 'CC', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: COLORS.border },
-  metaLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500, textTransform: 'uppercase', marginBottom: 2 },
-  metaValue: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  divider: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dividerLine: { flex: 1, height: 1 },
-  dividerText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', textAlign: 'center' },
+  filterSection: { backgroundColor: COLORS.bg, borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingTop: 10, paddingBottom: 6 },
+  filterLabel: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 16, marginBottom: 6 },
+  filterLabelText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.5 },
+  filterContent: { paddingHorizontal: 16, gap: 6, alignItems: 'center' },
+  listContent: { paddingHorizontal: 16, paddingTop: 10 },
+  pageInfo: { marginBottom: 8 },
+  pageInfoText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 },
+  emptyText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
 });
