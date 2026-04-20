@@ -18,20 +18,20 @@ import CustomerStatusTab from '@/components/ui/CustomerStatusTab';
 // ─── Neutral palette — no therapeutic/company hues ────────────────────────────
 const N = {
   cardBg:   '#ffffff',
-  pageBg:   '#f5f6f8',
-  border:   '#e8eaed',
-  borderLt: '#f0f2f5',
-  headBg:   '#f8f9fb',
-  cream:    '#f5f6f8',
-  dark:     '#1a2e1e',
-  mid:      '#4e6455',
-  muted:    '#6b8270',
-  faint:    '#9ab0a0',
-  green:    '#3a7d44',
-  greenBg:  '#eef7f0',
-  greenBdr: '#c2dcc6',
-  amber:    '#c9a84c',
-  red:      '#c0392b',
+  pageBg:   '#f2f4f7',
+  border:   '#dde0e5',
+  borderLt: '#eaecf0',
+  headBg:   '#f6f7f9',
+  cream:    '#f2f4f7',
+  dark:     '#111827',
+  mid:      '#374151',
+  muted:    '#4b5563',
+  faint:    '#6b7280',
+  green:    '#2d6a35',
+  greenBg:  '#eaf4ec',
+  greenBdr: '#b6d8bc',
+  amber:    '#b45309',
+  red:      '#b91c1c',
 };
 
 // Therapeutic dot colors only — used as tiny accent, never as backgrounds
@@ -127,7 +127,7 @@ function MiniBar({ data, color, h = 44 }: { data: { label: string; value: number
 
 // ─── DIFOT bar ────────────────────────────────────────────────────────────────
 function DifotBar({ pct }: { pct: number }) {
-  const fill = pct >= 95 ? COLORS.primary : pct >= 80 ? COLORS.gold : COLORS.error;
+  const fill = pct >= 95 ? N.green : pct >= 80 ? N.amber : N.red;
   return (
     <View style={dg.wrap}>
       <View style={dg.track}>
@@ -138,17 +138,17 @@ function DifotBar({ pct }: { pct: number }) {
   );
 }
 const dg = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
-  track: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden', backgroundColor: COLORS.gray100 },
-  fill: { height: 4, borderRadius: 2 },
-  label: { fontSize: 11, fontFamily: 'Poppins-SemiBold', minWidth: 40, textAlign: 'right' },
+  wrap: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
+  track: { flex: 1, height: 3, borderRadius: 2, overflow: 'hidden', backgroundColor: N.borderLt },
+  fill: { height: 3, borderRadius: 2 },
+  label: { fontSize: 10, fontFamily: 'Poppins-SemiBold', minWidth: 36, textAlign: 'right' },
 });
 
 // ─── Filter pill ──────────────────────────────────────────────────────────────
 function Pill({ label, active, color, onPress }: { label: string; active: boolean; color?: string; onPress: () => void }) {
-  const bg = active ? (color || COLORS.primary) : COLORS.white;
-  const border = active ? (color || COLORS.primary) : COLORS.border;
-  const textCol = active ? '#fff' : COLORS.gray600;
+  const bg = active ? (color || N.green) : N.cardBg;
+  const border = active ? (color || N.green) : N.border;
+  const textCol = active ? '#fff' : N.mid;
   return (
     <TouchableOpacity style={[pl.pill, { backgroundColor: bg, borderColor: border }]} onPress={onPress} activeOpacity={0.75}>
       <Text style={[pl.text, { color: textCol }]}>{label}</Text>
@@ -156,8 +156,8 @@ function Pill({ label, active, color, onPress }: { label: string; active: boolea
   );
 }
 const pl = StyleSheet.create({
-  pill: { paddingHorizontal: 13, paddingVertical: 5, borderRadius: 20, borderWidth: 1.2, marginRight: 7 },
-  text: { fontSize: 11, fontFamily: 'Poppins-SemiBold' },
+  pill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1, marginRight: 5 },
+  text: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
 });
 
 // ─── Section header inside sidebar ────────────────────────────────────────────
@@ -171,10 +171,10 @@ function SH({ label, icon }: { label: string; icon?: React.ReactNode }) {
   );
 }
 const sh = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 18, marginBottom: 10 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, marginBottom: 6 },
   icon: { opacity: 0.6 },
-  text: { fontSize: 10, fontFamily: 'Poppins-Bold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.8 },
-  line: { flex: 1, height: 1, backgroundColor: COLORS.border },
+  text: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.7 },
+  line: { flex: 1, height: 1, backgroundColor: N.border },
 });
 
 // ─── Molecule name banner inside tab ─────────────────────────────────────────
@@ -191,10 +191,10 @@ function MolBanner({ group }: { group: MolGroup }) {
   );
 }
 const mb = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, marginBottom: 14 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  name: { fontSize: 14, fontFamily: 'Poppins-Bold', color: N.dark },
-  ta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 1 },
+  wrap: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, marginBottom: 8 },
+  dot: { width: 7, height: 7, borderRadius: 3.5 },
+  name: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.dark },
+  ta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -372,40 +372,40 @@ function RegionTab({ group }: { group: MolGroup }) {
 }
 
 const rt = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 48 },
-  filterBlock: { backgroundColor: N.headBg, borderRadius: 10, borderWidth: 1, borderColor: N.border, padding: 12, marginBottom: 4 },
-  filterLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 7 },
+  content: { padding: 10, paddingBottom: 32 },
+  filterBlock: { backgroundColor: N.headBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, padding: 8, marginBottom: 4 },
+  filterLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 5 },
   filterRow: { flexDirection: 'row', alignItems: 'center' },
-  empty: { paddingVertical: 24, alignItems: 'center' },
+  empty: { paddingVertical: 20, alignItems: 'center' },
   emptyTxt: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
-  regionCard: { backgroundColor: N.cardBg, borderRadius: 12, borderWidth: 1, borderColor: N.border, padding: 14, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
-  regionCardHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  regionIconWrap: { width: 28, height: 28, borderRadius: 8, backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border, alignItems: 'center', justifyContent: 'center' },
-  regionCardTitle: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Bold', color: N.dark },
+  regionCard: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, padding: 10, marginBottom: 8 },
+  regionCardHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 7 },
+  regionIconWrap: { width: 24, height: 24, borderRadius: 6, backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border, alignItems: 'center', justifyContent: 'center' },
+  regionCardTitle: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Bold', color: N.dark },
   regionCardRight: { alignItems: 'flex-end' },
-  regionSkuCount: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.muted },
-  regionRev: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, marginTop: 2 },
-  compBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 12 },
-  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  regionSkuCount: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.muted },
+  regionRev: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green },
+  compBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 },
+  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
   compDot: { width: 5, height: 5, borderRadius: 2.5 },
   compBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  skuTable: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, overflow: 'hidden' },
-  skuTableHead: { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 6, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
-  skuTableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  skuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 9, gap: 6 },
+  skuTable: { backgroundColor: N.cardBg, borderRadius: 6, borderWidth: 1, borderColor: N.border, overflow: 'hidden' },
+  skuTableHead: { flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 5, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  skuTableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
+  skuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 7, gap: 5 },
   skuRowBorder: { borderBottomWidth: 1, borderBottomColor: N.borderLt },
   skuName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
-  skuSub: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 1 },
-  techBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignSelf: 'flex-start' },
+  skuSub: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+  techBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 5, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignSelf: 'flex-start' },
   techText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
   skuRev: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, textAlign: 'right' },
-  pipeSect: { marginTop: 12 },
-  pipeHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
-  pipeHeaderText: { fontSize: 10, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.6 },
-  pipeCard: { borderLeftWidth: 3, borderRadius: 8, padding: 10, marginBottom: 6, backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border },
-  pipeCardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 5 },
+  pipeSect: { marginTop: 8 },
+  pipeHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
+  pipeHeaderText: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  pipeCard: { borderLeftWidth: 3, borderRadius: 6, padding: 8, marginBottom: 5, backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border },
+  pipeCardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 4, marginBottom: 3 },
   pipeCardName: { flex: 1, fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
-  phaseBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg },
+  phaseBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg },
   phaseText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted },
   pipeCardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
   pipeCardMeta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
@@ -458,12 +458,12 @@ function CustomerTab({ group }: { group: MolGroup }) {
       {/* Summary KPI strip — matches Pipeline's kpiStrip */}
       <View style={cu.kpiRow}>
         <View style={cu.kpi}>
-          <Text style={[cu.kpiVal, { color: COLORS.primary }]}>{byCustomer.length}</Text>
+          <Text style={[cu.kpiVal, { color: N.dark }]}>{byCustomer.length}</Text>
           <Text style={cu.kpiLabel}>Customers</Text>
         </View>
         <View style={[cu.kpiDivider]} />
         <View style={cu.kpi}>
-          <Text style={[cu.kpiVal, { color: COLORS.success }]}>{fmt(totalRev)}</Text>
+          <Text style={[cu.kpiVal, { color: N.green }]}>{fmt(totalRev)}</Text>
           <Text style={cu.kpiLabel}>Total Revenue</Text>
         </View>
         <View style={[cu.kpiDivider]} />
@@ -473,26 +473,25 @@ function CustomerTab({ group }: { group: MolGroup }) {
         </View>
       </View>
 
-      <SH label="Customer Details" icon={<Users size={12} color={COLORS.gray500} />} />
+      <SH label="Customer Details" icon={<Users size={12} color={N.muted} />} />
 
       {byCustomer.map(({ name, rows, revenue, avgDifot: difot, company }) => {
-        const cc = COMPANY_COLORS[company] || COLORS.primary;
+        const cc = COMPANY_COLORS[company] || N.green;
         const expanded = expandedCustomer === name;
         const initials = name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
         return (
           <View key={name} style={cu.custCard}>
-            {/* Header row */}
             <TouchableOpacity style={cu.custHead} onPress={() => setExpandedCustomer(expanded ? null : name)} activeOpacity={0.8}>
-              <View style={[cu.avatar, { backgroundColor: cc + '18' }]}>
-                <Text style={[cu.avatarText, { color: cc }]}>{initials}</Text>
+              <View style={[cu.avatar, { backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border }]}>
+                <Text style={[cu.avatarText, { color: N.mid }]}>{initials}</Text>
               </View>
               <View style={cu.custInfo}>
                 <Text style={cu.custName}>{name}</Text>
                 <View style={cu.custMeta}>
-                  <View style={[cu.compTag, { backgroundColor: cc + '15' }]}>
+                  <View style={cu.compTag}>
                     <View style={[cu.compDot, { backgroundColor: cc }]} />
-                    <Text style={[cu.compTagText, { color: cc }]}>{company}</Text>
+                    <Text style={cu.compTagText}>{company}</Text>
                   </View>
                   <Text style={cu.skuCountText}>{rows.length} SKU{rows.length > 1 ? 's' : ''}</Text>
                 </View>
@@ -503,26 +502,22 @@ function CustomerTab({ group }: { group: MolGroup }) {
               </View>
             </TouchableOpacity>
 
-            {/* DIFOT bar */}
             <View style={cu.difotRow}>
               <Text style={cu.difotLabel}>DIFOT</Text>
               <DifotBar pct={difot} />
             </View>
 
-            {/* Expand toggle */}
             <TouchableOpacity
               style={cu.toggleRow}
               onPress={() => setExpandedCustomer(expanded ? null : name)}
               activeOpacity={0.75}
             >
               <Text style={cu.toggleText}>{expanded ? 'Hide SKU Details' : 'View SKU Details'}</Text>
-              <ChevronRight size={13} color={COLORS.gray500} style={{ transform: [{ rotate: expanded ? '90deg' : '0deg' }] }} />
+              <ChevronRight size={12} color={N.muted} style={{ transform: [{ rotate: expanded ? '90deg' : '0deg' }] }} />
             </TouchableOpacity>
 
-            {/* SKU wise detail (collapsible) */}
             {expanded && (
               <View style={cu.skuSection}>
-                {/* Table header */}
                 <View style={cu.skuTableHead}>
                   <Text style={[cu.skuTableH, { flex: 2 }]}>SKU / Technology</Text>
                   <Text style={[cu.skuTableH, { flex: 1, textAlign: 'center' }]}>DIFOT</Text>
@@ -530,7 +525,7 @@ function CustomerTab({ group }: { group: MolGroup }) {
                 </View>
                 {rows.map((r, i) => {
                   const inv = revenueData.find(rv => rv.material === r.materialCode && rv.customerName === name);
-                  const dColor = r.difotPercent >= 95 ? COLORS.primary : r.difotPercent >= 80 ? COLORS.gold : COLORS.error;
+                  const dColor = r.difotPercent >= 95 ? N.green : r.difotPercent >= 80 ? N.amber : N.red;
                   const product = group.products.find(p => p.productCode === r.materialCode);
                   return (
                     <View key={i} style={[cu.skuRow, i < rows.length - 1 && cu.skuRowBorder]}>
@@ -555,41 +550,41 @@ function CustomerTab({ group }: { group: MolGroup }) {
 }
 
 const cu = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 48 },
-  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 60 },
-  emptyText: { fontSize: 13, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
-  kpiRow: { flexDirection: 'row', backgroundColor: COLORS.cardBg, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, paddingVertical: 14, paddingHorizontal: 8, marginBottom: 4, gap: 0 },
-  kpi: { flex: 1, alignItems: 'center', gap: 4 },
-  kpiDivider: { width: 1, backgroundColor: COLORS.border, marginVertical: 4 },
-  kpiVal: { fontSize: 16, fontFamily: 'Poppins-Bold' },
-  kpiLabel: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500, textAlign: 'center' },
-  custCard: { backgroundColor: COLORS.cardBg, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, marginBottom: 10, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  custHead: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, paddingBottom: 10 },
-  avatar: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontSize: 14, fontFamily: 'Poppins-Bold' },
+  content: { padding: 10, paddingBottom: 32 },
+  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 40 },
+  emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
+  kpiRow: { flexDirection: 'row', backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, paddingVertical: 10, paddingHorizontal: 6, marginBottom: 4, gap: 0 },
+  kpi: { flex: 1, alignItems: 'center', gap: 2 },
+  kpiDivider: { width: 1, backgroundColor: N.border, marginVertical: 4 },
+  kpiVal: { fontSize: 15, fontFamily: 'Poppins-Bold' },
+  kpiLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, textAlign: 'center' },
+  custCard: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, marginBottom: 7, overflow: 'hidden' },
+  custHead: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, paddingBottom: 8 },
+  avatar: { width: 34, height: 34, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 12, fontFamily: 'Poppins-Bold' },
   custInfo: { flex: 1 },
-  custName: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: COLORS.dark, marginBottom: 5 },
-  custMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  compTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  custName: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 3 },
+  custMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  compTag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border },
   compDot: { width: 5, height: 5, borderRadius: 2.5 },
-  compTagText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  skuCountText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  custRight: { alignItems: 'flex-end', gap: 2 },
-  custRev: { fontSize: 14, fontFamily: 'Poppins-Bold', color: COLORS.success },
-  custRevLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
-  difotRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingBottom: 10, borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 10 },
-  difotLabel: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: COLORS.gray600, width: 40 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 9, borderTopWidth: 1, borderTopColor: COLORS.border },
-  toggleText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.gray600 },
-  skuSection: { borderTopWidth: 1, borderTopColor: COLORS.border },
-  skuTableHead: { flexDirection: 'row', paddingHorizontal: 14, paddingVertical: 7, backgroundColor: COLORS.cream, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  skuTableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.4 },
-  skuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11, gap: 6 },
-  skuRowBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  skuRowName: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.dark, marginBottom: 2 },
-  skuRowSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  skuDifot: { fontSize: 12, fontFamily: 'Poppins-Bold' },
-  skuRev: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Bold', color: COLORS.success, textAlign: 'right' },
+  compTagText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  skuCountText: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+  custRight: { alignItems: 'flex-end', gap: 1 },
+  custRev: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.green },
+  custRevLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.faint },
+  difotRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingBottom: 8, borderTopWidth: 1, borderTopColor: N.border, paddingTop: 8 },
+  difotLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, width: 36 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 7, borderTopWidth: 1, borderTopColor: N.border },
+  toggleText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.muted },
+  skuSection: { borderTopWidth: 1, borderTopColor: N.border },
+  skuTableHead: { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 5, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  skuTableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.3 },
+  skuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, gap: 5 },
+  skuRowBorder: { borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  skuRowName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 1 },
+  skuRowSub: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+  skuDifot: { fontSize: 11, fontFamily: 'Poppins-Bold' },
+  skuRev: { flex: 1, fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, textAlign: 'right' },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -759,28 +754,28 @@ function RevenueTab({ group }: { group: MolGroup }) {
 }
 
 const rv = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 48 },
-  heroCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: N.greenBg, borderWidth: 1, borderColor: N.greenBdr, borderRadius: 12, padding: 16, marginBottom: 12 },
+  content: { padding: 10, paddingBottom: 32 },
+  heroCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: N.greenBg, borderWidth: 1, borderColor: N.greenBdr, borderRadius: 8, padding: 12, marginBottom: 8 },
   heroLeft: {},
-  heroAmount: { fontSize: 26, fontFamily: 'Poppins-Bold', color: N.green },
-  heroLabel: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 2 },
-  yearFilters: { flexDirection: 'row', gap: 6 },
-  yearChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: N.greenBdr, backgroundColor: '#fff' },
+  heroAmount: { fontSize: 22, fontFamily: 'Poppins-Bold', color: N.green },
+  heroLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 1 },
+  yearFilters: { flexDirection: 'row', gap: 5 },
+  yearChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: N.greenBdr, backgroundColor: '#fff' },
   yearChipActive: { backgroundColor: N.green, borderColor: N.green },
-  yearChipText: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green },
+  yearChipText: { fontSize: 10, fontFamily: 'Poppins-Bold', color: N.green },
   yearChipTextActive: { color: '#fff' },
-  periodRow: { flexDirection: 'row', paddingBottom: 12 },
-  chartCard: { backgroundColor: N.cardBg, borderRadius: 10, borderWidth: 1, borderColor: N.border, padding: 14, marginBottom: 12 },
-  chartTitle: { fontSize: 10, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
-  barLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5 },
+  periodRow: { flexDirection: 'row', paddingBottom: 8 },
+  chartCard: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, padding: 10, marginBottom: 8 },
+  chartTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 },
+  barLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   barLabel: { flex: 1, fontSize: 9, fontFamily: 'Poppins-Regular', color: N.faint, textAlign: 'center' },
-  listRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: N.borderLt, gap: 8 },
-  listIcon: { width: 24, height: 24, borderRadius: 7, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignItems: 'center', justifyContent: 'center' },
-  compCircle: { width: 8, height: 8, borderRadius: 4 },
-  listLabel: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Regular', color: N.dark },
-  barTrack: { width: 70, height: 5, backgroundColor: N.borderLt, borderRadius: 3, overflow: 'hidden' },
-  barFill: { height: 5, borderRadius: 3, backgroundColor: N.green + '99' },
-  listVal: { fontSize: 12, fontFamily: 'Poppins-Bold', minWidth: 52, textAlign: 'right', color: N.green },
+  listRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: N.borderLt, gap: 7 },
+  listIcon: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignItems: 'center', justifyContent: 'center' },
+  compCircle: { width: 7, height: 7, borderRadius: 3.5 },
+  listLabel: { flex: 1, fontSize: 11, fontFamily: 'Poppins-Regular', color: N.dark },
+  barTrack: { width: 60, height: 4, backgroundColor: N.borderLt, borderRadius: 2, overflow: 'hidden' },
+  barFill: { height: 4, borderRadius: 2, backgroundColor: N.green + '99' },
+  listVal: { fontSize: 11, fontFamily: 'Poppins-Bold', minWidth: 48, textAlign: 'right', color: N.green },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -887,24 +882,24 @@ function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; 
 }
 
 const sid = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,35,25,0.50)' },
-  drawer: { position: 'absolute', right: 0, top: 0, bottom: 0, backgroundColor: N.pageBg, shadowColor: '#000', shadowOffset: { width: -6, height: 0 }, shadowOpacity: 0.12, shadowRadius: 24, elevation: 28 },
-  header: { paddingTop: 18, paddingBottom: 14, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: N.border, backgroundColor: N.cardBg },
-  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
-  molIconWrap: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  molName: { fontSize: 17, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 4 },
-  taBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
-  taDot: { width: 6, height: 6, borderRadius: 3 },
-  taText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  closeBtn: { width: 32, height: 32, borderRadius: 10, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg, alignItems: 'center', justifyContent: 'center' },
-  statsRow: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, borderColor: N.border, paddingVertical: 10, backgroundColor: N.headBg },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,20,10,0.45)' },
+  drawer: { position: 'absolute', right: 0, top: 0, bottom: 0, backgroundColor: N.pageBg, shadowColor: '#000', shadowOffset: { width: -4, height: 0 }, shadowOpacity: 0.1, shadowRadius: 16, elevation: 24 },
+  header: { paddingTop: 14, paddingBottom: 10, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: N.border, backgroundColor: N.cardBg },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  molIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  molName: { fontSize: 15, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 3 },
+  taBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  taDot: { width: 5, height: 5, borderRadius: 2.5 },
+  taText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  closeBtn: { width: 28, height: 28, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg, alignItems: 'center', justifyContent: 'center' },
+  statsRow: { flexDirection: 'row', borderRadius: 8, borderWidth: 1, borderColor: N.border, paddingVertical: 8, backgroundColor: N.headBg },
   stat: { flex: 1, alignItems: 'center' },
-  statVal: { fontSize: 16, fontFamily: 'Poppins-Bold' },
-  statLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 1 },
+  statVal: { fontSize: 14, fontFamily: 'Poppins-Bold' },
+  statLabel: { fontSize: 8, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1 },
   statDiv: { width: 1, backgroundColor: N.border, marginVertical: 4 },
   tabBar: { flexDirection: 'row', backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border },
-  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 12, borderBottomWidth: 2.5, borderBottomColor: 'transparent' },
-  tabText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.faint },
+  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 10, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.faint },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1132,59 +1127,59 @@ function ProductPortfolioView() {
 const main = StyleSheet.create({
   root: { flex: 1, backgroundColor: N.pageBg },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 20 },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 },
-  headerTitle: { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#fff' },
-  headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.75)', marginTop: 3 },
-  searchWrap: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border },
-  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: N.headBg, borderRadius: 10, paddingHorizontal: 13, paddingVertical: 9, gap: 9, borderWidth: 1, borderColor: N.border },
-  searchInput: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Regular', color: N.dark, padding: 0 },
-  filterBar: { backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border, paddingVertical: 8 },
-  filterBarContent: { paddingHorizontal: 16, gap: 6, alignItems: 'center' },
-  molFilterBar: { backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border, paddingVertical: 10, paddingHorizontal: 16 },
-  molFilterTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
-  molFilterScroll: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  molChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 10, paddingRight: 7, paddingVertical: 5, borderRadius: 20, borderWidth: 1.2, backgroundColor: N.headBg, borderColor: N.border },
+  scrollContent: { paddingBottom: 16 },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
+  headerTitle: { fontSize: 16, fontFamily: 'Poppins-Bold', color: '#fff' },
+  headerSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.80)', marginTop: 2 },
+  searchWrap: { paddingHorizontal: 12, paddingVertical: 7, backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: N.headBg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, gap: 7, borderWidth: 1, borderColor: N.border },
+  searchInput: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Regular', color: N.dark, padding: 0 },
+  filterBar: { backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border, paddingVertical: 6 },
+  filterBarContent: { paddingHorizontal: 12, gap: 5, alignItems: 'center' },
+  molFilterBar: { backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border, paddingVertical: 7, paddingHorizontal: 12 },
+  molFilterTitle: { fontSize: 8, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 },
+  molFilterScroll: { flexDirection: 'row', gap: 5, alignItems: 'center' },
+  molChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 8, paddingRight: 6, paddingVertical: 4, borderRadius: 20, borderWidth: 1, backgroundColor: N.headBg, borderColor: N.border },
   molChipActive: { backgroundColor: N.dark, borderColor: N.dark },
-  molChipDot: { width: 6, height: 6, borderRadius: 3 },
-  molChipText: { fontSize: 11, fontFamily: 'Poppins-SemiBold' },
-  molChipBadge: { minWidth: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  molChipBadgeText: { fontSize: 9, fontFamily: 'Poppins-Bold' },
-  cardWrap: { padding: 16 },
-  resultMeta: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.muted, marginBottom: 10 },
-  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 56, gap: 12 },
-  emptyText: { fontSize: 13, fontFamily: 'Poppins-Regular', color: N.faint, textAlign: 'center' },
-  molCard: { backgroundColor: N.cardBg, borderRadius: 13, borderWidth: 1, borderLeftWidth: 3, borderColor: N.border, marginBottom: 12, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
-  cardHead: { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 12, gap: 10, backgroundColor: N.cardBg },
-  cardIconWrap: { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  cardMolName: { fontSize: 15, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 4 },
-  taChip: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 7, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
-  taDot: { width: 6, height: 6, borderRadius: 3 },
+  molChipDot: { width: 5, height: 5, borderRadius: 2.5 },
+  molChipText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
+  molChipBadge: { minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
+  molChipBadgeText: { fontSize: 8, fontFamily: 'Poppins-Bold' },
+  cardWrap: { padding: 10 },
+  resultMeta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginBottom: 7 },
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 10 },
+  emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint, textAlign: 'center' },
+  molCard: { backgroundColor: N.cardBg, borderRadius: 10, borderWidth: 1, borderLeftWidth: 3, borderColor: N.border, marginBottom: 8, overflow: 'hidden' },
+  cardHead: { flexDirection: 'row', alignItems: 'center', padding: 10, paddingBottom: 8, gap: 8, backgroundColor: N.cardBg },
+  cardIconWrap: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  cardMolName: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 3 },
+  taChip: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  taDot: { width: 5, height: 5, borderRadius: 2.5 },
   taChipText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  detailBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
-  detailBtnText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  detailBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  detailBtnText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
   statsRow: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: N.borderLt, backgroundColor: N.headBg },
-  statCell: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  statVal: { fontSize: 17, fontFamily: 'Poppins-Bold', color: N.dark },
-  statLbl: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 1 },
-  statDivider: { width: 1, backgroundColor: N.borderLt, marginVertical: 8 },
-  compRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 14, paddingTop: 10 },
-  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
-  compDot: { width: 6, height: 6, borderRadius: 3 },
-  compBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  prodDivider: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 14, marginTop: 12 },
+  statCell: { flex: 1, alignItems: 'center', paddingVertical: 8 },
+  statVal: { fontSize: 15, fontFamily: 'Poppins-Bold', color: N.dark },
+  statLbl: { fontSize: 8, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1 },
+  statDivider: { width: 1, backgroundColor: N.borderLt, marginVertical: 6 },
+  compRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, paddingHorizontal: 10, paddingTop: 7 },
+  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  compDot: { width: 5, height: 5, borderRadius: 2.5 },
+  compBadgeText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  prodDivider: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 10, marginTop: 8 },
   prodDivLine: { flex: 1, height: 1, backgroundColor: N.borderLt },
-  prodDivLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.5 },
-  prodScroll: { paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
-  prodChip: { borderWidth: 1, borderRadius: 10, padding: 10, minWidth: 128, borderColor: N.border, backgroundColor: N.headBg },
-  prodChipName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 2 },
-  prodChipSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginBottom: 1 },
+  prodDivLabel: { fontSize: 8, fontFamily: 'Poppins-SemiBold', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4 },
+  prodScroll: { paddingHorizontal: 10, paddingVertical: 7, gap: 6 },
+  prodChip: { borderWidth: 1, borderRadius: 8, padding: 8, minWidth: 112, borderColor: N.border, backgroundColor: N.headBg },
+  prodChipName: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 1 },
+  prodChipSub: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
   prodChipCountry: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.faint },
-  pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: N.cardBg, borderTopWidth: 1, borderTopColor: N.border },
-  pgBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: N.border },
+  pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 9, backgroundColor: N.cardBg, borderTopWidth: 1, borderTopColor: N.border },
+  pgBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 7, borderWidth: 1, borderColor: N.border },
   pgBtnDis: { borderColor: N.borderLt, backgroundColor: N.headBg },
-  pgText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: N.dark },
-  pgInfo: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.muted },
+  pgText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  pgInfo: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.muted },
   pgNum: { fontFamily: 'Poppins-Bold', color: N.dark },
 });
 
