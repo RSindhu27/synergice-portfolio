@@ -433,6 +433,7 @@ const rt = StyleSheet.create({
 // ─────────────────────────────────────────────────────────────────────────────
 function CustomerTab({ group }: { group: MolGroup }) {
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
+  const col = tc(group.therapeutic);
 
   const customers = useMemo(() => customerViewData.filter(cv =>
     group.products.some(p => p.productCode === cv.materialCode)
@@ -470,12 +471,12 @@ function CustomerTab({ group }: { group: MolGroup }) {
 
       {/* Summary KPI row */}
       <View style={cu.kpiRow}>
-        <View style={[cu.kpi, { backgroundColor: PASTEL.greenBg, borderColor: PASTEL.greenBorder }]}>
-          <Text style={[cu.kpiVal, { color: PASTEL.greenText }]}>{byCustomer.length}</Text>
+        <View style={[cu.kpi, { backgroundColor: col.bg, borderColor: col.border }]}>
+          <Text style={[cu.kpiVal, { color: col.text }]}>{byCustomer.length}</Text>
           <Text style={cu.kpiLabel}>Customers</Text>
         </View>
-        <View style={[cu.kpi, { backgroundColor: PASTEL.blueBg, borderColor: PASTEL.blueBorder }]}>
-          <Text style={[cu.kpiVal, { color: PASTEL.blueText }]}>{fmt(totalRev)}</Text>
+        <View style={[cu.kpi, { backgroundColor: PASTEL.greenBg, borderColor: PASTEL.greenBorder }]}>
+          <Text style={[cu.kpiVal, { color: PASTEL.greenText }]}>{fmt(totalRev)}</Text>
           <Text style={cu.kpiLabel}>Total Revenue</Text>
         </View>
         <View style={[cu.kpi, { backgroundColor: PASTEL.amberBg, borderColor: PASTEL.amberBorder }]}>
@@ -507,16 +508,16 @@ function CustomerTab({ group }: { group: MolGroup }) {
                     <Text style={[cu.compTagText, { color: cpStyle.text }]}>{company}</Text>
                   </View>
                   {rows[0] && (
-                    <View style={[cu.techTag, { backgroundColor: PASTEL.lavBg, borderColor: PASTEL.lavBorder }]}>
-                      <Text style={[cu.techTagText, { color: PASTEL.lavText }]}>{rows[0].materialDesc.split(' ').pop() || 'ODT'}</Text>
+                    <View style={[cu.techTag, { backgroundColor: col.bg, borderColor: col.border }]}>
+                      <Text style={[cu.techTagText, { color: col.text }]}>{rows[0].materialDesc.split(' ').pop() || 'ODT'}</Text>
                     </View>
                   )}
                 </View>
               </View>
               <View style={cu.custRight}>
-                {revenue > 0 && <Text style={cu.custRev}>{fmt(revenue)}</Text>}
-                <View style={cu.expandIcon}>
-                  <Text style={cu.expandArrow}>{expanded ? '▲' : '▼'}</Text>
+                {revenue > 0 && <Text style={[cu.custRev, { color: PASTEL.greenText }]}>{fmt(revenue)}</Text>}
+                <View style={[cu.expandIcon, { backgroundColor: expanded ? col.bg : '#f5f6f8', borderColor: col.border }]}>
+                  <Text style={[cu.expandArrow, { color: expanded ? col.text : COLORS.gray500 }]}>{expanded ? '▲' : '▼'}</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -530,13 +531,14 @@ function CustomerTab({ group }: { group: MolGroup }) {
             {/* SKU wise detail (collapsible) */}
             {expanded && (
               <View style={cu.skuSection}>
-                <View style={cu.skuSectionHead}>
-                  <Text style={cu.skuSectionTitle}>SKU Wise DIFOT & Revenue</Text>
+                <View style={[cu.skuSectionHead, { backgroundColor: col.bg }]}>
+                  <Text style={[cu.skuSectionTitle, { color: col.text }]}>SKU Wise DIFOT & Revenue</Text>
                 </View>
                 {rows.map((r, i) => {
                   const inv = revenueData.find(rv => rv.material === r.materialCode && rv.customerName === name);
-                  const sku_difot_color = r.difotPercent >= 95 ? '#2d6a35' : r.difotPercent >= 80 ? '#8a6010' : '#8b2020';
+                  const sku_difot_color = r.difotPercent >= 95 ? PASTEL.greenText : r.difotPercent >= 80 ? PASTEL.amberText : '#8b2020';
                   const sku_difot_bg = r.difotPercent >= 95 ? PASTEL.greenBg : r.difotPercent >= 80 ? PASTEL.amberBg : PASTEL.roseBg;
+                  const sku_difot_border = r.difotPercent >= 95 ? PASTEL.greenBorder : r.difotPercent >= 80 ? PASTEL.amberBorder : PASTEL.roseBorder;
                   const product = group.products.find(p => p.productCode === r.materialCode);
                   return (
                     <View key={i} style={[cu.skuRow, i < rows.length - 1 && { borderBottomWidth: 1, borderBottomColor: '#f0f2f5' }]}>
@@ -545,27 +547,31 @@ function CustomerTab({ group }: { group: MolGroup }) {
                           <Text style={cu.skuRowName} numberOfLines={1}>{r.materialDesc}</Text>
                         </View>
                         <View style={cu.skuRowMeta}>
-                          {/* Company · Technology · DIFOT% · Revenue format */}
                           <Text style={cu.skuMetaText}>
-                            {company} · {product?.dosage || 'ODT'} · {' '}
+                            <Text style={{ color: cpStyle.text, fontFamily: 'Poppins-SemiBold' }}>{company}</Text>
+                            {product ? ` · ${product.dosage}` : ''}
+                            {' · '}
                             <Text style={{ color: sku_difot_color, fontFamily: 'Poppins-Bold' }}>
                               {r.difotPercent}%
                             </Text>
-                            {inv ? ` · ${fmtMn(inv.invoiceValLC)}` : ''}
+                            {inv ? <Text style={{ color: PASTEL.greenText, fontFamily: 'Poppins-SemiBold' }}>{` · ${fmt(inv.invoiceValLC)}`}</Text> : ''}
                           </Text>
                         </View>
                         <View style={cu.skuTagRow}>
-                          <View style={[cu.skuDifotBadge, { backgroundColor: sku_difot_bg }]}>
+                          <View style={[cu.skuDifotBadge, { backgroundColor: sku_difot_bg, borderWidth: 1, borderColor: sku_difot_border }]}>
                             <Text style={[cu.skuDifotText, { color: sku_difot_color }]}>DIFOT {r.difotPercent}%</Text>
                           </View>
                           {product && (
-                            <View style={[cu.techMini, { backgroundColor: PASTEL.lavBg, borderColor: PASTEL.lavBorder }]}>
-                              <Text style={[cu.techMiniText, { color: PASTEL.lavText }]}>{product.dosage}</Text>
+                            <View style={[cu.techMini, { backgroundColor: col.bg, borderColor: col.border }]}>
+                              <Text style={[cu.techMiniText, { color: col.text }]}>{product.dosage}</Text>
                             </View>
                           )}
                         </View>
                       </View>
-                      <Text style={cu.skuRowRev}>{inv ? fmt(inv.invoiceValLC) : '—'}</Text>
+                      <View style={cu.skuRevWrap}>
+                        <Text style={[cu.skuRowRev, { color: PASTEL.greenText }]}>{inv ? fmt(inv.invoiceValLC) : '—'}</Text>
+                        <Text style={cu.skuSoNum}>{r.soNumber}</Text>
+                      </View>
                     </View>
                   );
                 })}
@@ -573,9 +579,9 @@ function CustomerTab({ group }: { group: MolGroup }) {
             )}
 
             {!expanded && (
-              <TouchableOpacity style={cu.viewDetails} onPress={() => setExpandedCustomer(name)} activeOpacity={0.75}>
-                <Text style={cu.viewDetailsText}>View SKU Details</Text>
-                <ArrowUpRight size={11} color={COLORS.info} />
+              <TouchableOpacity style={[cu.viewDetails, { borderTopColor: col.border }]} onPress={() => setExpandedCustomer(name)} activeOpacity={0.75}>
+                <Text style={[cu.viewDetailsText, { color: col.dot }]}>View SKU Details</Text>
+                <ArrowUpRight size={11} color={col.dot} />
               </TouchableOpacity>
             )}
           </View>
@@ -605,29 +611,31 @@ const cu = StyleSheet.create({
   compTagText: { fontSize: 9, fontFamily: 'Poppins-SemiBold' },
   techTag: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
   techTagText: { fontSize: 9, fontFamily: 'Poppins-SemiBold' },
-  custRight: { alignItems: 'flex-end', gap: 4 },
-  custRev: { fontSize: 12, fontFamily: 'Poppins-Bold', color: '#2d6a35' },
-  expandIcon: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
-  expandArrow: { fontSize: 9, color: COLORS.gray400 },
-  difotRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
-  difotLabel: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, width: 40 },
-  skuSection: { borderTopWidth: 1, borderTopColor: '#f0f2f5' },
-  skuSectionHead: { paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#fafbfc', borderBottomWidth: 1, borderBottomColor: '#f0f2f5' },
-  skuSectionTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.6 },
+  custRight: { alignItems: 'flex-end', gap: 6 },
+  custRev: { fontSize: 13, fontFamily: 'Poppins-Bold' },
+  expandIcon: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  expandArrow: { fontSize: 8, fontFamily: 'Poppins-Bold' },
+  difotRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#f5f6f8', paddingTop: 8 },
+  difotLabel: { fontSize: 10, fontFamily: 'Poppins-Bold', color: COLORS.gray600, width: 42 },
+  skuSection: { borderTopWidth: 1, borderTopColor: '#eef0f4' },
+  skuSectionHead: { paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: '#eef0f4' },
+  skuSectionTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', textTransform: 'uppercase', letterSpacing: 0.6 },
   skuRow: { flexDirection: 'row', alignItems: 'flex-start', padding: 12, gap: 8 },
   skuRowLeft: { flex: 1 },
   skuRowTop: { marginBottom: 3 },
-  skuRowName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  skuRowMeta: { marginBottom: 5 },
-  skuMetaText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
+  skuRowName: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
+  skuRowMeta: { marginBottom: 6 },
+  skuMetaText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.gray600, lineHeight: 16 },
   skuTagRow: { flexDirection: 'row', gap: 5, flexWrap: 'wrap' },
-  skuDifotBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  skuDifotBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
   skuDifotText: { fontSize: 9, fontFamily: 'Poppins-Bold' },
-  techMini: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
+  techMini: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10, borderWidth: 1 },
   techMiniText: { fontSize: 9, fontFamily: 'Poppins-SemiBold' },
-  skuRowRev: { fontSize: 12, fontFamily: 'Poppins-Bold', color: '#2d6a35', minWidth: 50, textAlign: 'right' },
-  viewDetails: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#f0f2f5' },
-  viewDetailsText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.info },
+  skuRevWrap: { alignItems: 'flex-end', gap: 3 },
+  skuRowRev: { fontSize: 13, fontFamily: 'Poppins-Bold', minWidth: 52, textAlign: 'right' },
+  skuSoNum: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
+  viewDetails: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 9, borderTopWidth: 1 },
+  viewDetailsText: { fontSize: 11, fontFamily: 'Poppins-SemiBold' },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -737,7 +745,7 @@ function RevenueTab({ group }: { group: MolGroup }) {
       {chartData.length > 0 && chartData.some(d => d.value > 0) && (
         <View style={rv.chartCard}>
           <Text style={rv.chartTitle}>{period} Breakdown</Text>
-          <MiniBar data={chartData} color={COLORS.info} h={52} />
+          <MiniBar data={chartData} color={COLORS.primary} h={52} />
           <View style={rv.barLabelRow}>
             {chartData.map((d, i) => <Text key={i} style={rv.barLabel}>{d.label}</Text>)}
           </View>
