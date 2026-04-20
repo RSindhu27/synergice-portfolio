@@ -15,51 +15,47 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import FilterChip from '@/components/ui/FilterChip';
 import CustomerStatusTab from '@/components/ui/CustomerStatusTab';
 
-// ─── Pastel palette (overlays on white, subtle + elegant) ─────────────────────
-const PASTEL = {
-  greenBg: '#eef7f0',
-  greenBorder: '#c8e6cc',
-  greenText: '#2d6a35',
-  blueBg: '#eaf4fb',
-  blueBorder: '#b8d9ef',
-  blueText: '#1a5f85',
-  amberBg: '#fdf6e8',
-  amberBorder: '#f5dfa0',
-  amberText: '#8a6010',
-  roseBg: '#fdf0f3',
-  roseBorder: '#f5c6d0',
-  roseText: '#8b2038',
-  tealBg: '#e8f6f5',
-  tealBorder: '#b2dbd8',
-  tealText: '#1a5f5a',
-  lavBg: '#f2eefb',
-  lavBorder: '#d4c5f0',
-  lavText: '#4a2d8a',
-  slateBg: '#f0f4f8',
-  slateBorder: '#c8d4e0',
-  slateText: '#3a4f62',
+// ─── Neutral palette — no therapeutic/company hues ────────────────────────────
+const N = {
+  cardBg:   '#ffffff',
+  pageBg:   '#f5f6f8',
+  border:   '#e8eaed',
+  borderLt: '#f0f2f5',
+  headBg:   '#f8f9fb',
+  cream:    '#f5f6f8',
+  dark:     '#1a2e1e',
+  mid:      '#4e6455',
+  muted:    '#6b8270',
+  faint:    '#9ab0a0',
+  green:    '#3a7d44',
+  greenBg:  '#eef7f0',
+  greenBdr: '#c2dcc6',
+  amber:    '#c9a84c',
+  red:      '#c0392b',
 };
 
-// ─── Therapeutic colours (pastel-shifted) ─────────────────────────────────────
-const TCOL: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  Diabetes:        { bg: '#eef7f0', border: '#b8dcbf', text: '#2d6a35', dot: '#3a7d44' },
-  Cardiovascular:  { bg: '#fdf0f0', border: '#f5bcbc', text: '#8b2020', dot: '#c0392b' },
-  'Anti-infective':{ bg: '#fdf6e8', border: '#f5dfa0', text: '#8a6010', dot: '#df6d14' },
-  GI:              { bg: '#eaf4fb', border: '#b8d9ef', text: '#1a5f85', dot: '#4a90a4' },
-  Antiretroviral:  { bg: '#fdf9e8', border: '#f0dfa0', text: '#7a6010', dot: '#c9a84c' },
-  "Women's Health":{ bg: '#fdf0f6', border: '#f5bcd8', text: '#8b1050', dot: '#d63384' },
-  CNS:             { bg: '#f2eefb', border: '#d4c5f0', text: '#4a2d8a', dot: '#7952b3' },
+// Therapeutic dot colors only — used as tiny accent, never as backgrounds
+const TCOL: Record<string, string> = {
+  Diabetes:        '#3a7d44',
+  Cardiovascular:  '#c0392b',
+  'Anti-infective':'#df6d14',
+  GI:              '#4a90a4',
+  Antiretroviral:  '#c9a84c',
+  "Women's Health":'#d63384',
+  CNS:             '#7952b3',
 };
-const tc = (t: string) => TCOL[t] || { bg: '#f0f4f8', border: '#c8d4e0', text: '#3a4f62', dot: '#607D8B' };
+const tcDot = (t: string) => TCOL[t] || '#607D8B';
 
-const COMPANY_PASTEL: Record<string, { bg: string; border: string; text: string }> = {
-  Strides:      { bg: '#eef7f0', border: '#b8dcbf', text: '#2d6a35' },
-  Instapill:    { bg: '#fdf6e8', border: '#f5dfa0', text: '#8a6010' },
-  'One Source': { bg: '#fdf9e8', border: '#f0dfa0', text: '#7a6010' },
-  Naari:        { bg: '#eaf4fb', border: '#b8d9ef', text: '#1a5f85' },
-  Solara:       { bg: '#f2eefb', border: '#d4c5f0', text: '#4a2d8a' },
-};
-const cp = (c: string) => COMPANY_PASTEL[c] || { bg: PASTEL.slateBg, border: PASTEL.slateBorder, text: PASTEL.slateText };
+// Keep tc() for MolBanner — but now uses neutral bg
+const tc = (t: string) => ({
+  bg: N.headBg,
+  border: N.border,
+  text: N.dark,
+  dot: tcDot(t),
+});
+
+// Company colors used only as tiny dot indicator
+const cp = (_c: string) => ({ bg: N.headBg, border: N.border, text: N.mid });
 
 function fmt(v: number) {
   if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
@@ -183,22 +179,22 @@ const sh = StyleSheet.create({
 
 // ─── Molecule name banner inside tab ─────────────────────────────────────────
 function MolBanner({ group }: { group: MolGroup }) {
-  const col = tc(group.therapeutic);
+  const dot = tcDot(group.therapeutic);
   return (
-    <View style={[mb.wrap, { backgroundColor: col.bg, borderColor: col.border }]}>
-      <View style={[mb.dot, { backgroundColor: col.dot }]} />
+    <View style={mb.wrap}>
+      <View style={[mb.dot, { backgroundColor: dot }]} />
       <View style={{ flex: 1 }}>
-        <Text style={[mb.name, { color: col.text }]}>{group.molecule}</Text>
-        <Text style={[mb.ta, { color: col.text }]}>{group.therapeutic}</Text>
+        <Text style={mb.name}>{group.molecule}</Text>
+        <Text style={mb.ta}>{group.therapeutic}</Text>
       </View>
     </View>
   );
 }
 const mb = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 14 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  name: { fontSize: 14, fontFamily: 'Poppins-Bold' },
-  ta: { fontSize: 10, fontFamily: 'Poppins-Regular', opacity: 0.75, marginTop: 1 },
+  wrap: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, marginBottom: 14 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  name: { fontSize: 14, fontFamily: 'Poppins-Bold', color: N.dark },
+  ta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 1 },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -250,13 +246,13 @@ function RegionTab({ group }: { group: MolGroup }) {
         <Text style={rt.filterLabel}>Region</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={rt.filterRow}>
           {['All', ...group.regions].map(r => (
-            <Pill key={r} label={r} active={regionFilter === r} color={COLORS.info} onPress={() => setRegionFilter(r)} />
+            <Pill key={r} label={r} active={regionFilter === r} color={N.green} onPress={() => setRegionFilter(r)} />
           ))}
         </ScrollView>
         <Text style={[rt.filterLabel, { marginTop: 8 }]}>Company</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={rt.filterRow}>
           {['All', ...group.companies].map(c => (
-            <Pill key={c} label={c} active={companyFilter === c} color={COMPANY_COLORS[c] || COLORS.primary} onPress={() => setCompanyFilter(c)} />
+            <Pill key={c} label={c} active={companyFilter === c} color={N.green} onPress={() => setCompanyFilter(c)} />
           ))}
         </ScrollView>
       </View>
@@ -266,19 +262,16 @@ function RegionTab({ group }: { group: MolGroup }) {
       {regionDist.length === 0 ? (
         <View style={rt.empty}><Text style={rt.emptyTxt}>No data for selected filters</Text></View>
       ) : regionDist.map(([region, info]) => {
-        const companiesList = [...info.companies].map(c => {
-          const cpStyle = cp(c);
-          return (
-            <View key={c} style={[rt.compBadge, { backgroundColor: cpStyle.bg, borderColor: cpStyle.border }]}>
-              <View style={[rt.compDot, { backgroundColor: COMPANY_COLORS[c] || COLORS.primary }]} />
-              <Text style={[rt.compBadgeText, { color: cpStyle.text }]}>{c}</Text>
-            </View>
-          );
-        });
+        const companiesList = [...info.companies].map(c => (
+          <View key={c} style={rt.compBadge}>
+            <View style={[rt.compDot, { backgroundColor: COMPANY_COLORS[c] || N.green }]} />
+            <Text style={rt.compBadgeText}>{c}</Text>
+          </View>
+        ));
         return (
           <View key={region} style={rt.regionCard}>
             <View style={rt.regionCardHead}>
-              <View style={rt.regionIconWrap}><Globe size={14} color={COLORS.info} /></View>
+              <View style={rt.regionIconWrap}><Globe size={14} color={N.muted} /></View>
               <Text style={rt.regionCardTitle}>{region}</Text>
               <View style={rt.regionCardRight}>
                 <Text style={rt.regionSkuCount}>{info.skus.length} SKU{info.skus.length > 1 ? 's' : ''}</Text>
@@ -295,7 +288,6 @@ function RegionTab({ group }: { group: MolGroup }) {
                 <Text style={[rt.skuTableH, { flex: 1, textAlign: 'right' }]}>Revenue</Text>
               </View>
               {info.skus.map((p, i) => {
-                const cpStyle = cp(p.company);
                 const inv = revenueData.find(r => r.material === p.productCode);
                 return (
                   <View key={p.productCode} style={[rt.skuRow, i < info.skus.length - 1 && rt.skuRowBorder]}>
@@ -304,8 +296,8 @@ function RegionTab({ group }: { group: MolGroup }) {
                       <Text style={rt.skuSub}>{p.strength} · {p.region}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <View style={[rt.techBadge, { backgroundColor: cpStyle.bg, borderColor: cpStyle.border }]}>
-                        <Text style={[rt.techText, { color: cpStyle.text }]}>{p.dosage}</Text>
+                      <View style={rt.techBadge}>
+                        <Text style={rt.techText}>{p.dosage}</Text>
                       </View>
                     </View>
                     <Text style={[rt.skuRev, { flex: 1 }]}>{inv ? fmt(inv.invoiceValLC) : '—'}</Text>
@@ -318,31 +310,28 @@ function RegionTab({ group }: { group: MolGroup }) {
             {pipelineByRegion[region] && (
               <View style={rt.pipeSect}>
                 <View style={rt.pipeHeader}>
-                  <Beaker size={11} color='#7952b3' />
+                  <Beaker size={11} color={N.muted} />
                   <Text style={rt.pipeHeaderText}>Pipeline · {region}</Text>
                 </View>
                 {pipelineByRegion[region].map((pp, j) => {
                   const isGoLive = (pp as any).currentStatusCategory?.includes('Go') || (pp as any).currentStatusCategory?.includes('Launch');
-                  const phaseColor = isGoLive ? '#2d6a35' : '#1a5f85';
-                  const phaseBg = isGoLive ? PASTEL.greenBg : PASTEL.blueBg;
+                  const accentColor = isGoLive ? N.green : N.muted;
+                  const priorityColor = pp.priority === 'Critical' ? N.red : pp.priority === 'High' ? N.amber : N.muted;
                   return (
-                    <View key={j} style={[rt.pipeCard, { borderLeftColor: phaseColor, backgroundColor: phaseBg }]}>
+                    <View key={j} style={[rt.pipeCard, { borderLeftColor: accentColor }]}>
                       <View style={rt.pipeCardTop}>
                         <Text style={rt.pipeCardName} numberOfLines={1}>{pp.summary}</Text>
-                        <View style={[rt.phaseBadge, { backgroundColor: isGoLive ? PASTEL.greenBg : PASTEL.lavBg, borderColor: isGoLive ? PASTEL.greenBorder : PASTEL.lavBorder }]}>
-                          <Text style={[rt.phaseText, { color: isGoLive ? PASTEL.greenText : PASTEL.lavText }]}>{pp.currentStatus}</Text>
+                        <View style={rt.phaseBadge}>
+                          <Text style={rt.phaseText}>{pp.currentStatus}</Text>
                         </View>
                       </View>
                       <View style={rt.pipeCardRow}>
                         <Text style={rt.pipeCardMeta}>{pp.strength} · {pp.dosageForm}</Text>
-                        <Text style={[rt.pipeCardRev, { color: phaseColor }]}>{fmt(pp.totalRevenue)}</Text>
+                        <Text style={[rt.pipeCardRev, { color: N.green }]}>{fmt(pp.totalRevenue)}</Text>
                       </View>
                       <View style={rt.pipeCardRow}>
                         <Text style={rt.pipeCardCo}>{pp.company}</Text>
-                        <Text style={[rt.priorityBadge, {
-                          color: pp.priority === 'Critical' ? '#8b2020' : pp.priority === 'High' ? '#8a6010' : '#3a4f62',
-                          backgroundColor: pp.priority === 'Critical' ? '#fdf0f0' : pp.priority === 'High' ? '#fdf6e8' : PASTEL.slateBg,
-                        }]}>{pp.priority}</Text>
+                        <Text style={[rt.priorityBadge, { color: priorityColor }]}>{pp.priority}</Text>
                       </View>
                     </View>
                   );
@@ -360,19 +349,17 @@ function RegionTab({ group }: { group: MolGroup }) {
           {Object.entries(pipelineByRegion).filter(([r]) => !regionDist.find(([reg]) => reg === r)).map(([region, pipes]) =>
             pipes.map((pp, j) => {
               const isGoLive = (pp as any).currentStatusCategory?.includes('Go') || (pp as any).currentStatusCategory?.includes('Launch');
-              const phaseColor = isGoLive ? '#2d6a35' : '#1a5f85';
-              const phaseBg = isGoLive ? PASTEL.greenBg : PASTEL.blueBg;
               return (
-                <View key={`${region}-${j}`} style={[rt.pipeCard, { borderLeftColor: phaseColor, backgroundColor: phaseBg, marginBottom: 8 }]}>
+                <View key={`${region}-${j}`} style={[rt.pipeCard, { borderLeftColor: isGoLive ? N.green : N.muted, marginBottom: 8 }]}>
                   <View style={rt.pipeCardTop}>
                     <Text style={rt.pipeCardName} numberOfLines={1}>{pp.summary}</Text>
-                    <View style={[rt.phaseBadge, { backgroundColor: isGoLive ? PASTEL.greenBg : PASTEL.lavBg, borderColor: isGoLive ? PASTEL.greenBorder : PASTEL.lavBorder }]}>
-                      <Text style={[rt.phaseText, { color: isGoLive ? PASTEL.greenText : PASTEL.lavText }]}>{region}</Text>
+                    <View style={rt.phaseBadge}>
+                      <Text style={rt.phaseText}>{region}</Text>
                     </View>
                   </View>
                   <View style={rt.pipeCardRow}>
                     <Text style={rt.pipeCardMeta}>{pp.currentStatus} · {pp.dosageForm}</Text>
-                    <Text style={[rt.pipeCardRev, { color: phaseColor }]}>{fmt(pp.totalRevenue)}</Text>
+                    <Text style={[rt.pipeCardRev, { color: N.green }]}>{fmt(pp.totalRevenue)}</Text>
                   </View>
                 </View>
               );
@@ -386,45 +373,45 @@ function RegionTab({ group }: { group: MolGroup }) {
 
 const rt = StyleSheet.create({
   content: { padding: 16, paddingBottom: 48 },
-  filterBlock: { backgroundColor: '#f8f9fb', borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, padding: 12, marginBottom: 4 },
-  filterLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 7 },
+  filterBlock: { backgroundColor: N.headBg, borderRadius: 10, borderWidth: 1, borderColor: N.border, padding: 12, marginBottom: 4 },
+  filterLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 7 },
   filterRow: { flexDirection: 'row', alignItems: 'center' },
   empty: { paddingVertical: 24, alignItems: 'center' },
-  emptyTxt: { fontSize: 12, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
-  regionCard: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
+  emptyTxt: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
+  regionCard: { backgroundColor: N.cardBg, borderRadius: 12, borderWidth: 1, borderColor: N.border, padding: 14, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
   regionCardHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  regionIconWrap: { width: 28, height: 28, borderRadius: 8, backgroundColor: PASTEL.blueBg, borderWidth: 1, borderColor: PASTEL.blueBorder, alignItems: 'center', justifyContent: 'center' },
-  regionCardTitle: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Bold', color: COLORS.dark },
+  regionIconWrap: { width: 28, height: 28, borderRadius: 8, backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border, alignItems: 'center', justifyContent: 'center' },
+  regionCardTitle: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Bold', color: N.dark },
   regionCardRight: { alignItems: 'flex-end' },
-  regionSkuCount: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.gray600 },
-  regionRev: { fontSize: 11, fontFamily: 'Poppins-Bold', color: '#2d6a35', marginTop: 2 },
+  regionSkuCount: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.muted },
+  regionRev: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, marginTop: 2 },
   compBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 12 },
-  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
+  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
   compDot: { width: 5, height: 5, borderRadius: 2.5 },
-  compBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  skuTable: { backgroundColor: '#fafbfc', borderRadius: 8, borderWidth: 1, borderColor: '#eef0f3', overflow: 'hidden' },
-  skuTableHead: { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#f2f4f7', borderBottomWidth: 1, borderBottomColor: '#eef0f3' },
-  skuTableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.5 },
+  compBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  skuTable: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, overflow: 'hidden' },
+  skuTableHead: { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 6, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  skuTableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
   skuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 9, gap: 6 },
-  skuRowBorder: { borderBottomWidth: 1, borderBottomColor: '#eef0f3' },
-  skuName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  skuSub: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500, marginTop: 1 },
-  techBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, borderWidth: 1, alignSelf: 'flex-start' },
-  techText: { fontSize: 9, fontFamily: 'Poppins-SemiBold' },
-  skuRev: { fontSize: 11, fontFamily: 'Poppins-Bold', color: '#2d6a35', textAlign: 'right' },
+  skuRowBorder: { borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  skuName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  skuSub: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 1 },
+  techBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignSelf: 'flex-start' },
+  techText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  skuRev: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, textAlign: 'right' },
   pipeSect: { marginTop: 12 },
   pipeHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
-  pipeHeaderText: { fontSize: 10, fontFamily: 'Poppins-Bold', color: '#4a2d8a', textTransform: 'uppercase', letterSpacing: 0.6 },
-  pipeCard: { borderLeftWidth: 3, borderRadius: 8, padding: 10, marginBottom: 6 },
+  pipeHeaderText: { fontSize: 10, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.6 },
+  pipeCard: { borderLeftWidth: 3, borderRadius: 8, padding: 10, marginBottom: 6, backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border },
   pipeCardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 5 },
-  pipeCardName: { flex: 1, fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  phaseBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
-  phaseText: { fontSize: 9, fontFamily: 'Poppins-SemiBold' },
+  pipeCardName: { flex: 1, fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  phaseBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg },
+  phaseText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted },
   pipeCardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
-  pipeCardMeta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
+  pipeCardMeta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
   pipeCardRev: { fontSize: 11, fontFamily: 'Poppins-Bold' },
-  pipeCardCo: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  priorityBadge: { fontSize: 9, fontFamily: 'Poppins-Bold', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 },
+  pipeCardCo: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+  priorityBadge: { fontSize: 9, fontFamily: 'Poppins-Bold' },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -696,7 +683,7 @@ function RevenueTab({ group }: { group: MolGroup }) {
       {/* Period filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={rv.periodRow}>
         {PERIOD_OPTS.map(p => (
-          <Pill key={p} label={p} active={period === p} color={COLORS.info} onPress={() => setPeriod(p)} />
+          <Pill key={p} label={p} active={period === p} color={N.green} onPress={() => setPeriod(p)} />
         ))}
       </ScrollView>
 
@@ -722,14 +709,14 @@ function RevenueTab({ group }: { group: MolGroup }) {
       <SH label="By Region" icon={<Globe size={12} color={COLORS.gray500} />} />
       {byRegion.map(([region, rev]) => (
         <View key={region} style={rv.listRow}>
-          <View style={[rv.listIcon, { backgroundColor: PASTEL.blueBg, borderColor: PASTEL.blueBorder }]}>
-            <Globe size={11} color={PASTEL.blueText} />
+          <View style={rv.listIcon}>
+            <Globe size={11} color={N.muted} />
           </View>
           <Text style={rv.listLabel} numberOfLines={1}>{region}</Text>
           <View style={rv.barTrack}>
-            <View style={[rv.barFill, { width: `${(rev / maxReg) * 100}%`, backgroundColor: COLORS.info + 'AA' }]} />
+            <View style={[rv.barFill, { width: `${(rev / maxReg) * 100}%` }]} />
           </View>
-          <Text style={[rv.listVal, { color: PASTEL.blueText }]}>{fmt(rev)}</Text>
+          <Text style={rv.listVal}>{fmt(rev)}</Text>
         </View>
       ))}
 
@@ -738,33 +725,32 @@ function RevenueTab({ group }: { group: MolGroup }) {
         const pct = totalRev > 0 ? (rev / totalRev) * 100 : 0;
         return (
           <View key={cust} style={rv.listRow}>
-            <View style={[rv.listIcon, { backgroundColor: PASTEL.tealBg, borderColor: PASTEL.tealBorder }]}>
-              <Users size={11} color={PASTEL.tealText} />
+            <View style={rv.listIcon}>
+              <Users size={11} color={N.muted} />
             </View>
             <Text style={rv.listLabel} numberOfLines={1}>{cust}</Text>
             <View style={rv.barTrack}>
-              <View style={[rv.barFill, { width: `${pct}%`, backgroundColor: '#4a90a4AA' }]} />
+              <View style={[rv.barFill, { width: `${pct}%` }]} />
             </View>
-            <Text style={[rv.listVal, { color: PASTEL.tealText }]}>{fmt(rev)}</Text>
+            <Text style={rv.listVal}>{fmt(rev)}</Text>
           </View>
         );
       })}
 
       <SH label="By Company" icon={<Package size={12} color={COLORS.gray500} />} />
       {byCompany.map(([comp, rev]) => {
-        const cc = COMPANY_COLORS[comp] || COLORS.primary;
-        const cpStyle = cp(comp);
+        const cc = COMPANY_COLORS[comp] || N.green;
         const pct = totalRev > 0 ? (rev / totalRev) * 100 : 0;
         return (
           <View key={comp} style={rv.listRow}>
-            <View style={[rv.listIcon, { backgroundColor: cpStyle.bg, borderColor: cpStyle.border }]}>
+            <View style={rv.listIcon}>
               <View style={[rv.compCircle, { backgroundColor: cc }]} />
             </View>
             <Text style={rv.listLabel}>{comp}</Text>
             <View style={rv.barTrack}>
-              <View style={[rv.barFill, { width: `${pct}%`, backgroundColor: cc + '80' }]} />
+              <View style={[rv.barFill, { width: `${pct}%` }]} />
             </View>
-            <Text style={[rv.listVal, { color: cpStyle.text }]}>{fmt(rev)}</Text>
+            <Text style={rv.listVal}>{fmt(rev)}</Text>
           </View>
         );
       })}
@@ -774,27 +760,27 @@ function RevenueTab({ group }: { group: MolGroup }) {
 
 const rv = StyleSheet.create({
   content: { padding: 16, paddingBottom: 48 },
-  heroCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: PASTEL.greenBg, borderWidth: 1, borderColor: PASTEL.greenBorder, borderRadius: 12, padding: 16, marginBottom: 12 },
+  heroCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: N.greenBg, borderWidth: 1, borderColor: N.greenBdr, borderRadius: 12, padding: 16, marginBottom: 12 },
   heroLeft: {},
-  heroAmount: { fontSize: 26, fontFamily: 'Poppins-Bold', color: PASTEL.greenText },
-  heroLabel: { fontSize: 10, fontFamily: 'Poppins-Regular', color: '#5a8f62', marginTop: 2 },
+  heroAmount: { fontSize: 26, fontFamily: 'Poppins-Bold', color: N.green },
+  heroLabel: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 2 },
   yearFilters: { flexDirection: 'row', gap: 6 },
-  yearChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: PASTEL.greenBorder, backgroundColor: '#fff' },
-  yearChipActive: { backgroundColor: PASTEL.greenText, borderColor: PASTEL.greenText },
-  yearChipText: { fontSize: 11, fontFamily: 'Poppins-Bold', color: PASTEL.greenText },
+  yearChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: N.greenBdr, backgroundColor: '#fff' },
+  yearChipActive: { backgroundColor: N.green, borderColor: N.green },
+  yearChipText: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green },
   yearChipTextActive: { color: '#fff' },
   periodRow: { flexDirection: 'row', paddingBottom: 12 },
-  chartCard: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 12 },
-  chartTitle: { fontSize: 10, fontFamily: 'Poppins-Bold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+  chartCard: { backgroundColor: N.cardBg, borderRadius: 10, borderWidth: 1, borderColor: N.border, padding: 14, marginBottom: 12 },
+  chartTitle: { fontSize: 10, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   barLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5 },
-  barLabel: { flex: 1, fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray400, textAlign: 'center' },
-  listRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f2f4f7', gap: 8 },
-  listIcon: { width: 24, height: 24, borderRadius: 7, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  barLabel: { flex: 1, fontSize: 9, fontFamily: 'Poppins-Regular', color: N.faint, textAlign: 'center' },
+  listRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: N.borderLt, gap: 8 },
+  listIcon: { width: 24, height: 24, borderRadius: 7, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignItems: 'center', justifyContent: 'center' },
   compCircle: { width: 8, height: 8, borderRadius: 4 },
-  listLabel: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Regular', color: COLORS.dark },
-  barTrack: { width: 70, height: 5, backgroundColor: '#f0f2f5', borderRadius: 3, overflow: 'hidden' },
-  barFill: { height: 5, borderRadius: 3 },
-  listVal: { fontSize: 12, fontFamily: 'Poppins-Bold', minWidth: 52, textAlign: 'right' },
+  listLabel: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Regular', color: N.dark },
+  barTrack: { width: 70, height: 5, backgroundColor: N.borderLt, borderRadius: 3, overflow: 'hidden' },
+  barFill: { height: 5, borderRadius: 3, backgroundColor: N.green + '99' },
+  listVal: { fontSize: 12, fontFamily: 'Poppins-Bold', minWidth: 52, textAlign: 'right', color: N.green },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -829,7 +815,7 @@ function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; 
   }, [visible]);
 
   if (!group) return null;
-  const col = tc(group.therapeutic);
+  const dot = tcDot(group.therapeutic);
 
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
@@ -839,23 +825,24 @@ function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; 
       <Animated.View style={[sid.drawer, { width: drawerW, transform: [{ translateX: slideAnim }] }]}>
 
         {/* Header */}
-        <View style={[sid.header, { backgroundColor: col.bg, borderBottomColor: col.border }]}>
+        <View style={sid.header}>
           <View style={sid.headerTop}>
-            <View style={[sid.molIconWrap, { backgroundColor: col.dot + '22', borderColor: col.border }]}>
-              <FlaskConical size={18} color={col.dot} />
+            <View style={[sid.molIconWrap, { backgroundColor: dot + '15' }]}>
+              <FlaskConical size={18} color={dot} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[sid.molName, { color: col.text }]}>{group.molecule}</Text>
-              <View style={[sid.taBadge, { backgroundColor: col.dot + '15', borderColor: col.dot + '40' }]}>
-                <Text style={[sid.taText, { color: col.dot }]}>{group.therapeutic}</Text>
+              <Text style={sid.molName}>{group.molecule}</Text>
+              <View style={sid.taBadge}>
+                <View style={[sid.taDot, { backgroundColor: dot }]} />
+                <Text style={sid.taText}>{group.therapeutic}</Text>
               </View>
             </View>
-            <TouchableOpacity style={[sid.closeBtn, { borderColor: col.border }]} onPress={onClose} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-              <X size={16} color={col.text} />
+            <TouchableOpacity style={sid.closeBtn} onPress={onClose} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <X size={16} color={N.muted} />
             </TouchableOpacity>
           </View>
           {/* Stats row */}
-          <View style={[sid.statsRow, { backgroundColor: '#fff', borderColor: col.border }]}>
+          <View style={sid.statsRow}>
             {[
               { val: group.products.length, lbl: 'SKUs' },
               { val: group.companies.length, lbl: 'Companies' },
@@ -864,10 +851,10 @@ function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; 
             ].map((s, i, arr) => (
               <React.Fragment key={s.lbl}>
                 <View style={sid.stat}>
-                  <Text style={[sid.statVal, { color: col.text }]}>{s.val}</Text>
+                  <Text style={[sid.statVal, { color: dot }]}>{s.val}</Text>
                   <Text style={sid.statLabel}>{s.lbl}</Text>
                 </View>
-                {i < arr.length - 1 && <View style={[sid.statDiv, { backgroundColor: col.border }]} />}
+                {i < arr.length - 1 && <View style={sid.statDiv} />}
               </React.Fragment>
             ))}
           </View>
@@ -878,11 +865,11 @@ function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; 
           {SIDEBAR_TABS.map(t => {
             const isActive = activeTab === t;
             return (
-              <TouchableOpacity key={t} style={[sid.tabBtn, isActive && { borderBottomColor: col.dot }]} onPress={() => setActiveTab(t)} activeOpacity={0.8}>
-                {t === 'Region' && <Globe size={13} color={isActive ? col.dot : COLORS.gray400} />}
-                {t === 'Customer' && <Users size={13} color={isActive ? col.dot : COLORS.gray400} />}
-                {t === 'Revenue' && <TrendingUp size={13} color={isActive ? col.dot : COLORS.gray400} />}
-                <Text style={[sid.tabText, isActive && { color: col.dot }]}>{t}</Text>
+              <TouchableOpacity key={t} style={[sid.tabBtn, isActive && { borderBottomColor: N.green }]} onPress={() => setActiveTab(t)} activeOpacity={0.8}>
+                {t === 'Region' && <Globe size={13} color={isActive ? N.green : N.faint} />}
+                {t === 'Customer' && <Users size={13} color={isActive ? N.green : N.faint} />}
+                {t === 'Revenue' && <TrendingUp size={13} color={isActive ? N.green : N.faint} />}
+                <Text style={[sid.tabText, isActive && { color: N.green }]}>{t}</Text>
               </TouchableOpacity>
             );
           })}
@@ -900,23 +887,24 @@ function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; 
 }
 
 const sid = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,35,25,0.55)' },
-  drawer: { position: 'absolute', right: 0, top: 0, bottom: 0, backgroundColor: '#f8f9fb', shadowColor: '#000', shadowOffset: { width: -6, height: 0 }, shadowOpacity: 0.14, shadowRadius: 24, elevation: 28 },
-  header: { paddingTop: 18, paddingBottom: 14, paddingHorizontal: 18, borderBottomWidth: 1 },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,35,25,0.50)' },
+  drawer: { position: 'absolute', right: 0, top: 0, bottom: 0, backgroundColor: N.pageBg, shadowColor: '#000', shadowOffset: { width: -6, height: 0 }, shadowOpacity: 0.12, shadowRadius: 24, elevation: 28 },
+  header: { paddingTop: 18, paddingBottom: 14, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: N.border, backgroundColor: N.cardBg },
   headerTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
-  molIconWrap: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  molName: { fontSize: 17, fontFamily: 'Poppins-Bold', marginBottom: 4 },
-  taBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, borderWidth: 1 },
-  taText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  closeBtn: { width: 32, height: 32, borderRadius: 10, borderWidth: 1, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  statsRow: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, paddingVertical: 10 },
+  molIconWrap: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  molName: { fontSize: 17, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 4 },
+  taBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  taDot: { width: 6, height: 6, borderRadius: 3 },
+  taText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  closeBtn: { width: 32, height: 32, borderRadius: 10, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg, alignItems: 'center', justifyContent: 'center' },
+  statsRow: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, borderColor: N.border, paddingVertical: 10, backgroundColor: N.headBg },
   stat: { flex: 1, alignItems: 'center' },
   statVal: { fontSize: 16, fontFamily: 'Poppins-Bold' },
-  statLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 1 },
-  statDiv: { width: 1, marginVertical: 4 },
-  tabBar: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  statLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 1 },
+  statDiv: { width: 1, backgroundColor: N.border, marginVertical: 4 },
+  tabBar: { flexDirection: 'row', backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border },
   tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 12, borderBottomWidth: 2.5, borderBottomColor: 'transparent' },
-  tabText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.gray400 },
+  tabText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.faint },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1010,24 +998,20 @@ function ProductPortfolioView() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={main.molFilterScroll}>
             {allMolecules.map(m => {
               const grp = allGroups.find(g => g.molecule === m);
-              const col = grp ? tc(grp.therapeutic) : { bg: PASTEL.slateBg, border: PASTEL.slateBorder, text: PASTEL.slateText, dot: '#607D8B' };
               const isActive = moleculeFilter === m;
+              const dot = grp ? tcDot(grp.therapeutic) : N.muted;
               return (
                 <TouchableOpacity
                   key={m}
-                  style={[main.molChip,
-                    isActive
-                      ? { backgroundColor: m === 'All' ? COLORS.dark : col.dot, borderColor: m === 'All' ? COLORS.dark : col.dot }
-                      : { backgroundColor: m === 'All' ? '#f8f9fb' : col.bg, borderColor: m === 'All' ? COLORS.border : col.border }
-                  ]}
+                  style={[main.molChip, isActive ? main.molChipActive : {}]}
                   onPress={() => { setMoleculeFilter(m); setPage(1); }}
                   activeOpacity={0.78}
                 >
-                  {m !== 'All' && <FlaskConical size={9} color={isActive ? '#fff' : col.dot} />}
-                  <Text style={[main.molChipText, { color: isActive ? '#fff' : m === 'All' ? COLORS.gray600 : col.text }]}>{m}</Text>
+                  {m !== 'All' && <View style={[main.molChipDot, { backgroundColor: isActive ? 'rgba(255,255,255,0.8)' : dot }]} />}
+                  <Text style={[main.molChipText, { color: isActive ? '#fff' : N.mid }]}>{m}</Text>
                   {grp && (
-                    <View style={[main.molChipBadge, { backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : col.dot + '20' }]}>
-                      <Text style={[main.molChipBadgeText, { color: isActive ? '#fff' : col.dot }]}>{grp.products.length}</Text>
+                    <View style={[main.molChipBadge, { backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : N.border }]}>
+                      <Text style={[main.molChipBadgeText, { color: isActive ? '#fff' : N.muted }]}>{grp.products.length}</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -1046,27 +1030,28 @@ function ProductPortfolioView() {
               <Text style={main.emptyText}>No molecules match the current filters</Text>
             </View>
           ) : pageGroups.map(group => {
-            const col = tc(group.therapeutic);
+            const dot = tcDot(group.therapeutic);
             return (
-              <View key={group.molecule} style={[main.molCard, { borderLeftColor: col.dot, borderLeftWidth: 3 }]}>
+              <View key={group.molecule} style={[main.molCard, { borderLeftColor: dot }]}>
                 {/* Card header */}
-                <View style={[main.cardHead, { backgroundColor: col.bg }]}>
-                  <View style={[main.cardIconWrap, { backgroundColor: col.dot + '20', borderColor: col.border }]}>
-                    <FlaskConical size={16} color={col.dot} />
+                <View style={main.cardHead}>
+                  <View style={[main.cardIconWrap, { backgroundColor: dot + '15' }]}>
+                    <FlaskConical size={16} color={dot} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[main.cardMolName, { color: col.text }]}>{group.molecule}</Text>
-                    <View style={[main.taChip, { backgroundColor: col.dot + '15', borderColor: col.dot + '40' }]}>
-                      <Text style={[main.taChipText, { color: col.dot }]}>{group.therapeutic}</Text>
+                    <Text style={main.cardMolName}>{group.molecule}</Text>
+                    <View style={main.taChip}>
+                      <View style={[main.taDot, { backgroundColor: dot }]} />
+                      <Text style={main.taChipText}>{group.therapeutic}</Text>
                     </View>
                   </View>
                   <TouchableOpacity
-                    style={[main.detailBtn, { borderColor: col.dot, backgroundColor: '#fff' }]}
+                    style={main.detailBtn}
                     onPress={() => openSidebar(group)}
                     activeOpacity={0.8}
                   >
-                    <Text style={[main.detailBtnText, { color: col.dot }]}>Details</Text>
-                    <ArrowUpRight size={11} color={col.dot} />
+                    <Text style={main.detailBtnText}>Details</Text>
+                    <ArrowUpRight size={11} color={N.muted} />
                   </TouchableOpacity>
                 </View>
 
@@ -1080,7 +1065,7 @@ function ProductPortfolioView() {
                   ].map((s, i, arr) => (
                     <React.Fragment key={s.lbl}>
                       <View style={main.statCell}>
-                        <Text style={[main.statVal, { color: col.dot }]}>{s.val}</Text>
+                        <Text style={main.statVal}>{s.val}</Text>
                         <Text style={main.statLbl}>{s.lbl}</Text>
                       </View>
                       {i < arr.length - 1 && <View style={main.statDivider} />}
@@ -1090,15 +1075,12 @@ function ProductPortfolioView() {
 
                 {/* Company badges */}
                 <View style={main.compRow}>
-                  {group.companies.map(c => {
-                    const cpStyle = cp(c);
-                    return (
-                      <View key={c} style={[main.compBadge, { backgroundColor: cpStyle.bg, borderColor: cpStyle.border }]}>
-                        <View style={[main.compDot, { backgroundColor: COMPANY_COLORS[c] || COLORS.primary }]} />
-                        <Text style={[main.compBadgeText, { color: cpStyle.text }]}>{c}</Text>
-                      </View>
-                    );
-                  })}
+                  {group.companies.map(c => (
+                    <View key={c} style={main.compBadge}>
+                      <View style={[main.compDot, { backgroundColor: COMPANY_COLORS[c] || N.green }]} />
+                      <Text style={main.compBadgeText}>{c}</Text>
+                    </View>
+                  ))}
                 </View>
 
                 {/* Products horizontal scroll */}
@@ -1108,21 +1090,18 @@ function ProductPortfolioView() {
                   <View style={main.prodDivLine} />
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={main.prodScroll}>
-                  {group.products.map(p => {
-                    const cpStyle = cp(p.company);
-                    return (
-                      <TouchableOpacity
-                        key={p.productCode}
-                        style={[main.prodChip, { borderColor: cpStyle.border, backgroundColor: cpStyle.bg }]}
-                        onPress={() => openSidebar(group)}
-                        activeOpacity={0.78}
-                      >
-                        <Text style={[main.prodChipName, { color: cpStyle.text }]} numberOfLines={1}>{p.product}</Text>
-                        <Text style={main.prodChipSub}>{p.strength} · {p.dosage}</Text>
-                        <Text style={main.prodChipCountry}>{p.country}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {group.products.map(p => (
+                    <TouchableOpacity
+                      key={p.productCode}
+                      style={main.prodChip}
+                      onPress={() => openSidebar(group)}
+                      activeOpacity={0.78}
+                    >
+                      <Text style={main.prodChipName} numberOfLines={1}>{p.product}</Text>
+                      <Text style={main.prodChipSub}>{p.strength} · {p.dosage}</Text>
+                      <Text style={main.prodChipCountry}>{p.country}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </ScrollView>
               </View>
             );
@@ -1151,59 +1130,62 @@ function ProductPortfolioView() {
 }
 
 const main = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f4f6f9' },
+  root: { flex: 1, backgroundColor: N.pageBg },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20 },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 },
   headerTitle: { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#fff' },
   headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.75)', marginTop: 3 },
-  searchWrap: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f9fb', borderRadius: 10, paddingHorizontal: 13, paddingVertical: 9, gap: 9, borderWidth: 1, borderColor: COLORS.border },
-  searchInput: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Regular', color: COLORS.dark, padding: 0 },
-  filterBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingVertical: 8 },
+  searchWrap: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: N.headBg, borderRadius: 10, paddingHorizontal: 13, paddingVertical: 9, gap: 9, borderWidth: 1, borderColor: N.border },
+  searchInput: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Regular', color: N.dark, padding: 0 },
+  filterBar: { backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border, paddingVertical: 8 },
   filterBarContent: { paddingHorizontal: 16, gap: 6, alignItems: 'center' },
-  molFilterBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingVertical: 10, paddingHorizontal: 16 },
-  molFilterTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
+  molFilterBar: { backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border, paddingVertical: 10, paddingHorizontal: 16 },
+  molFilterTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
   molFilterScroll: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  molChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 10, paddingRight: 7, paddingVertical: 5, borderRadius: 20, borderWidth: 1.2 },
+  molChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 10, paddingRight: 7, paddingVertical: 5, borderRadius: 20, borderWidth: 1.2, backgroundColor: N.headBg, borderColor: N.border },
+  molChipActive: { backgroundColor: N.dark, borderColor: N.dark },
+  molChipDot: { width: 6, height: 6, borderRadius: 3 },
   molChipText: { fontSize: 11, fontFamily: 'Poppins-SemiBold' },
   molChipBadge: { minWidth: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   molChipBadgeText: { fontSize: 9, fontFamily: 'Poppins-Bold' },
   cardWrap: { padding: 16 },
-  resultMeta: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.gray500, marginBottom: 10 },
+  resultMeta: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.muted, marginBottom: 10 },
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 56, gap: 12 },
-  emptyText: { fontSize: 13, fontFamily: 'Poppins-Regular', color: COLORS.gray400, textAlign: 'center' },
-  molCard: { backgroundColor: '#fff', borderRadius: 13, borderWidth: 1, borderColor: COLORS.border, marginBottom: 12, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
-  cardHead: { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 12, gap: 10 },
-  cardIconWrap: { width: 38, height: 38, borderRadius: 11, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  cardMolName: { fontSize: 15, fontFamily: 'Poppins-Bold', marginBottom: 4 },
-  taChip: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 7, borderWidth: 1 },
-  taChipText: { fontSize: 9, fontFamily: 'Poppins-Bold' },
-  detailBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1.5 },
-  detailBtnText: { fontSize: 11, fontFamily: 'Poppins-SemiBold' },
-  statsRow: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#f0f2f5', backgroundColor: '#fafbfc' },
+  emptyText: { fontSize: 13, fontFamily: 'Poppins-Regular', color: N.faint, textAlign: 'center' },
+  molCard: { backgroundColor: N.cardBg, borderRadius: 13, borderWidth: 1, borderLeftWidth: 3, borderColor: N.border, marginBottom: 12, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  cardHead: { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 12, gap: 10, backgroundColor: N.cardBg },
+  cardIconWrap: { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  cardMolName: { fontSize: 15, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 4 },
+  taChip: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 7, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  taDot: { width: 6, height: 6, borderRadius: 3 },
+  taChipText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  detailBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  detailBtnText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  statsRow: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: N.borderLt, backgroundColor: N.headBg },
   statCell: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  statVal: { fontSize: 17, fontFamily: 'Poppins-Bold' },
-  statLbl: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray500, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 1 },
-  statDivider: { width: 1, backgroundColor: '#f0f2f5', marginVertical: 8 },
+  statVal: { fontSize: 17, fontFamily: 'Poppins-Bold', color: N.dark },
+  statLbl: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 1 },
+  statDivider: { width: 1, backgroundColor: N.borderLt, marginVertical: 8 },
   compRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 14, paddingTop: 10 },
-  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
   compDot: { width: 6, height: 6, borderRadius: 3 },
-  compBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
+  compBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
   prodDivider: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 14, marginTop: 12 },
-  prodDivLine: { flex: 1, height: 1, backgroundColor: '#f0f2f5' },
-  prodDivLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: COLORS.gray400, textTransform: 'uppercase', letterSpacing: 0.5 },
+  prodDivLine: { flex: 1, height: 1, backgroundColor: N.borderLt },
+  prodDivLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.5 },
   prodScroll: { paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
-  prodChip: { borderWidth: 1, borderRadius: 10, padding: 10, minWidth: 128 },
-  prodChipName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', marginBottom: 2 },
-  prodChipSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500, marginBottom: 1 },
-  prodChipCountry: { fontSize: 9, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
-  pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: COLORS.border },
-  pgBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border },
-  pgBtnDis: { borderColor: '#f0f2f5', backgroundColor: '#f8f9fb' },
-  pgText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  pgInfo: { fontSize: 12, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  pgNum: { fontFamily: 'Poppins-Bold', color: COLORS.dark },
+  prodChip: { borderWidth: 1, borderRadius: 10, padding: 10, minWidth: 128, borderColor: N.border, backgroundColor: N.headBg },
+  prodChipName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 2 },
+  prodChipSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginBottom: 1 },
+  prodChipCountry: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.faint },
+  pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: N.cardBg, borderTopWidth: 1, borderTopColor: N.border },
+  pgBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: N.border },
+  pgBtnDis: { borderColor: N.borderLt, backgroundColor: N.headBg },
+  pgText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  pgInfo: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.muted },
+  pgNum: { fontFamily: 'Poppins-Bold', color: N.dark },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
