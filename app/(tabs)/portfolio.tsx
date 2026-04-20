@@ -911,7 +911,7 @@ const TOP_TABS = ['Product Portfolio', 'Customer Details'];
 
 function ProductPortfolioView() {
   const [companyFilter, setCompanyFilter] = useState('All');
-  const [moleculeFilter, setMoleculeFilter] = useState('All');
+  const [moleculeFilter, setMoleculeFilter] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selectedGroup, setSelectedGroup] = useState<MolGroup | null>(null);
@@ -920,10 +920,18 @@ function ProductPortfolioView() {
   const allGroups = useMemo(() => buildGroups(productPortfolio), []);
   const allMolecules = useMemo(() => ['All', ...allGroups.map(g => g.molecule)], [allGroups]);
 
+  const pipelineCountByMolecule = useMemo(() => {
+    const map: Record<string, number> = {};
+    [...rdData, ...goLanzarData].forEach((item: any) => {
+      if (item.molecule) map[item.molecule] = (map[item.molecule] || 0) + 1;
+    });
+    return map;
+  }, []);
+
   const filteredProducts = useMemo(() => {
     let items = productPortfolio;
     if (companyFilter !== 'All') items = items.filter(p => p.company === companyFilter);
-    if (moleculeFilter !== 'All') items = items.filter(p => p.molecules === moleculeFilter);
+    if (moleculeFilter.length > 0) items = items.filter(p => moleculeFilter.includes(p.molecules));
     if (search.trim()) {
       const q = search.toLowerCase();
       items = items.filter(p =>
@@ -962,7 +970,7 @@ function ProductPortfolioView() {
               placeholder="Search molecules, products, companies..."
               placeholderTextColor={COLORS.gray400}
               value={search}
-              onChangeText={v => { setSearch(v); setPage(1); setMoleculeFilter('All'); }}
+              onChangeText={v => { setSearch(v); setPage(1); setMoleculeFilter([]); }}
             />
             {search.length > 0 && (
               <TouchableOpacity onPress={() => { setSearch(''); setPage(1); }} hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}>
@@ -993,16 +1001,26 @@ function ProductPortfolioView() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={main.molFilterScroll}>
             {allMolecules.map(m => {
               const grp = allGroups.find(g => g.molecule === m);
-              const isActive = moleculeFilter === m;
+              const isAllChip = m === 'All';
+              const isActive = isAllChip ? moleculeFilter.length === 0 : moleculeFilter.includes(m);
               const dot = grp ? tcDot(grp.therapeutic) : N.muted;
               return (
                 <TouchableOpacity
                   key={m}
                   style={[main.molChip, isActive ? main.molChipActive : {}]}
-                  onPress={() => { setMoleculeFilter(m); setPage(1); }}
+                  onPress={() => {
+                    setPage(1);
+                    if (isAllChip) {
+                      setMoleculeFilter([]);
+                    } else {
+                      setMoleculeFilter(prev =>
+                        prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
+                      );
+                    }
+                  }}
                   activeOpacity={0.78}
                 >
-                  {m !== 'All' && <View style={[main.molChipDot, { backgroundColor: isActive ? 'rgba(255,255,255,0.8)' : dot }]} />}
+                  {!isAllChip && <View style={[main.molChipDot, { backgroundColor: isActive ? 'rgba(255,255,255,0.8)' : dot }]} />}
                   <Text style={[main.molChipText, { color: isActive ? '#fff' : N.mid }]}>{m}</Text>
                   {grp && (
                     <View style={[main.molChipBadge, { backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : N.border }]}>
@@ -1024,83 +1042,81 @@ function ProductPortfolioView() {
               <FlaskConical size={36} color={COLORS.gray300} />
               <Text style={main.emptyText}>No molecules match the current filters</Text>
             </View>
-          ) : pageGroups.map(group => {
-            const dot = tcDot(group.therapeutic);
-            return (
-              <View key={group.molecule} style={[main.molCard, { borderLeftColor: dot }]}>
-                {/* Card header */}
-                <View style={main.cardHead}>
-                  <View style={[main.cardIconWrap, { backgroundColor: dot + '15' }]}>
-                    <FlaskConical size={16} color={dot} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={main.cardMolName}>{group.molecule}</Text>
-                    <View style={main.taChip}>
-                      <View style={[main.taDot, { backgroundColor: dot }]} />
-                      <Text style={main.taChipText}>{group.therapeutic}</Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={main.detailBtn}
-                    onPress={() => openSidebar(group)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={main.detailBtnText}>Details</Text>
-                    <ArrowUpRight size={11} color={N.muted} />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Stats row */}
-                <View style={main.statsRow}>
-                  {[
-                    { val: group.products.length, lbl: 'SKUs' },
-                    { val: group.regions.length, lbl: 'Regions' },
-                    { val: group.dosageForms.length, lbl: 'Forms' },
-                    { val: group.companies.length, lbl: 'Companies' },
-                  ].map((s, i, arr) => (
-                    <React.Fragment key={s.lbl}>
-                      <View style={main.statCell}>
-                        <Text style={main.statVal}>{s.val}</Text>
-                        <Text style={main.statLbl}>{s.lbl}</Text>
+          ) : (
+            <View style={main.cardGrid}>
+              {pageGroups.map(group => {
+                const dot = tcDot(group.therapeutic);
+                const pipelineCount = pipelineCountByMolecule[group.molecule] || 0;
+                return (
+                  <View key={group.molecule} style={[main.molCard, { borderLeftColor: dot }]}>
+                    {/* Card header */}
+                    <View style={main.cardHead}>
+                      <View style={[main.cardIconWrap, { backgroundColor: dot + '15' }]}>
+                        <FlaskConical size={14} color={dot} />
                       </View>
-                      {i < arr.length - 1 && <View style={main.statDivider} />}
-                    </React.Fragment>
-                  ))}
-                </View>
-
-                {/* Company badges */}
-                <View style={main.compRow}>
-                  {group.companies.map(c => (
-                    <View key={c} style={main.compBadge}>
-                      <View style={[main.compDot, { backgroundColor: COMPANY_COLORS[c] || N.green }]} />
-                      <Text style={main.compBadgeText}>{c}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={main.cardMolName} numberOfLines={1}>{group.molecule}</Text>
+                        <View style={main.taChip}>
+                          <View style={[main.taDot, { backgroundColor: dot }]} />
+                          <Text style={main.taChipText} numberOfLines={1}>{group.therapeutic}</Text>
+                        </View>
+                      </View>
                     </View>
-                  ))}
-                </View>
 
-                {/* Products horizontal scroll */}
-                <View style={main.prodDivider}>
-                  <View style={main.prodDivLine} />
-                  <Text style={main.prodDivLabel}>Products</Text>
-                  <View style={main.prodDivLine} />
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={main.prodScroll}>
-                  {group.products.map(p => (
+                    {/* Stats row */}
+                    <View style={main.statsRow}>
+                      {[
+                        { val: group.products.length, lbl: 'SKUs' },
+                        { val: group.regions.length, lbl: 'Regions' },
+                        { val: group.companies.length, lbl: 'Co.' },
+                      ].map((s, i, arr) => (
+                        <React.Fragment key={s.lbl}>
+                          <View style={main.statCell}>
+                            <Text style={main.statVal}>{s.val}</Text>
+                            <Text style={main.statLbl}>{s.lbl}</Text>
+                          </View>
+                          {i < arr.length - 1 && <View style={main.statDivider} />}
+                        </React.Fragment>
+                      ))}
+                    </View>
+
+                    {/* Pipeline count */}
+                    <View style={main.pipelineRow}>
+                      <Beaker size={11} color={N.green} />
+                      <Text style={main.pipelineLabel}>Pipeline</Text>
+                      <Text style={main.pipelineCount}>{pipelineCount}</Text>
+                      <Text style={main.pipelineUnit}>products</Text>
+                    </View>
+
+                    {/* Company badges */}
+                    <View style={main.compRow}>
+                      {group.companies.slice(0, 2).map(c => (
+                        <View key={c} style={main.compBadge}>
+                          <View style={[main.compDot, { backgroundColor: COMPANY_COLORS[c] || N.green }]} />
+                          <Text style={main.compBadgeText} numberOfLines={1}>{c}</Text>
+                        </View>
+                      ))}
+                      {group.companies.length > 2 && (
+                        <View style={main.compBadge}>
+                          <Text style={main.compBadgeText}>+{group.companies.length - 2}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* More Details */}
                     <TouchableOpacity
-                      key={p.productCode}
-                      style={main.prodChip}
+                      style={main.detailBtn}
                       onPress={() => openSidebar(group)}
-                      activeOpacity={0.78}
+                      activeOpacity={0.8}
                     >
-                      <Text style={main.prodChipName} numberOfLines={1}>{p.product}</Text>
-                      <Text style={main.prodChipSub}>{p.strength} · {p.dosage}</Text>
-                      <Text style={main.prodChipCountry}>{p.country}</Text>
+                      <Text style={main.detailBtnText}>More Details</Text>
+                      <ArrowUpRight size={10} color={N.muted} />
                     </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            );
-          })}
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -1149,32 +1165,29 @@ const main = StyleSheet.create({
   resultMeta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginBottom: 7 },
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 10 },
   emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint, textAlign: 'center' },
-  molCard: { backgroundColor: N.cardBg, borderRadius: 10, borderWidth: 1, borderLeftWidth: 3, borderColor: N.border, marginBottom: 8, overflow: 'hidden' },
-  cardHead: { flexDirection: 'row', alignItems: 'center', padding: 10, paddingBottom: 8, gap: 8, backgroundColor: N.cardBg },
-  cardIconWrap: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  cardMolName: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 3 },
-  taChip: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  molCard: { backgroundColor: N.cardBg, borderRadius: 10, borderWidth: 1, borderLeftWidth: 3, borderColor: N.border, overflow: 'hidden', width: '31%', flexGrow: 1 },
+  cardHead: { flexDirection: 'row', alignItems: 'flex-start', padding: 8, paddingBottom: 6, gap: 6, backgroundColor: N.cardBg },
+  cardIconWrap: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  cardMolName: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 3 },
+  taChip: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
   taDot: { width: 5, height: 5, borderRadius: 2.5 },
-  taChipText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  detailBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
-  detailBtnText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  taChipText: { fontSize: 8, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  detailBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, margin: 8, marginTop: 6, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  detailBtnText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
   statsRow: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: N.borderLt, backgroundColor: N.headBg },
-  statCell: { flex: 1, alignItems: 'center', paddingVertical: 8 },
-  statVal: { fontSize: 15, fontFamily: 'Poppins-Bold', color: N.dark },
-  statLbl: { fontSize: 8, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1 },
-  statDivider: { width: 1, backgroundColor: N.borderLt, marginVertical: 6 },
-  compRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, paddingHorizontal: 10, paddingTop: 7 },
-  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
-  compDot: { width: 5, height: 5, borderRadius: 2.5 },
-  compBadgeText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  prodDivider: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 10, marginTop: 8 },
-  prodDivLine: { flex: 1, height: 1, backgroundColor: N.borderLt },
-  prodDivLabel: { fontSize: 8, fontFamily: 'Poppins-SemiBold', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4 },
-  prodScroll: { paddingHorizontal: 10, paddingVertical: 7, gap: 6 },
-  prodChip: { borderWidth: 1, borderRadius: 8, padding: 8, minWidth: 112, borderColor: N.border, backgroundColor: N.headBg },
-  prodChipName: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 1 },
-  prodChipSub: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
-  prodChipCountry: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.faint },
+  statCell: { flex: 1, alignItems: 'center', paddingVertical: 6 },
+  statVal: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.dark },
+  statLbl: { fontSize: 7, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1 },
+  statDivider: { width: 1, backgroundColor: N.borderLt, marginVertical: 5 },
+  pipelineRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: N.borderLt, backgroundColor: N.greenBg },
+  pipelineLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.green, flex: 1 },
+  pipelineCount: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.green },
+  pipelineUnit: { fontSize: 8, fontFamily: 'Poppins-Regular', color: N.green },
+  compRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, paddingHorizontal: 8, paddingTop: 6 },
+  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  compDot: { width: 4, height: 4, borderRadius: 2 },
+  compBadgeText: { fontSize: 8, fontFamily: 'Poppins-SemiBold', color: N.mid },
   pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 9, backgroundColor: N.cardBg, borderTopWidth: 1, borderTopColor: N.border },
   pgBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 7, borderWidth: 1, borderColor: N.border },
   pgBtnDis: { borderColor: N.borderLt, backgroundColor: N.headBg },
