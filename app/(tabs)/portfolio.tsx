@@ -916,6 +916,9 @@ function ProductPortfolioView() {
   const [page, setPage] = useState(1);
   const [selectedGroup, setSelectedGroup] = useState<MolGroup | null>(null);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const { width: screenWidth } = useWindowDimensions();
+  const cols = screenWidth < 480 ? 1 : screenWidth < 768 ? 2 : 3;
+  const cardWidth = cols === 1 ? '100%' : cols === 2 ? '48%' : '31%';
 
   const allGroups = useMemo(() => buildGroups(productPortfolio), []);
   const allMolecules = useMemo(() => ['All', ...allGroups.map(g => g.molecule)], [allGroups]);
@@ -1048,17 +1051,17 @@ function ProductPortfolioView() {
                 const dot = tcDot(group.therapeutic);
                 const pipelineCount = pipelineCountByMolecule[group.molecule] || 0;
                 return (
-                  <View key={group.molecule} style={[main.molCard, { borderLeftColor: dot }]}>
+                  <View key={group.molecule} style={[main.molCard, { borderLeftColor: dot, width: cardWidth }]}>
                     {/* Card header */}
                     <View style={main.cardHead}>
                       <View style={[main.cardIconWrap, { backgroundColor: dot + '18' }]}>
-                        <FlaskConical size={15} color={dot} />
+                        <FlaskConical size={cols === 1 ? 18 : 15} color={dot} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={main.cardMolName} numberOfLines={1}>{group.molecule}</Text>
+                        <Text style={[main.cardMolName, cols === 1 && { fontSize: 15, lineHeight: 20 }]}>{group.molecule}</Text>
                         <View style={main.taChip}>
                           <View style={[main.taDot, { backgroundColor: dot }]} />
-                          <Text style={main.taChipText} numberOfLines={1}>{group.therapeutic}</Text>
+                          <Text style={[main.taChipText, cols === 1 && { fontSize: 11 }]} numberOfLines={1}>{group.therapeutic}</Text>
                         </View>
                       </View>
                     </View>
@@ -1071,9 +1074,9 @@ function ProductPortfolioView() {
                         { val: group.companies.length, singular: 'Company', plural: 'Companies' },
                       ].map((s, i, arr) => (
                         <React.Fragment key={s.singular}>
-                          <View style={main.statCell}>
-                            <Text style={main.statVal}>{s.val}</Text>
-                            <Text style={main.statLbl}>{s.val === 1 ? s.singular : s.plural}</Text>
+                          <View style={[main.statCell, cols === 1 && { paddingVertical: 10 }]}>
+                            <Text style={[main.statVal, cols === 1 && { fontSize: 18 }]}>{s.val}</Text>
+                            <Text style={[main.statLbl, cols === 1 && { fontSize: 10 }]}>{s.val === 1 ? s.singular : s.plural}</Text>
                           </View>
                           {i < arr.length - 1 && <View style={main.statDivider} />}
                         </React.Fragment>
@@ -1081,38 +1084,38 @@ function ProductPortfolioView() {
                     </View>
 
                     {/* Pipeline count */}
-                    <View style={[main.pipelineRow, pipelineCount === 0 && main.pipelineRowEmpty]}>
-                      <Beaker size={11} color={pipelineCount > 0 ? N.green : N.faint} />
-                      <Text style={[main.pipelineLabel, pipelineCount === 0 && main.pipelineLabelEmpty]}>Pipeline</Text>
-                      <Text style={[main.pipelineCount, pipelineCount === 0 && main.pipelineCountEmpty]}>
+                    <View style={[main.pipelineRow, pipelineCount === 0 && main.pipelineRowEmpty, cols === 1 && { paddingVertical: 9, paddingHorizontal: 12 }]}>
+                      <Beaker size={cols === 1 ? 13 : 11} color={pipelineCount > 0 ? N.green : N.faint} />
+                      <Text style={[main.pipelineLabel, pipelineCount === 0 && main.pipelineLabelEmpty, cols === 1 && { fontSize: 12 }]}>Pipeline</Text>
+                      <Text style={[main.pipelineCount, pipelineCount === 0 && main.pipelineCountEmpty, cols === 1 && { fontSize: 16 }]}>
                         {pipelineCount > 0 ? pipelineCount : 'None'}
                       </Text>
-                      {pipelineCount > 0 && <Text style={main.pipelineUnit}>{pipelineCount === 1 ? 'product' : 'products'}</Text>}
+                      {pipelineCount > 0 && <Text style={[main.pipelineUnit, cols === 1 && { fontSize: 11 }]}>{pipelineCount === 1 ? 'product' : 'products'}</Text>}
                     </View>
 
                     {/* Supplier badges */}
-                    <View style={main.compRow}>
+                    <View style={[main.compRow, cols === 1 && { paddingHorizontal: 12, paddingTop: 10, gap: 6 }]}>
                       {group.companies.slice(0, 3).map(c => (
-                        <View key={c} style={main.compBadge}>
+                        <View key={c} style={[main.compBadge, cols === 1 && { paddingHorizontal: 8, paddingVertical: 4 }]}>
                           <View style={[main.compDot, { backgroundColor: COMPANY_COLORS[c] || N.green }]} />
-                          <Text style={main.compBadgeText} numberOfLines={1}>{c}</Text>
+                          <Text style={[main.compBadgeText, cols === 1 && { fontSize: 11 }]} numberOfLines={1}>{c}</Text>
                         </View>
                       ))}
                       {group.companies.length > 3 && (
                         <View style={main.compBadge}>
-                          <Text style={main.compBadgeText}>+{group.companies.length - 3} more</Text>
+                          <Text style={[main.compBadgeText, cols === 1 && { fontSize: 11 }]}>+{group.companies.length - 3} more</Text>
                         </View>
                       )}
                     </View>
 
                     {/* More Details */}
                     <TouchableOpacity
-                      style={main.detailBtn}
+                      style={[main.detailBtn, cols === 1 && { paddingVertical: 10, margin: 12, marginTop: 10 }]}
                       onPress={() => openSidebar(group)}
                       activeOpacity={0.8}
                     >
-                      <Text style={main.detailBtnText}>More Details</Text>
-                      <ArrowUpRight size={10} color={N.muted} />
+                      <Text style={[main.detailBtnText, cols === 1 && { fontSize: 12 }]}>More Details</Text>
+                      <ArrowUpRight size={cols === 1 ? 12 : 10} color={N.muted} />
                     </TouchableOpacity>
                   </View>
                 );
