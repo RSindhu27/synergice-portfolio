@@ -1051,8 +1051,8 @@ function ProductPortfolioView() {
                   <View key={group.molecule} style={[main.molCard, { borderLeftColor: dot }]}>
                     {/* Card header */}
                     <View style={main.cardHead}>
-                      <View style={[main.cardIconWrap, { backgroundColor: dot + '15' }]}>
-                        <FlaskConical size={14} color={dot} />
+                      <View style={[main.cardIconWrap, { backgroundColor: dot + '18' }]}>
+                        <FlaskConical size={15} color={dot} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={main.cardMolName} numberOfLines={1}>{group.molecule}</Text>
@@ -1066,9 +1066,9 @@ function ProductPortfolioView() {
                     {/* Stats row */}
                     <View style={main.statsRow}>
                       {[
-                        { val: group.products.length, lbl: 'SKUs' },
+                        { val: group.products.length, lbl: 'Products' },
                         { val: group.regions.length, lbl: 'Regions' },
-                        { val: group.companies.length, lbl: 'Co.' },
+                        { val: group.companies.length, lbl: 'Companies' },
                       ].map((s, i, arr) => (
                         <React.Fragment key={s.lbl}>
                           <View style={main.statCell}>
@@ -1081,24 +1081,26 @@ function ProductPortfolioView() {
                     </View>
 
                     {/* Pipeline count */}
-                    <View style={main.pipelineRow}>
-                      <Beaker size={11} color={N.green} />
-                      <Text style={main.pipelineLabel}>Pipeline</Text>
-                      <Text style={main.pipelineCount}>{pipelineCount}</Text>
-                      <Text style={main.pipelineUnit}>products</Text>
+                    <View style={[main.pipelineRow, pipelineCount === 0 && main.pipelineRowEmpty]}>
+                      <Beaker size={11} color={pipelineCount > 0 ? N.green : N.faint} />
+                      <Text style={[main.pipelineLabel, pipelineCount === 0 && main.pipelineLabelEmpty]}>Pipeline</Text>
+                      <Text style={[main.pipelineCount, pipelineCount === 0 && main.pipelineCountEmpty]}>
+                        {pipelineCount > 0 ? pipelineCount : 'None'}
+                      </Text>
+                      {pipelineCount > 0 && <Text style={main.pipelineUnit}>in development</Text>}
                     </View>
 
-                    {/* Company badges */}
+                    {/* Supplier badges */}
                     <View style={main.compRow}>
-                      {group.companies.slice(0, 2).map(c => (
+                      {group.companies.slice(0, 3).map(c => (
                         <View key={c} style={main.compBadge}>
                           <View style={[main.compDot, { backgroundColor: COMPANY_COLORS[c] || N.green }]} />
                           <Text style={main.compBadgeText} numberOfLines={1}>{c}</Text>
                         </View>
                       ))}
-                      {group.companies.length > 2 && (
+                      {group.companies.length > 3 && (
                         <View style={main.compBadge}>
-                          <Text style={main.compBadgeText}>+{group.companies.length - 2}</Text>
+                          <Text style={main.compBadgeText}>+{group.companies.length - 3} more</Text>
                         </View>
                       )}
                     </View>
@@ -1165,29 +1167,32 @@ const main = StyleSheet.create({
   resultMeta: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted, marginBottom: 7 },
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 10 },
   emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint, textAlign: 'center' },
-  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  molCard: { backgroundColor: N.cardBg, borderRadius: 10, borderWidth: 1, borderLeftWidth: 3, borderColor: N.border, overflow: 'hidden', width: '31%', flexGrow: 1 },
-  cardHead: { flexDirection: 'row', alignItems: 'flex-start', padding: 8, paddingBottom: 6, gap: 6, backgroundColor: N.cardBg },
-  cardIconWrap: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  cardMolName: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 3 },
-  taChip: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  molCard: { backgroundColor: N.cardBg, borderRadius: 12, borderWidth: 1, borderLeftWidth: 3, borderColor: N.border, overflow: 'hidden', width: '31%', flexGrow: 1 },
+  cardHead: { flexDirection: 'row', alignItems: 'flex-start', padding: 10, paddingBottom: 8, gap: 8, backgroundColor: N.cardBg },
+  cardIconWrap: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  cardMolName: { fontSize: 12, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 4, lineHeight: 16 },
+  taChip: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
   taDot: { width: 5, height: 5, borderRadius: 2.5 },
-  taChipText: { fontSize: 8, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  detailBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, margin: 8, marginTop: 6, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
-  detailBtnText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  taChipText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  detailBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, margin: 10, marginTop: 8, paddingVertical: 7, borderRadius: 7, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  detailBtnText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
   statsRow: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: N.borderLt, backgroundColor: N.headBg },
-  statCell: { flex: 1, alignItems: 'center', paddingVertical: 6 },
-  statVal: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.dark },
-  statLbl: { fontSize: 7, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1 },
-  statDivider: { width: 1, backgroundColor: N.borderLt, marginVertical: 5 },
-  pipelineRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: N.borderLt, backgroundColor: N.greenBg },
-  pipelineLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.green, flex: 1 },
-  pipelineCount: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.green },
-  pipelineUnit: { fontSize: 8, fontFamily: 'Poppins-Regular', color: N.green },
-  compRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, paddingHorizontal: 8, paddingTop: 6 },
-  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
-  compDot: { width: 4, height: 4, borderRadius: 2 },
-  compBadgeText: { fontSize: 8, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  statCell: { flex: 1, alignItems: 'center', paddingVertical: 8 },
+  statVal: { fontSize: 14, fontFamily: 'Poppins-Bold', color: N.dark },
+  statLbl: { fontSize: 8, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: N.borderLt, marginVertical: 6 },
+  pipelineRow: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: N.greenBdr, backgroundColor: N.greenBg },
+  pipelineRowEmpty: { backgroundColor: N.headBg, borderBottomColor: N.borderLt },
+  pipelineLabel: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.green, flex: 1 },
+  pipelineLabelEmpty: { color: N.faint },
+  pipelineCount: { fontSize: 14, fontFamily: 'Poppins-Bold', color: N.green },
+  pipelineCountEmpty: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.faint },
+  pipelineUnit: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.green },
+  compRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, paddingHorizontal: 10, paddingTop: 7 },
+  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  compDot: { width: 5, height: 5, borderRadius: 2.5 },
+  compBadgeText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
   pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 9, backgroundColor: N.cardBg, borderTopWidth: 1, borderTopColor: N.border },
   pgBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 7, borderWidth: 1, borderColor: N.border },
   pgBtnDis: { borderColor: N.borderLt, backgroundColor: N.headBg },
