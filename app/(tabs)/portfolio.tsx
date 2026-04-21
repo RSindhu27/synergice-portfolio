@@ -1066,14 +1066,14 @@ function ProductPortfolioView() {
                     {/* Stats row */}
                     <View style={main.statsRow}>
                       {[
-                        { val: group.products.length, lbl: 'Products' },
-                        { val: group.regions.length, lbl: 'Regions' },
-                        { val: group.companies.length, lbl: 'Companies' },
+                        { val: group.products.length, singular: 'Product', plural: 'Products' },
+                        { val: group.regions.length, singular: 'Region', plural: 'Regions' },
+                        { val: group.companies.length, singular: 'Company', plural: 'Companies' },
                       ].map((s, i, arr) => (
-                        <React.Fragment key={s.lbl}>
+                        <React.Fragment key={s.singular}>
                           <View style={main.statCell}>
                             <Text style={main.statVal}>{s.val}</Text>
-                            <Text style={main.statLbl}>{s.lbl}</Text>
+                            <Text style={main.statLbl}>{s.val === 1 ? s.singular : s.plural}</Text>
                           </View>
                           {i < arr.length - 1 && <View style={main.statDivider} />}
                         </React.Fragment>
@@ -1087,7 +1087,7 @@ function ProductPortfolioView() {
                       <Text style={[main.pipelineCount, pipelineCount === 0 && main.pipelineCountEmpty]}>
                         {pipelineCount > 0 ? pipelineCount : 'None'}
                       </Text>
-                      {pipelineCount > 0 && <Text style={main.pipelineUnit}>in development</Text>}
+                      {pipelineCount > 0 && <Text style={main.pipelineUnit}>{pipelineCount === 1 ? 'product' : 'products'}</Text>}
                     </View>
 
                     {/* Supplier badges */}
