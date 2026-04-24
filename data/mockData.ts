@@ -1,6 +1,7 @@
 export { COLORS, COMPANY_COLORS, COMPANIES } from './theme';
 export type { CompanyName } from './theme';
-export { productPortfolio, companyMetrics, CUSTOMERS_BY_COMPANY } from './portfolioData';
+export { productPortfolio, companyMetrics, CUSTOMERS_BY_COMPANY, CUSTOMER_SKU_DETAILS } from './portfolioData';
+export type { CustomerSKUDetail } from './portfolioData';
 export { revenueData, monthlyRevenue } from './revenueData';
 export { rdData, goLanzarData } from './pipelineData';
 export { imsData } from './competitorData';

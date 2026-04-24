@@ -53,6 +53,101 @@ export const companyMetrics: Record<string, { products: number; revenue: number;
   Solara: { products: 8, revenue: 207800, topRegion: 'North America', topCustomer: 'AmerisourceBergen', sparkline: [15, 16, 18, 20, 19, 22, 25, 24, 28, 30, 32, 35], growth: 11.2, color: '#8a5fa8' },
 };
 
+export type CustomerSKUDetail = {
+  sku: string;
+  product: string;
+  region: string;
+  revenue: number;
+};
+
+export const CUSTOMER_SKU_DETAILS: Record<string, CustomerSKUDetail[]> = {
+  'CUST-US-001': [
+    { sku: 'STR-005', product: 'Zestril-S 10mg Tablet', region: 'North America', revenue: 411760 },
+    { sku: 'STR-001', product: 'Glucophage-S 500mg Tablet', region: 'North America', revenue: 300000 },
+  ],
+  'CUST-DE-001': [
+    { sku: 'STR-001', product: 'Glucophage-S 500mg Tablet', region: 'Europe', revenue: 485000 },
+  ],
+  'CUST-FR-001': [
+    { sku: 'STR-002', product: 'Lipitor-S 20mg Tablet', region: 'Europe', revenue: 384000 },
+  ],
+  'CUST-AE-001': [
+    { sku: 'STR-007', product: 'Pantop-S 40mg Tablet', region: 'Middle East', revenue: 294000 },
+  ],
+  'CUST-NG-001': [
+    { sku: 'STR-003', product: 'Amoxil-S 500mg Capsule', region: 'Africa', revenue: 340000 },
+    { sku: 'STR-010', product: 'Amoxil-S Susp 250mg/5mL', region: 'Africa', revenue: 254000 },
+  ],
+  'CUST-AU-001': [
+    { sku: 'STR-004', product: 'Losec-S 20mg Capsule', region: 'Asia Pacific', revenue: 420000 },
+  ],
+  'CUST-IN-001': [
+    { sku: 'INS-001', product: 'InsulGlar 100U/mL Injection', region: 'Asia Pacific', revenue: 2400000 },
+  ],
+  'CUST-CA-001': [
+    { sku: 'INS-004', product: 'Jardiance-I 10mg Tablet', region: 'North America', revenue: 825000 },
+  ],
+  'CUST-KW-002': [
+    { sku: 'INS-005', product: 'Victoza-I 6mg/mL Injection', region: 'Middle East', revenue: 310000 },
+  ],
+  'CUST-KE-001': [
+    { sku: 'INS-002', product: 'Glucomet-I 850mg Tablet', region: 'Africa', revenue: 960000 },
+  ],
+  'CUST-ES-001': [
+    { sku: 'INS-003', product: 'Januvia-I 100mg Tablet', region: 'Europe', revenue: 220000 },
+    { sku: 'INS-007', product: 'Omez-I 40mg Capsule', region: 'Europe', revenue: 160000 },
+  ],
+  'CUST-ZA-001': [
+    { sku: 'ONE-001', product: 'Viread-O 300mg Tablet', region: 'Africa', revenue: 580000 },
+    { sku: 'ONE-005', product: 'Tivicay-O 50mg Tablet', region: 'Africa', revenue: 370000 },
+  ],
+  'CUST-PH-001': [
+    { sku: 'ONE-003', product: 'Sustiva-O 600mg Tablet', region: 'Asia Pacific', revenue: 1225000 },
+  ],
+  'CUST-ET-001': [
+    { sku: 'ONE-002', product: 'Epivir-O 150mg Tablet', region: 'Africa', revenue: 450000 },
+    { sku: 'ONE-007', product: 'Epivir-Sol-O 50mg/5mL', region: 'Africa', revenue: 230000 },
+  ],
+  'CUST-GH-001': [
+    { sku: 'ONE-005', product: 'Tivicay-O 50mg Tablet', region: 'Africa', revenue: 520000 },
+  ],
+  'CUST-BR-001': [
+    { sku: 'ONE-004', product: 'Reyataz-O 300mg Capsule', region: 'Latin America', revenue: 450000 },
+  ],
+  'CUST-IN-002': [
+    { sku: 'NAR-001', product: 'FolaCare 5mg Tablet', region: 'Asia Pacific', revenue: 244000 },
+    { sku: 'NAR-004', product: 'Venofer-N 20mg/mL Injection', region: 'Asia Pacific', revenue: 200000 },
+  ],
+  'CUST-KW-001': [
+    { sku: 'NAR-002', product: 'Utrogestan-N 200mg Capsule', region: 'Middle East', revenue: 357600 },
+  ],
+  'CUST-IT-001': [
+    { sku: 'NAR-003', product: 'Estraderm-N 50mcg Patch', region: 'Europe', revenue: 450000 },
+  ],
+  'CUST-ID-001': [
+    { sku: 'NAR-004', product: 'Venofer-N 20mg/mL Injection', region: 'Asia Pacific', revenue: 290000 },
+  ],
+  'CUST-TZ-001': [
+    { sku: 'NAR-005', product: 'Mifeprex-N 200mg Tablet', region: 'Africa', revenue: 180000 },
+  ],
+  'CUST-US-002': [
+    { sku: 'SOL-002', product: 'Seroquel-SL 200mg Tablet', region: 'North America', revenue: 430000 },
+    { sku: 'SOL-006', product: 'Effexor XR-SL 150mg Capsule', region: 'North America', revenue: 250000 },
+  ],
+  'CUST-NL-001': [
+    { sku: 'SOL-001', product: 'Effexor-SL 75mg Capsule', region: 'Europe', revenue: 420000 },
+  ],
+  'CUST-JP-001': [
+    { sku: 'SOL-003', product: 'Aricept-SL 10mg Tablet', region: 'Asia Pacific', revenue: 340000 },
+  ],
+  'CUST-MX-001': [
+    { sku: 'SOL-004', product: 'Lexapro-SL 10mg Tablet', region: 'Latin America', revenue: 2800000 },
+  ],
+  'CUST-IL-001': [
+    { sku: 'SOL-005', product: 'Lamictal-SL 100mg Tablet', region: 'Middle East', revenue: 260000 },
+  ],
+};
+
 export const CUSTOMERS_BY_COMPANY: Record<string, {
   customerName: string;
   customerCode: string;

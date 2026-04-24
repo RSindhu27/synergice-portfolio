@@ -1,27 +1,40 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, SafeAreaView, Dimensions,
+  TextInput, SafeAreaView, useWindowDimensions, Modal,
+  Animated, TouchableWithoutFeedback,
 } from 'react-native';
-import { Search, X, ChevronRight, MapPin, Users, TrendingUp } from 'lucide-react-native';
+import { Search, X, ChevronLeft, ChevronRight, Users, MapPin, TrendingUp, Package, Globe, ArrowUpRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, COMPANY_COLORS, CUSTOMERS_BY_COMPANY, CUSTOMER_PRODUCTS } from '@/data/mockData';
-import DrawerModal from '@/components/ui/DrawerModal';
-import CustomerDIFOT from '@/components/ui/CustomerDIFOT';
-import CustomerBackorders from '@/components/ui/CustomerBackorders';
-import CustomerUpcomingOrders from '@/components/ui/CustomerUpcomingOrders';
-import CustomerCompetitorAnalysis from '@/components/ui/CustomerCompetitorAnalysis';
+import {
+  COLORS, COMPANY_COLORS, CUSTOMERS_BY_COMPANY, CUSTOMER_SKU_DETAILS,
+} from '@/data/mockData';
+import type { CustomerSKUDetail } from '@/data/mockData';
 
-const { width: SW } = Dimensions.get('window');
-const isTablet = SW >= 768;
-const COMPANIES = ['All', 'Strides', 'Instapill', 'One Source', 'Naari', 'Solara'];
-const SUB_TABS = ['Customers', 'DIFOT', 'Backorders', 'Upcoming Orders', 'Competitor Analysis'];
+// ─── Palette ──────────────────────────────────────────────────────────────────
+const N = {
+  cardBg:   '#ffffff',
+  pageBg:   '#f2f4f7',
+  border:   '#dde0e5',
+  borderLt: '#eaecf0',
+  headBg:   '#f6f7f9',
+  dark:     '#111827',
+  mid:      '#374151',
+  muted:    '#4b5563',
+  faint:    '#6b7280',
+  green:    '#2d6a35',
+  greenBg:  '#eaf4ec',
+  greenBdr: '#b6d8bc',
+};
 
 function fmt(v: number) {
   if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
   if (v >= 1000) return `$${(v / 1000).toFixed(0)}K`;
   return `$${v}`;
 }
+
+const COMPANIES = ['All', 'Strides', 'Instapill', 'One Source', 'Naari', 'Solara'];
+const PAGE_SIZE = 6;
 
 type CustomerEntry = {
   customerName: string;
@@ -34,236 +47,244 @@ type CustomerEntry = {
   company: string;
 };
 
-function CustomerCard({ item, color, onPress }: { item: CustomerEntry; color: string; onPress: () => void }) {
-  const hasProducts = !!CUSTOMER_PRODUCTS[item.customerCode];
+// ─── Customer Sidebar ─────────────────────────────────────────────────────────
+function CustomerSidebar({ customer, visible, onClose }: {
+  customer: CustomerEntry | null;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const { width: sw } = useWindowDimensions();
+  const drawerW = Math.min(sw * 0.94, 500);
+  const slideAnim = useRef(new Animated.Value(drawerW)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => { slideAnim.setValue(drawerW); }, [drawerW]);
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 68, friction: 12 }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideAnim, { toValue: drawerW, duration: 200, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible]);
+
+  if (!customer) return null;
+  const cc = COMPANY_COLORS[customer.company] || N.green;
+  const skus: CustomerSKUDetail[] = CUSTOMER_SKU_DETAILS[customer.customerCode] || [];
+  const totalRev = skus.reduce((s, r) => s + r.revenue, 0) || customer.totalRevenue;
+  const regions = [...new Set(skus.map(s => s.region))];
+
   return (
-    <TouchableOpacity style={[styles.custCard, { borderTopColor: color }]} activeOpacity={0.88} onPress={onPress}>
-      <View style={styles.custCardInner}>
-        <View style={[styles.custInitial, { backgroundColor: color + '18' }]}>
-          <Text style={[styles.custInitialText, { color }]}>{item.customerName.substring(0, 2).toUpperCase()}</Text>
-        </View>
-        <View style={styles.custInfo}>
-          <Text style={styles.custName} numberOfLines={1}>{item.customerName}</Text>
-          <View style={styles.custMetaRow}>
-            <MapPin size={10} color={COLORS.gray500} />
-            <Text style={styles.custMeta} numberOfLines={1}>{item.country} · {item.region}</Text>
-          </View>
-          <View style={styles.custBottom}>
-            <View style={[styles.segBadge, { backgroundColor: color + '12' }]}>
-              <Text style={[styles.segText, { color }]} numberOfLines={1}>{item.segment}</Text>
+    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <Animated.View style={[csd.overlay, { opacity: fadeAnim }]} />
+      </TouchableWithoutFeedback>
+      <Animated.View style={[csd.drawer, { width: drawerW, transform: [{ translateX: slideAnim }] }]}>
+
+        {/* Header */}
+        <View style={csd.header}>
+          <View style={csd.headerTop}>
+            <View style={[csd.avatar, { backgroundColor: cc + '18' }]}>
+              <Text style={[csd.avatarText, { color: cc }]}>{customer.customerName.substring(0, 2).toUpperCase()}</Text>
             </View>
-            <Text style={[styles.revText, { color }]}>{fmt(item.totalRevenue)}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={csd.custName}>{customer.customerName}</Text>
+              <View style={csd.metaRow}>
+                <MapPin size={10} color={N.muted} />
+                <Text style={csd.metaText}>{customer.country} · {customer.region}</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={csd.closeBtn} onPress={onClose} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <X size={16} color={N.muted} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Stats row */}
+          <View style={csd.statsRow}>
+            {[
+              { val: skus.length, lbl: skus.length === 1 ? 'SKU' : 'SKUs' },
+              { val: customer.products.length, lbl: customer.products.length === 1 ? 'Product' : 'Products' },
+              { val: regions.length, lbl: regions.length === 1 ? 'Region' : 'Regions' },
+              { val: fmt(totalRev), lbl: 'Revenue' },
+            ].map((s, i, arr) => (
+              <React.Fragment key={s.lbl}>
+                <View style={csd.stat}>
+                  <Text style={[csd.statVal, { color: cc }]}>{s.val}</Text>
+                  <Text style={csd.statLabel}>{s.lbl}</Text>
+                </View>
+                {i < arr.length - 1 && <View style={csd.statDiv} />}
+              </React.Fragment>
+            ))}
           </View>
         </View>
-        <View style={styles.custArrow}>
-          <Text style={styles.prodCount}>{item.products.length} SKU{item.products.length !== 1 ? 's' : ''}</Text>
-          {hasProducts && <ChevronRight size={14} color={COLORS.gray400} />}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
 
-type CustomerDetailProduct = {
-  product: string;
-  materialCode: string;
-  company: string;
-  category: string;
-  strength: string;
-  supplyType: string;
-  annualVolume: number;
-  revenue: number;
-  competitors: { name: string; product: string; share: number }[];
-  otherVendors: { vendor: string; product: string; category: string }[];
-  stridesSupply: { company: string; product: string; category: string }[];
-};
-
-function CustomerDetailDrawer({ item, color }: { item: CustomerEntry; color: string }) {
-  const products: CustomerDetailProduct[] = CUSTOMER_PRODUCTS[item.customerCode] || [];
-  const [activeSection, setActiveSection] = useState<'products' | 'competitors' | 'supply'>('products');
-
-  return (
-    <View style={dd.root}>
-      <View style={[dd.header, { backgroundColor: color + '10' }]}>
-        <View style={[dd.initial, { backgroundColor: color + '22' }]}>
-          <Text style={[dd.initText, { color }]}>{item.customerName.substring(0, 2).toUpperCase()}</Text>
+        {/* Company & Segment tags */}
+        <View style={csd.tagRow}>
+          <View style={[csd.compTag, { borderColor: cc + '40', backgroundColor: cc + '10' }]}>
+            <View style={[csd.compDot, { backgroundColor: cc }]} />
+            <Text style={[csd.compTagText, { color: cc }]}>{customer.company}</Text>
+          </View>
+          <View style={csd.segTag}>
+            <Text style={csd.segTagText}>{customer.segment}</Text>
+          </View>
         </View>
-        <View style={dd.headerInfo}>
-          <Text style={dd.name}>{item.customerName}</Text>
-          <Text style={dd.sub}>{item.country} · {item.region} · {item.segment}</Text>
-        </View>
-      </View>
 
-      <View style={dd.kpiRow}>
-        <View style={dd.kpi}>
-          <Text style={dd.kpiLabel}>Revenue</Text>
-          <Text style={[dd.kpiVal, { color }]}>{fmt(item.totalRevenue)}</Text>
-        </View>
-        <View style={dd.kpi}>
-          <Text style={dd.kpiLabel}>Products</Text>
-          <Text style={[dd.kpiVal, { color: COLORS.info }]}>{item.products.length}</Text>
-        </View>
-        <View style={dd.kpi}>
-          <Text style={dd.kpiLabel}>Company</Text>
-          <Text style={[dd.kpiVal, { color }]} numberOfLines={1}>{item.company}</Text>
-        </View>
-      </View>
+        {/* SKU Details Table */}
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={csd.scrollContent}>
+          <View style={csd.sectionHeader}>
+            <Package size={12} color={N.muted} />
+            <Text style={csd.sectionTitle}>SKU Details</Text>
+            <View style={csd.sectionLine} />
+          </View>
 
-      <View style={dd.sectionTabs}>
-        {([['products', 'Products'], ['competitors', 'Competitors'], ['supply', 'Supply']] as const).map(([key, label]) => (
-          <TouchableOpacity
-            key={key} activeOpacity={0.8}
-            style={[dd.sectionTab, activeSection === key && { backgroundColor: color, borderColor: color }]}
-            onPress={() => setActiveSection(key)}
-          >
-            <Text style={[dd.sectionTabText, activeSection === key && dd.sectionTabActive]}>{label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {activeSection === 'products' && (
-        <View style={dd.section}>
-          {products.length > 0 ? (
-            products.map((p, i) => (
-              <View key={i} style={[dd.productRow, { borderLeftColor: color }]}>
-                <View style={dd.prodInfo}>
-                  <Text style={dd.prodName}>{p.product}</Text>
-                  <Text style={dd.prodMeta}>{p.category} · {p.strength} · {p.supplyType}</Text>
-                  <Text style={dd.prodVol}>{p.annualVolume.toLocaleString()} units/yr</Text>
-                </View>
-                <View style={dd.prodRight}>
-                  <Text style={[dd.prodRev, { color }]}>{fmt(p.revenue)}</Text>
-                  <Text style={dd.prodCode}>{p.materialCode}</Text>
-                </View>
+          <View style={csd.table}>
+            <View style={csd.tableHead}>
+              <Text style={[csd.tableH, { flex: 1 }]}>SKU</Text>
+              <Text style={[csd.tableH, { flex: 2 }]}>Product</Text>
+              <Text style={[csd.tableH, { flex: 1 }]}>Region</Text>
+              <Text style={[csd.tableH, { flex: 1, textAlign: 'right' }]}>Revenue</Text>
+            </View>
+            {skus.length === 0 ? (
+              <View style={csd.empty}>
+                <Text style={csd.emptyText}>No SKU details available</Text>
               </View>
-            ))
-          ) : (
-            <Text style={dd.noData}>Product details available on demand</Text>
+            ) : skus.map((s, i) => (
+              <View key={s.sku} style={[csd.tableRow, i < skus.length - 1 && csd.tableRowBorder]}>
+                <View style={{ flex: 1 }}>
+                  <View style={csd.skuBadge}>
+                    <Text style={csd.skuBadgeText} numberOfLines={1}>{s.sku}</Text>
+                  </View>
+                </View>
+                <Text style={[csd.productText, { flex: 2 }]} numberOfLines={2}>{s.product}</Text>
+                <Text style={[csd.regionText, { flex: 1 }]} numberOfLines={1}>{s.region}</Text>
+                <Text style={[csd.revenueText, { flex: 1 }]}>{fmt(s.revenue)}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Revenue Summary */}
+          <View style={csd.sectionHeader}>
+            <TrendingUp size={12} color={N.muted} />
+            <Text style={csd.sectionTitle}>Revenue Summary</Text>
+            <View style={csd.sectionLine} />
+          </View>
+          <View style={[csd.heroCard, { borderColor: cc + '40', backgroundColor: cc + '08' }]}>
+            <View>
+              <Text style={[csd.heroAmount, { color: cc }]}>{fmt(totalRev)}</Text>
+              <Text style={csd.heroLabel}>Total Revenue</Text>
+            </View>
+            <View style={csd.heroRight}>
+              <View style={csd.heroStat}>
+                <Text style={csd.heroStatVal}>{skus.length}</Text>
+                <Text style={csd.heroStatLabel}>{skus.length === 1 ? 'SKU' : 'SKUs'}</Text>
+              </View>
+              <View style={[csd.heroDivider]} />
+              <View style={csd.heroStat}>
+                <Text style={csd.heroStatVal}>{regions.length}</Text>
+                <Text style={csd.heroStatLabel}>{regions.length === 1 ? 'Region' : 'Regions'}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Region breakdown */}
+          {regions.length > 0 && (
+            <>
+              <View style={csd.sectionHeader}>
+                <Globe size={12} color={N.muted} />
+                <Text style={csd.sectionTitle}>By Region</Text>
+                <View style={csd.sectionLine} />
+              </View>
+              {regions.map(region => {
+                const regionSkus = skus.filter(s => s.region === region);
+                const regionRev = regionSkus.reduce((sum, s) => sum + s.revenue, 0);
+                return (
+                  <View key={region} style={csd.regionRow}>
+                    <Globe size={11} color={N.muted} />
+                    <Text style={csd.regionLabel}>{region}</Text>
+                    <Text style={csd.regionSkuCount}>{regionSkus.length} SKU{regionSkus.length !== 1 ? 's' : ''}</Text>
+                    <Text style={[csd.regionRev, { color: cc }]}>{fmt(regionRev)}</Text>
+                  </View>
+                );
+              })}
+            </>
           )}
-        </View>
-      )}
-
-      {activeSection === 'competitors' && (
-        <View style={dd.section}>
-          {products.flatMap((p, pi) => (
-            <View key={pi} style={{ marginBottom: 12 }}>
-              <Text style={dd.prodHeader}>{p.product} — Top Competitors</Text>
-              {p.competitors.map((c, ci) => (
-                <View key={ci} style={dd.compRow}>
-                  <Text style={dd.compRank}>#{ci + 1}</Text>
-                  <View style={dd.compInfo}>
-                    <Text style={dd.compName}>{c.name}</Text>
-                    <Text style={dd.compProduct}>{c.product}</Text>
-                  </View>
-                  <View style={dd.shareBar}>
-                    <View style={[dd.shareBarFill, { width: `${c.share}%`, backgroundColor: COLORS.error + 'AA' }]} />
-                  </View>
-                  <Text style={[dd.shareVal, { color: COLORS.error }]}>{c.share}%</Text>
-                </View>
-              ))}
-              {p.otherVendors.length > 0 && (
-                <>
-                  <Text style={[dd.prodHeader, { marginTop: 10 }]}>Other Vendors Buying From</Text>
-                  {p.otherVendors.map((v, vi) => (
-                    <View key={vi} style={dd.vendorRow}>
-                      <View style={[dd.vendorDot, { backgroundColor: COLORS.info }]} />
-                      <Text style={dd.vendorName}>{v.vendor}</Text>
-                      <Text style={dd.vendorProduct}>{v.product}</Text>
-                      <View style={dd.catBadge}>
-                        <Text style={dd.catText}>{v.category}</Text>
-                      </View>
-                    </View>
-                  ))}
-                </>
-              )}
-            </View>
-          ))}
-          {products.length === 0 && <Text style={dd.noData}>No competitor data available</Text>}
-        </View>
-      )}
-
-      {activeSection === 'supply' && (
-        <View style={dd.section}>
-          <Text style={dd.sectionDesc}>Everything the Strides Group companies supply to this customer:</Text>
-          {products.flatMap((p, pi) => p.stridesSupply.map((s, si) => {
-            const sc = COMPANY_COLORS[s.company] || COLORS.primary;
-            return (
-              <View key={`${pi}-${si}`} style={[dd.supplyRow, { borderLeftColor: sc }]}>
-                <View style={[dd.supplyCompBadge, { backgroundColor: sc + '18' }]}>
-                  <Text style={[dd.supplyCompText, { color: sc }]}>{s.company}</Text>
-                </View>
-                <View style={dd.supplyInfo}>
-                  <Text style={dd.supplyProduct}>{s.product}</Text>
-                  <Text style={dd.supplyCategory}>{s.category}</Text>
-                </View>
-              </View>
-            );
-          }))}
-          {products.length === 0 && <Text style={dd.noData}>No supply data available</Text>}
-        </View>
-      )}
-    </View>
+        </ScrollView>
+      </Animated.View>
+    </Modal>
   );
 }
 
-const dd = StyleSheet.create({
-  root: { gap: 12 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, padding: 14 },
-  initial: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  initText: { fontSize: 16, fontFamily: 'Poppins-Bold' },
-  headerInfo: { flex: 1 },
-  name: { fontSize: 15, fontFamily: 'Poppins-Bold', color: COLORS.dark },
-  sub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.gray500, marginTop: 2 },
-  kpiRow: { flexDirection: 'row', gap: 8 },
-  kpi: { flex: 1, backgroundColor: COLORS.cream, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: COLORS.border },
-  kpiLabel: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500, textTransform: 'uppercase', marginBottom: 4 },
-  kpiVal: { fontSize: 14, fontFamily: 'Poppins-Bold' },
-  sectionTabs: { flexDirection: 'row', gap: 8 },
-  sectionTab: { flex: 1, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, paddingVertical: 10, alignItems: 'center', backgroundColor: COLORS.white },
-  sectionTabText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.gray600 },
-  sectionTabActive: { color: COLORS.white },
-  section: { backgroundColor: COLORS.white, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: COLORS.border, gap: 4 },
-  sectionDesc: { fontSize: 12, fontFamily: 'Poppins-Regular', color: COLORS.gray500, marginBottom: 8 },
-  productRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingLeft: 12, borderLeftWidth: 3, borderRadius: 4, marginBottom: 8, backgroundColor: COLORS.bg },
-  prodInfo: { flex: 1, gap: 3 },
-  prodName: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  prodMeta: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  prodVol: { fontSize: 11, fontFamily: 'Poppins-Medium', color: COLORS.info },
-  prodRight: { alignItems: 'flex-end', gap: 3, paddingLeft: 8 },
-  prodRev: { fontSize: 13, fontFamily: 'Poppins-Bold' },
-  prodCode: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
-  noData: { fontSize: 13, fontFamily: 'Poppins-Regular', color: COLORS.gray400, padding: 16, textAlign: 'center' },
-  prodHeader: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.gray700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
-  compRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: COLORS.gray100 },
-  compRank: { width: 20, fontSize: 11, fontFamily: 'Poppins-Bold', color: COLORS.gray400 },
-  compInfo: { flex: 1 },
-  compName: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  compProduct: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  shareBar: { width: 64, height: 6, backgroundColor: COLORS.gray100, borderRadius: 3, overflow: 'hidden' },
-  shareBarFill: { height: 6, borderRadius: 3 },
-  shareVal: { width: 36, fontSize: 11, fontFamily: 'Poppins-Bold', textAlign: 'right' },
-  vendorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: COLORS.gray100 },
-  vendorDot: { width: 7, height: 7, borderRadius: 4 },
-  vendorName: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.dark, flex: 1 },
-  vendorProduct: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.gray500, flex: 1 },
-  catBadge: { borderRadius: 6, backgroundColor: COLORS.gray100, paddingHorizontal: 7, paddingVertical: 3 },
-  catText: { fontSize: 10, fontFamily: 'Poppins-Medium', color: COLORS.gray600 },
-  supplyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 12, paddingVertical: 8, borderLeftWidth: 3, borderRadius: 4, marginBottom: 6, backgroundColor: COLORS.bg },
-  supplyCompBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  supplyCompText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  supplyInfo: { flex: 1 },
-  supplyProduct: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  supplyCategory: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
+const csd = StyleSheet.create({
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,20,10,0.45)' },
+  drawer: { position: 'absolute', right: 0, top: 0, bottom: 0, backgroundColor: N.pageBg, shadowColor: '#000', shadowOffset: { width: -4, height: 0 }, shadowOpacity: 0.1, shadowRadius: 16, elevation: 24 },
+  header: { paddingTop: 14, paddingBottom: 10, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: N.border, backgroundColor: N.cardBg },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  avatar: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 13, fontFamily: 'Poppins-Bold' },
+  custName: { fontSize: 14, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 3 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  metaText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
+  closeBtn: { width: 28, height: 28, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg, alignItems: 'center', justifyContent: 'center' },
+  statsRow: { flexDirection: 'row', borderRadius: 8, borderWidth: 1, borderColor: N.border, paddingVertical: 8, backgroundColor: N.headBg },
+  stat: { flex: 1, alignItems: 'center' },
+  statVal: { fontSize: 13, fontFamily: 'Poppins-Bold' },
+  statLabel: { fontSize: 8, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1 },
+  statDiv: { width: 1, backgroundColor: N.border, marginVertical: 4 },
+  tagRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  compTag: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1 },
+  compDot: { width: 6, height: 6, borderRadius: 3 },
+  compTagText: { fontSize: 11, fontFamily: 'Poppins-SemiBold' },
+  segTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  segTagText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  scrollContent: { padding: 12, paddingBottom: 32 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, marginBottom: 7 },
+  sectionTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.7 },
+  sectionLine: { flex: 1, height: 1, backgroundColor: N.border },
+  table: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, overflow: 'hidden' },
+  tableHead: { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 7, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  tableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
+  tableRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 9, gap: 6 },
+  tableRowBorder: { borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  skuBadge: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignSelf: 'flex-start' },
+  skuBadgeText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  productText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  regionText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
+  revenueText: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, textAlign: 'right' },
+  empty: { padding: 20, alignItems: 'center' },
+  emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
+  heroCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 8, padding: 14, marginBottom: 4 },
+  heroAmount: { fontSize: 20, fontFamily: 'Poppins-Bold' },
+  heroLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 2 },
+  heroRight: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  heroStat: { alignItems: 'center' },
+  heroStatVal: { fontSize: 16, fontFamily: 'Poppins-Bold', color: N.dark },
+  heroStatLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+  heroDivider: { width: 1, height: 28, backgroundColor: N.border },
+  regionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  regionLabel: { flex: 1, fontSize: 11, fontFamily: 'Poppins-Regular', color: N.dark },
+  regionSkuCount: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
+  regionRev: { fontSize: 11, fontFamily: 'Poppins-Bold', minWidth: 48, textAlign: 'right' },
 });
 
+// ─── Main Customer Details View ───────────────────────────────────────────────
 export default function CustomerStatusTab() {
-  const [activeSubTab, setActiveSubTab] = useState(0);
-  const [search, setSearch] = useState('');
   const [companyFilter, setCompanyFilter] = useState('All');
+  const [customerFilter, setCustomerFilter] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerEntry | null>(null);
-  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const { width: screenWidth } = useWindowDimensions();
+  const cols = screenWidth < 480 ? 1 : screenWidth < 768 ? 2 : 3;
+  const cardWidth = cols === 1 ? '100%' : cols === 2 ? '48%' : '31%';
 
-  const allCustomers = useMemo(() => {
+  const allCustomers = useMemo((): CustomerEntry[] => {
     const result: CustomerEntry[] = [];
     Object.entries(CUSTOMERS_BY_COMPANY).forEach(([company, customers]) => {
       customers.forEach(c => result.push({ ...c, company }));
@@ -271,266 +292,275 @@ export default function CustomerStatusTab() {
     return result;
   }, []);
 
+  const allCustomerNames = useMemo(() => ['All', ...allCustomers.map(c => c.customerName)], [allCustomers]);
+
   const filtered = useMemo(() => {
     let items = allCustomers;
     if (companyFilter !== 'All') items = items.filter(c => c.company === companyFilter);
+    if (customerFilter.length > 0) items = items.filter(c => customerFilter.includes(c.customerName));
     if (search.trim()) {
       const q = search.toLowerCase();
       items = items.filter(c =>
         c.customerName.toLowerCase().includes(q) ||
         c.country.toLowerCase().includes(q) ||
         c.region.toLowerCase().includes(q) ||
-        c.segment.toLowerCase().includes(q)
+        c.segment.toLowerCase().includes(q) ||
+        c.company.toLowerCase().includes(q)
       );
     }
     return items;
-  }, [allCustomers, search, companyFilter]);
+  }, [allCustomers, companyFilter, customerFilter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageCustomers = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const totalRevenue = filtered.reduce((s, c) => s + c.totalRevenue, 0);
 
-  const groupedByCompany = useMemo(() => {
-    const map: Record<string, CustomerEntry[]> = {};
-    filtered.forEach(c => {
-      if (!map[c.company]) map[c.company] = [];
-      map[c.company].push(c);
-    });
-    return Object.entries(map);
-  }, [filtered]);
-
-  const openCustomer = (item: CustomerEntry) => {
-    setSelectedCustomer(item);
-    setDrawerVisible(true);
+  const openSidebar = (customer: CustomerEntry) => {
+    setSelectedCustomer(customer);
+    setSidebarVisible(true);
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <LinearGradient
-        colors={[COLORS.primaryDark, COLORS.primary, '#4a8f55']}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <Text style={styles.headerTitle}>Customer Details</Text>
-        <Text style={styles.headerSub}>
-          {allCustomers.length} customers · {Object.keys(CUSTOMERS_BY_COMPANY).length} companies · {fmt(allCustomers.reduce((s, c) => s + c.totalRevenue, 0))} total revenue
-        </Text>
-        <View style={styles.headerGoldLine} />
-      </LinearGradient>
+    <View style={cs.root}>
+      <ScrollView style={cs.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={cs.scrollContent}>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subTabsScroll} contentContainerStyle={styles.subTabsContent}>
-        {SUB_TABS.map((tab, i) => (
-          <TouchableOpacity
-            key={tab} activeOpacity={0.8}
-            style={[styles.subTab, activeSubTab === i && styles.subTabActive]}
-            onPress={() => setActiveSubTab(i)}
-          >
-            <Text style={[styles.subTabText, activeSubTab === i && styles.subTabTextActive]}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+        {/* Header */}
+        <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, '#4a8f55']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={cs.header}>
+          <Text style={cs.headerTitle}>Customer Details</Text>
+          <Text style={cs.headerSub}>{filtered.length} customer{filtered.length !== 1 ? 's' : ''} · {Object.keys(CUSTOMERS_BY_COMPANY).length} companies · {fmt(totalRevenue)}</Text>
+        </LinearGradient>
 
-      {activeSubTab === 0 && (
-        <>
-          <View style={styles.searchRow}>
-            <View style={styles.searchBox}>
-              <Search size={15} color={COLORS.gray500} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search customers, countries, regions..."
-                placeholderTextColor={COLORS.gray400}
-                value={search} onChangeText={setSearch}
-              />
-              {search.length > 0 && (
-                <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                  <X size={14} color={COLORS.gray400} />
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.companyFilterScroll} contentContainerStyle={styles.companyFilterContent}>
-            {COMPANIES.map(c => (
-              <TouchableOpacity
-                key={c} activeOpacity={0.8}
-                style={[styles.compChip, companyFilter === c && { backgroundColor: COMPANY_COLORS[c] || COLORS.primary, borderColor: COMPANY_COLORS[c] || COLORS.primary }]}
-                onPress={() => setCompanyFilter(c)}
-              >
-                <Text style={[styles.compChipText, companyFilter === c && styles.compChipActive]}>{c}</Text>
+        {/* Search */}
+        <View style={cs.searchWrap}>
+          <View style={cs.searchBox}>
+            <Search size={15} color={COLORS.gray400} />
+            <TextInput
+              style={cs.searchInput}
+              placeholder="Search customers, countries, regions..."
+              placeholderTextColor={COLORS.gray400}
+              value={search}
+              onChangeText={v => { setSearch(v); setPage(1); setCustomerFilter([]); }}
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => { setSearch(''); setPage(1); }} hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}>
+                <X size={14} color={COLORS.gray400} />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryItem}>
-              <Users size={14} color={COLORS.primary} />
-              <Text style={styles.summaryVal}>{filtered.length}</Text>
-              <Text style={styles.summaryLabel}>Customers</Text>
-            </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryItem}>
-              <TrendingUp size={14} color={COLORS.success} />
-              <Text style={styles.summaryVal}>{fmt(totalRevenue)}</Text>
-              <Text style={styles.summaryLabel}>Total Revenue</Text>
-            </View>
+            )}
           </View>
+        </View>
 
-          <ScrollView style={styles.listScroll} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-            {groupedByCompany.map(([company, customers]) => {
-              const cc = COMPANY_COLORS[company] || COLORS.primary;
+        {/* Company filter */}
+        <View style={cs.filterSection}>
+          <Text style={cs.filterGroupLabel}>Companies</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={cs.filterRow}>
+            {COMPANIES.map(c => {
+              const active = companyFilter === c;
+              const color = COMPANY_COLORS[c] || N.green;
               return (
-                <View key={company} style={styles.compGroup}>
-                  <View style={styles.compGroupHeader}>
-                    <View style={[styles.compGroupDot, { backgroundColor: cc }]} />
-                    <Text style={[styles.compGroupName, { color: cc }]}>{company}</Text>
-                    <View style={[styles.compGroupBadge, { backgroundColor: cc + '20' }]}>
-                      <Text style={[styles.compGroupCount, { color: cc }]}>{customers.length}</Text>
-                    </View>
-                    <Text style={[styles.compGroupRev, { color: cc }]}>{fmt(customers.reduce((s, c) => s + c.totalRevenue, 0))}</Text>
-                  </View>
-                  <View style={styles.custGrid}>
-                    {customers.map(c => (
-                      <CustomerCard key={c.customerCode} item={c} color={cc} onPress={() => openCustomer(c)} />
-                    ))}
-                  </View>
-                </View>
+                <TouchableOpacity
+                  key={c}
+                  style={[cs.filterChip, active && { backgroundColor: color, borderColor: color }]}
+                  onPress={() => { setCompanyFilter(c); setPage(1); }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[cs.filterChipText, active && { color: '#fff' }]}>{c}</Text>
+                </TouchableOpacity>
               );
             })}
-            {filtered.length === 0 && (
-              <View style={styles.empty}>
-                <Text style={styles.emptyText}>No customers match your search</Text>
-              </View>
-            )}
           </ScrollView>
-        </>
-      )}
+        </View>
 
-      {activeSubTab === 1 && <CustomerDIFOT />}
-      {activeSubTab === 2 && <CustomerBackorders />}
-      {activeSubTab === 3 && <CustomerUpcomingOrders />}
-      {activeSubTab === 4 && <CustomerCompetitorAnalysis />}
+        {/* Customer filter */}
+        <View style={cs.filterSection}>
+          <Text style={cs.filterGroupLabel}>Customers</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={cs.filterRow}>
+            <TouchableOpacity
+              style={[cs.filterChip, customerFilter.length === 0 && { backgroundColor: N.green, borderColor: N.green }]}
+              onPress={() => { setCustomerFilter([]); setPage(1); }}
+              activeOpacity={0.75}
+            >
+              <Text style={[cs.filterChipText, customerFilter.length === 0 && { color: '#fff' }]}>All</Text>
+            </TouchableOpacity>
+            {allCustomers
+              .filter(c => companyFilter === 'All' || c.company === companyFilter)
+              .map(c => {
+                const active = customerFilter.includes(c.customerName);
+                return (
+                  <TouchableOpacity
+                    key={c.customerCode}
+                    style={[cs.filterChip, active && { backgroundColor: N.green, borderColor: N.green }]}
+                    onPress={() => {
+                      setCustomerFilter(prev =>
+                        active ? prev.filter(n => n !== c.customerName) : [...prev, c.customerName]
+                      );
+                      setPage(1);
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[cs.filterChipText, active && { color: '#fff' }]} numberOfLines={1}>{c.customerName}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+          </ScrollView>
+        </View>
 
-      {selectedCustomer && (
-        <DrawerModal
-          visible={drawerVisible}
-          onClose={() => setDrawerVisible(false)}
-          title={`${selectedCustomer.customerName} — ${selectedCustomer.company}`}
-        >
-          <CustomerDetailDrawer
-            item={selectedCustomer}
-            color={COMPANY_COLORS[selectedCustomer.company] || COLORS.primary}
-          />
-        </DrawerModal>
-      )}
-    </SafeAreaView>
+        {/* Card grid */}
+        <View style={cs.cardWrap}>
+          <Text style={cs.resultMeta}>Showing {pageCustomers.length} of {filtered.length} customer{filtered.length !== 1 ? 's' : ''}</Text>
+
+          {filtered.length === 0 ? (
+            <View style={cs.empty}>
+              <Users size={36} color={COLORS.gray300} />
+              <Text style={cs.emptyText}>No customers match the current filters</Text>
+            </View>
+          ) : (
+            <View style={cs.cardGrid}>
+              {pageCustomers.map(customer => {
+                const cc = COMPANY_COLORS[customer.company] || N.green;
+                const skuCount = CUSTOMER_SKU_DETAILS[customer.customerCode]?.length ?? customer.products.length;
+                return (
+                  <View key={customer.customerCode} style={[cs.custCard, { borderLeftColor: cc, width: cardWidth }]}>
+                    {/* Card header */}
+                    <View style={cs.cardHead}>
+                      <View style={[cs.cardIconWrap, { backgroundColor: cc + '18' }]}>
+                        <Text style={[cs.cardInitials, { color: cc }]}>{customer.customerName.substring(0, 2).toUpperCase()}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={cs.cardName} numberOfLines={1}>{customer.customerName}</Text>
+                        <View style={cs.segChip}>
+                          <MapPin size={8} color={N.muted} />
+                          <Text style={cs.segChipText} numberOfLines={1}>{customer.country}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Stats row */}
+                    <View style={cs.statsRow}>
+                      {[
+                        { val: skuCount, singular: 'SKU', plural: 'SKUs' },
+                        { val: [...new Set((CUSTOMER_SKU_DETAILS[customer.customerCode] ?? []).map(s => s.region))].length || 1, singular: 'Region', plural: 'Regions' },
+                        { val: customer.products.length, singular: 'Product', plural: 'Products' },
+                      ].map((s, i, arr) => (
+                        <React.Fragment key={s.singular}>
+                          <View style={cs.statCell}>
+                            <Text style={cs.statVal}>{s.val}</Text>
+                            <Text style={cs.statLbl}>{s.val === 1 ? s.singular : s.plural}</Text>
+                          </View>
+                          {i < arr.length - 1 && <View style={cs.statDivider} />}
+                        </React.Fragment>
+                      ))}
+                    </View>
+
+                    {/* Revenue row */}
+                    <View style={cs.revenueRow}>
+                      <TrendingUp size={11} color={N.green} />
+                      <Text style={cs.revenueLabel}>Revenue</Text>
+                      <Text style={cs.revenueVal}>{fmt(customer.totalRevenue)}</Text>
+                    </View>
+
+                    {/* Company & segment badges */}
+                    <View style={cs.compRow}>
+                      <View style={[cs.compBadge, { borderColor: cc + '40', backgroundColor: cc + '0f' }]}>
+                        <View style={[cs.compDot, { backgroundColor: cc }]} />
+                        <Text style={[cs.compBadgeText, { color: cc }]} numberOfLines={1}>{customer.company}</Text>
+                      </View>
+                      <View style={cs.segBadge}>
+                        <Text style={cs.segBadgeText} numberOfLines={1}>{customer.segment}</Text>
+                      </View>
+                    </View>
+
+                    {/* More Details */}
+                    <TouchableOpacity style={cs.detailBtn} onPress={() => openSidebar(customer)} activeOpacity={0.8}>
+                      <Text style={cs.detailBtnText}>More Details</Text>
+                      <ArrowUpRight size={10} color={N.muted} />
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <View style={cs.pagination}>
+              <TouchableOpacity
+                style={[cs.pageBtn, safePage === 1 && cs.pageBtnDisabled]}
+                onPress={() => setPage(p => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                activeOpacity={0.75}
+              >
+                <ChevronLeft size={14} color={safePage === 1 ? N.faint : N.mid} />
+              </TouchableOpacity>
+              <Text style={cs.pageInfo}>Page {safePage} of {totalPages}</Text>
+              <TouchableOpacity
+                style={[cs.pageBtn, safePage === totalPages && cs.pageBtnDisabled]}
+                onPress={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                activeOpacity={0.75}
+              >
+                <ChevronRight size={14} color={safePage === totalPages ? N.faint : N.mid} />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+
+      <CustomerSidebar
+        customer={selectedCustomer}
+        visible={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+      />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.bg },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  headerGoldLine: { height: 2, backgroundColor: COLORS.gold, opacity: 0.5, marginTop: 12 },
-  headerTitle: { fontSize: 20, fontFamily: 'Poppins-Bold', color: COLORS.white },
-  headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.goldLight, marginTop: 2, opacity: 0.85 },
-  subTabsScroll: {
-    maxHeight: 48,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  subTabsContent: { paddingHorizontal: 14, paddingVertical: 8, gap: 6, alignItems: 'center' },
-  subTab: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8 },
-  subTabActive: { backgroundColor: COLORS.primary },
-  subTabText: { fontSize: 13, fontFamily: 'Poppins-Medium', color: COLORS.gray600 },
-  subTabTextActive: { color: COLORS.white },
-  searchRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: COLORS.bg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: 'Poppins-Regular', color: COLORS.dark, padding: 0 },
-  companyFilterScroll: {
-    maxHeight: 50,
-    backgroundColor: COLORS.bg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  companyFilterContent: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: 'center' },
-  compChip: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: COLORS.white,
-  },
-  compChipText: { fontSize: 12, fontFamily: 'Poppins-Medium', color: COLORS.gray700 },
-  compChipActive: { color: COLORS.white },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: COLORS.cream,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  summaryItem: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
-  summaryVal: { fontSize: 15, fontFamily: 'Poppins-Bold', color: COLORS.dark },
-  summaryLabel: { fontSize: 12, fontFamily: 'Poppins-Regular', color: COLORS.gray500 },
-  summaryDivider: { width: 1, height: 24, backgroundColor: COLORS.border, marginHorizontal: 16 },
-  listScroll: { flex: 1 },
-  listContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 32, gap: 16 },
-  compGroup: { gap: 10 },
-  compGroupHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  compGroupDot: { width: 10, height: 10, borderRadius: 5 },
-  compGroupName: { fontSize: 14, fontFamily: 'Poppins-Bold', flex: 1 },
-  compGroupBadge: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-  compGroupCount: { fontSize: 11, fontFamily: 'Poppins-Bold' },
-  compGroupRev: { fontSize: 12, fontFamily: 'Poppins-SemiBold' },
-  custGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  custCard: {
-    width: isTablet ? '31%' : '100%',
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    borderTopWidth: 3,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 12,
-  },
-  custCardInner: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  custInitial: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  custInitialText: { fontSize: 13, fontFamily: 'Poppins-Bold' },
-  custInfo: { flex: 1, gap: 4 },
-  custName: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: COLORS.dark },
-  custMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  custMeta: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.gray500, flex: 1 },
-  custBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
-  segBadge: { borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
-  segText: { fontSize: 10, fontFamily: 'Poppins-Medium' },
-  revText: { fontSize: 12, fontFamily: 'Poppins-Bold' },
-  custArrow: { alignItems: 'center', gap: 4, paddingLeft: 4 },
-  prodCount: { fontSize: 10, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
-  empty: { alignItems: 'center', padding: 48 },
-  emptyText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: COLORS.gray400 },
+const cs = StyleSheet.create({
+  root: { flex: 1, backgroundColor: N.pageBg },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 32 },
+  header: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16 },
+  headerTitle: { fontSize: 20, fontFamily: 'Poppins-Bold', color: '#fff' },
+  headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.8)', marginTop: 3 },
+  searchWrap: { paddingHorizontal: 14, paddingVertical: 10, backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: N.pageBg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, gap: 8, borderWidth: 1, borderColor: N.border },
+  searchInput: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Regular', color: N.dark, padding: 0 },
+  filterSection: { backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border, paddingHorizontal: 14, paddingTop: 8, paddingBottom: 8 },
+  filterGroupLabel: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 },
+  filterRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  filterChip: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg },
+  filterChipText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  cardWrap: { padding: 14 },
+  resultMeta: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.muted, marginBottom: 10 },
+  empty: { alignItems: 'center', paddingVertical: 40, gap: 10 },
+  emptyText: { fontSize: 13, fontFamily: 'Poppins-Regular', color: N.faint },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  custCard: { backgroundColor: N.cardBg, borderRadius: 12, borderWidth: 1, borderLeftWidth: 3, borderColor: N.border, overflow: 'hidden' },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  cardIconWrap: { width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  cardInitials: { fontSize: 12, fontFamily: 'Poppins-Bold' },
+  cardName: { fontSize: 12, fontFamily: 'Poppins-Bold', color: N.dark, marginBottom: 3 },
+  segChip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  segChipText: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+  statsRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: N.borderLt, paddingVertical: 8 },
+  statCell: { flex: 1, alignItems: 'center' },
+  statVal: { fontSize: 14, fontFamily: 'Poppins-Bold', color: N.dark },
+  statLbl: { fontSize: 8, fontFamily: 'Poppins-Regular', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: N.border, marginVertical: 4 },
+  revenueRow: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  revenueLabel: { flex: 1, fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.muted },
+  revenueVal: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.green },
+  compRow: { flexDirection: 'row', gap: 6, paddingHorizontal: 10, paddingTop: 8, paddingBottom: 6, flexWrap: 'wrap' },
+  compBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
+  compDot: { width: 5, height: 5, borderRadius: 2.5 },
+  compBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
+  segBadge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  segBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  detailBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, margin: 10, marginTop: 6, paddingVertical: 7, borderRadius: 7, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  detailBtnText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.muted },
+  pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 16 },
+  pageBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg, alignItems: 'center', justifyContent: 'center' },
+  pageBtnDisabled: { opacity: 0.4 },
+  pageInfo: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.mid },
 });

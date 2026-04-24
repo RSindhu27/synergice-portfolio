@@ -198,6 +198,104 @@ const mb = StyleSheet.create({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SKU TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function SkuTab({ group }: { group: MolGroup }) {
+  const [regionFilter, setRegionFilter] = useState('All');
+  const [companyFilter, setCompanyFilter] = useState('All');
+
+  const filtered = useMemo(() => group.products.filter(p =>
+    (regionFilter === 'All' || p.region === regionFilter) &&
+    (companyFilter === 'All' || p.company === companyFilter)
+  ), [group.products, regionFilter, companyFilter]);
+
+  return (
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={sk.content}>
+      <MolBanner group={group} />
+
+      {/* Filters */}
+      <View style={sk.filterBlock}>
+        <Text style={sk.filterLabel}>Region</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={sk.filterRow}>
+          {['All', ...group.regions].map(r => (
+            <Pill key={r} label={r} active={regionFilter === r} color={N.green} onPress={() => setRegionFilter(r)} />
+          ))}
+        </ScrollView>
+        <Text style={[sk.filterLabel, { marginTop: 8 }]}>Company</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={sk.filterRow}>
+          {['All', ...group.companies].map(c => (
+            <Pill key={c} label={c} active={companyFilter === c} color={N.green} onPress={() => setCompanyFilter(c)} />
+          ))}
+        </ScrollView>
+      </View>
+
+      <SH label={`${filtered.length} SKU${filtered.length !== 1 ? 's' : ''}`} icon={<Package size={12} color={COLORS.gray500} />} />
+
+      {/* SKU Table */}
+      <View style={sk.table}>
+        <View style={sk.tableHead}>
+          <Text style={[sk.tableH, { flex: 2 }]}>SKU Name</Text>
+          <Text style={[sk.tableH, { flex: 1 }]}>Strength</Text>
+          <Text style={[sk.tableH, { flex: 1 }]}>Technology</Text>
+          <Text style={[sk.tableH, { flex: 1, textAlign: 'right' }]}>Region</Text>
+        </View>
+        {filtered.length === 0 ? (
+          <View style={sk.empty}><Text style={sk.emptyTxt}>No SKUs match the selected filters</Text></View>
+        ) : filtered.map((p, i) => {
+          const cc = COMPANY_COLORS[p.company] || N.green;
+          return (
+            <View key={p.productCode} style={[sk.row, i < filtered.length - 1 && sk.rowBorder]}>
+              <View style={{ flex: 2 }}>
+                <Text style={sk.skuName} numberOfLines={1}>{p.product}</Text>
+                <View style={sk.compTag}>
+                  <View style={[sk.compDot, { backgroundColor: cc }]} />
+                  <Text style={sk.compTagText}>{p.company}</Text>
+                </View>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={sk.strengthText}>{p.strength}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={sk.techBadge}>
+                  <Text style={sk.techText} numberOfLines={1}>{p.dosage}</Text>
+                </View>
+              </View>
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                <Text style={sk.regionText} numberOfLines={1}>{p.region}</Text>
+                <Text style={sk.countryText} numberOfLines={1}>{p.country}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+}
+
+const sk = StyleSheet.create({
+  content: { padding: 10, paddingBottom: 32 },
+  filterBlock: { backgroundColor: N.headBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, padding: 8, marginBottom: 4 },
+  filterLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 5 },
+  filterRow: { flexDirection: 'row', alignItems: 'center' },
+  table: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, overflow: 'hidden' },
+  tableHead: { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 7, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  tableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 9, gap: 6 },
+  rowBorder: { borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  skuName: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 3 },
+  compTag: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  compDot: { width: 5, height: 5, borderRadius: 2.5 },
+  compTagText: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+  strengthText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  techBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignSelf: 'flex-start' },
+  techText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  regionText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.dark, textAlign: 'right' },
+  countryText: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, textAlign: 'right' },
+  empty: { padding: 20, alignItems: 'center' },
+  emptyTxt: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // REGION TAB
 // ─────────────────────────────────────────────────────────────────────────────
 function RegionTab({ group }: { group: MolGroup }) {
@@ -781,7 +879,7 @@ const rv = StyleSheet.create({
 // ─────────────────────────────────────────────────────────────────────────────
 // MOLECULE SIDEBAR
 // ─────────────────────────────────────────────────────────────────────────────
-const SIDEBAR_TABS = ['Region', 'Customer', 'Revenue'] as const;
+const SIDEBAR_TABS = ['SKU', 'Region', 'Customer', 'Revenue'] as const;
 type SidebarTab = typeof SIDEBAR_TABS[number];
 
 function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; visible: boolean; onClose: () => void }) {
@@ -861,6 +959,7 @@ function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; 
             const isActive = activeTab === t;
             return (
               <TouchableOpacity key={t} style={[sid.tabBtn, isActive && { borderBottomColor: N.green }]} onPress={() => setActiveTab(t)} activeOpacity={0.8}>
+                {t === 'SKU' && <Package size={13} color={isActive ? N.green : N.faint} />}
                 {t === 'Region' && <Globe size={13} color={isActive ? N.green : N.faint} />}
                 {t === 'Customer' && <Users size={13} color={isActive ? N.green : N.faint} />}
                 {t === 'Revenue' && <TrendingUp size={13} color={isActive ? N.green : N.faint} />}
@@ -872,6 +971,7 @@ function MoleculeSidebar({ group, visible, onClose }: { group: MolGroup | null; 
 
         {/* Tab content */}
         <View style={{ flex: 1 }}>
+          {activeTab === 'SKU' && <SkuTab group={group} />}
           {activeTab === 'Region' && <RegionTab group={group} />}
           {activeTab === 'Customer' && <CustomerTab group={group} />}
           {activeTab === 'Revenue' && <RevenueTab group={group} />}
