@@ -33,12 +33,12 @@ export const COLORS = {
 };
 
 export const COMPANY_COLORS: Record<string, string> = {
-  Strides: '#3a7d44',
-  Instapill: '#df6d14',
-  'One Source': '#c9a84c',
-  Naari: '#4a90a4',
-  Solara: '#8a5fa8',
+  'Company A': '#3a7d44',
+  'Company B': '#df6d14',
+  'Company C': '#c9a84c',
+  'Company D': '#4a90a4',
+  'Company E': '#5f7fbf',
 };
 
-export const COMPANIES = ['Strides', 'Instapill', 'One Source', 'Naari', 'Solara'] as const;
+export const COMPANIES = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'] as const;
 export type CompanyName = typeof COMPANIES[number];

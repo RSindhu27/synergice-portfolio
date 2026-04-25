@@ -1,56 +1,56 @@
 export const productPortfolio = [
-  { productCode: 'STR-001', region: 'Europe', country: 'Germany', molecules: 'Metformin', dosage: 'Tablet', product: 'Glucophage-S', strength: '500mg', therapeutic: 'Diabetes', partnerStatus: 'Partner', company: 'Strides' },
-  { productCode: 'STR-002', region: 'Europe', country: 'France', molecules: 'Atorvastatin', dosage: 'Tablet', product: 'Lipitor-S', strength: '20mg', therapeutic: 'Cardiovascular', partnerStatus: 'In-House', company: 'Strides' },
-  { productCode: 'STR-003', region: 'Africa', country: 'Nigeria', molecules: 'Amoxicillin', dosage: 'Capsule', product: 'Amoxil-S', strength: '500mg', therapeutic: 'Anti-infective', partnerStatus: 'Partner', company: 'Strides' },
-  { productCode: 'STR-004', region: 'Asia Pacific', country: 'Australia', molecules: 'Omeprazole', dosage: 'Capsule', product: 'Losec-S', strength: '20mg', therapeutic: 'GI', partnerStatus: 'In-House', company: 'Strides' },
-  { productCode: 'STR-005', region: 'North America', country: 'USA', molecules: 'Lisinopril', dosage: 'Tablet', product: 'Zestril-S', strength: '10mg', therapeutic: 'Cardiovascular', partnerStatus: 'Partner', company: 'Strides' },
-  { productCode: 'STR-006', region: 'Europe', country: 'UK', molecules: 'Amlodipine', dosage: 'Tablet', product: 'Norvasc-S', strength: '5mg', therapeutic: 'Cardiovascular', partnerStatus: 'In-House', company: 'Strides' },
-  { productCode: 'STR-007', region: 'Middle East', country: 'UAE', molecules: 'Pantoprazole', dosage: 'Tablet', product: 'Pantop-S', strength: '40mg', therapeutic: 'GI', partnerStatus: 'Partner', company: 'Strides' },
-  { productCode: 'STR-008', region: 'Europe', country: 'Germany', molecules: 'Metformin', dosage: 'Extended-Release Tablet', product: 'Glucophage XR-S', strength: '1000mg', therapeutic: 'Diabetes', partnerStatus: 'In-House', company: 'Strides' },
-  { productCode: 'STR-009', region: 'Asia Pacific', country: 'Australia', molecules: 'Atorvastatin', dosage: 'Tablet', product: 'Atova-S', strength: '40mg', therapeutic: 'Cardiovascular', partnerStatus: 'Partner', company: 'Strides' },
-  { productCode: 'STR-010', region: 'Africa', country: 'South Africa', molecules: 'Amoxicillin', dosage: 'Oral Suspension', product: 'Amoxil-S Susp', strength: '250mg/5mL', therapeutic: 'Anti-infective', partnerStatus: 'In-House', company: 'Strides' },
+  { productCode: 'CPA-001', region: 'Region A', country: 'Country A1', molecules: 'Molecule A', dosage: 'Tablet', product: 'Product A1-α', strength: '500mg', therapeutic: 'Diabetes', partnerStatus: 'Partner', company: 'Company A' },
+  { productCode: 'CPA-002', region: 'Region A', country: 'Country A2', molecules: 'Molecule B', dosage: 'Tablet', product: 'Product A2-α', strength: '20mg', therapeutic: 'Cardiovascular', partnerStatus: 'In-House', company: 'Company A' },
+  { productCode: 'CPA-003', region: 'Region B', country: 'Country B1', molecules: 'Molecule C', dosage: 'Capsule', product: 'Product A3-α', strength: '500mg', therapeutic: 'Anti-infective', partnerStatus: 'Partner', company: 'Company A' },
+  { productCode: 'CPA-004', region: 'Region C', country: 'Country C1', molecules: 'Molecule D', dosage: 'Capsule', product: 'Product A4-α', strength: '20mg', therapeutic: 'GI', partnerStatus: 'In-House', company: 'Company A' },
+  { productCode: 'CPA-005', region: 'Region D', country: 'Country D1', molecules: 'Molecule E', dosage: 'Tablet', product: 'Product A5-α', strength: '10mg', therapeutic: 'Cardiovascular', partnerStatus: 'Partner', company: 'Company A' },
+  { productCode: 'CPA-006', region: 'Region A', country: 'Country A3', molecules: 'Molecule F', dosage: 'Tablet', product: 'Product A6-α', strength: '5mg', therapeutic: 'Cardiovascular', partnerStatus: 'In-House', company: 'Company A' },
+  { productCode: 'CPA-007', region: 'Region E', country: 'Country E1', molecules: 'Molecule G', dosage: 'Tablet', product: 'Product A7-α', strength: '40mg', therapeutic: 'GI', partnerStatus: 'Partner', company: 'Company A' },
+  { productCode: 'CPA-008', region: 'Region A', country: 'Country A1', molecules: 'Molecule A', dosage: 'Extended-Release Tablet', product: 'Product A8-α', strength: '1000mg', therapeutic: 'Diabetes', partnerStatus: 'In-House', company: 'Company A' },
+  { productCode: 'CPA-009', region: 'Region C', country: 'Country C1', molecules: 'Molecule B', dosage: 'Tablet', product: 'Product A9-α', strength: '40mg', therapeutic: 'Cardiovascular', partnerStatus: 'Partner', company: 'Company A' },
+  { productCode: 'CPA-010', region: 'Region B', country: 'Country B2', molecules: 'Molecule C', dosage: 'Oral Suspension', product: 'Product A10-α', strength: '250mg/5mL', therapeutic: 'Anti-infective', partnerStatus: 'In-House', company: 'Company A' },
 
-  { productCode: 'INS-001', region: 'Asia Pacific', country: 'India', molecules: 'Insulin Glargine', dosage: 'Injection', product: 'InsulGlar', strength: '100U/mL', therapeutic: 'Diabetes', partnerStatus: 'Partner', company: 'Instapill' },
-  { productCode: 'INS-002', region: 'Africa', country: 'Kenya', molecules: 'Metformin', dosage: 'Tablet', product: 'Glucomet-I', strength: '850mg', therapeutic: 'Diabetes', partnerStatus: 'In-House', company: 'Instapill' },
-  { productCode: 'INS-003', region: 'Europe', country: 'Spain', molecules: 'Sitagliptin', dosage: 'Tablet', product: 'Januvia-I', strength: '100mg', therapeutic: 'Diabetes', partnerStatus: 'Partner', company: 'Instapill' },
-  { productCode: 'INS-004', region: 'North America', country: 'Canada', molecules: 'Empagliflozin', dosage: 'Tablet', product: 'Jardiance-I', strength: '10mg', therapeutic: 'Diabetes', partnerStatus: 'Licensed', company: 'Instapill' },
-  { productCode: 'INS-005', region: 'Middle East', country: 'Saudi Arabia', molecules: 'Liraglutide', dosage: 'Injection', product: 'Victoza-I', strength: '6mg/mL', therapeutic: 'Diabetes', partnerStatus: 'Partner', company: 'Instapill' },
-  { productCode: 'INS-006', region: 'Asia Pacific', country: 'India', molecules: 'Atorvastatin', dosage: 'Tablet', product: 'Rosuvas-I', strength: '10mg', therapeutic: 'Cardiovascular', partnerStatus: 'In-House', company: 'Instapill' },
-  { productCode: 'INS-007', region: 'Europe', country: 'Spain', molecules: 'Omeprazole', dosage: 'Capsule', product: 'Omez-I', strength: '40mg', therapeutic: 'GI', partnerStatus: 'Partner', company: 'Instapill' },
-  { productCode: 'INS-008', region: 'North America', country: 'Canada', molecules: 'Amoxicillin', dosage: 'Tablet', product: 'Amoxil-I', strength: '250mg', therapeutic: 'Anti-infective', partnerStatus: 'Licensed', company: 'Instapill' },
+  { productCode: 'CPB-001', region: 'Region C', country: 'Country C2', molecules: 'Molecule H', dosage: 'Injection', product: 'Product B1-β', strength: '100U/mL', therapeutic: 'Diabetes', partnerStatus: 'Partner', company: 'Company B' },
+  { productCode: 'CPB-002', region: 'Region B', country: 'Country B3', molecules: 'Molecule A', dosage: 'Tablet', product: 'Product B2-β', strength: '850mg', therapeutic: 'Diabetes', partnerStatus: 'In-House', company: 'Company B' },
+  { productCode: 'CPB-003', region: 'Region A', country: 'Country A4', molecules: 'Molecule I', dosage: 'Tablet', product: 'Product B3-β', strength: '100mg', therapeutic: 'Diabetes', partnerStatus: 'Partner', company: 'Company B' },
+  { productCode: 'CPB-004', region: 'Region D', country: 'Country D2', molecules: 'Molecule J', dosage: 'Tablet', product: 'Product B4-β', strength: '10mg', therapeutic: 'Diabetes', partnerStatus: 'Licensed', company: 'Company B' },
+  { productCode: 'CPB-005', region: 'Region E', country: 'Country E2', molecules: 'Molecule K', dosage: 'Injection', product: 'Product B5-β', strength: '6mg/mL', therapeutic: 'Diabetes', partnerStatus: 'Partner', company: 'Company B' },
+  { productCode: 'CPB-006', region: 'Region C', country: 'Country C2', molecules: 'Molecule B', dosage: 'Tablet', product: 'Product B6-β', strength: '10mg', therapeutic: 'Cardiovascular', partnerStatus: 'In-House', company: 'Company B' },
+  { productCode: 'CPB-007', region: 'Region A', country: 'Country A4', molecules: 'Molecule D', dosage: 'Capsule', product: 'Product B7-β', strength: '40mg', therapeutic: 'GI', partnerStatus: 'Partner', company: 'Company B' },
+  { productCode: 'CPB-008', region: 'Region D', country: 'Country D2', molecules: 'Molecule C', dosage: 'Tablet', product: 'Product B8-β', strength: '250mg', therapeutic: 'Anti-infective', partnerStatus: 'Licensed', company: 'Company B' },
 
-  { productCode: 'ONE-001', region: 'Africa', country: 'South Africa', molecules: 'Tenofovir', dosage: 'Tablet', product: 'Viread-O', strength: '300mg', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'One Source' },
-  { productCode: 'ONE-002', region: 'Africa', country: 'Ethiopia', molecules: 'Lamivudine', dosage: 'Tablet', product: 'Epivir-O', strength: '150mg', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'One Source' },
-  { productCode: 'ONE-003', region: 'Asia Pacific', country: 'Philippines', molecules: 'Efavirenz', dosage: 'Tablet', product: 'Sustiva-O', strength: '600mg', therapeutic: 'Antiretroviral', partnerStatus: 'Partner', company: 'One Source' },
-  { productCode: 'ONE-004', region: 'Latin America', country: 'Brazil', molecules: 'Atazanavir', dosage: 'Capsule', product: 'Reyataz-O', strength: '300mg', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'One Source' },
-  { productCode: 'ONE-005', region: 'Africa', country: 'Ghana', molecules: 'Dolutegravir', dosage: 'Tablet', product: 'Tivicay-O', strength: '50mg', therapeutic: 'Antiretroviral', partnerStatus: 'Licensed', company: 'One Source' },
-  { productCode: 'ONE-006', region: 'Africa', country: 'Uganda', molecules: 'Tenofovir', dosage: 'Tablet', product: 'TDF-O', strength: '300mg', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'One Source' },
-  { productCode: 'ONE-007', region: 'Africa', country: 'Tanzania', molecules: 'Lamivudine', dosage: 'Oral Solution', product: 'Epivir-Sol-O', strength: '50mg/5mL', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'One Source' },
+  { productCode: 'CPC-001', region: 'Region B', country: 'Country B2', molecules: 'Molecule L', dosage: 'Tablet', product: 'Product C1-γ', strength: '300mg', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'Company C' },
+  { productCode: 'CPC-002', region: 'Region B', country: 'Country B4', molecules: 'Molecule M', dosage: 'Tablet', product: 'Product C2-γ', strength: '150mg', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'Company C' },
+  { productCode: 'CPC-003', region: 'Region C', country: 'Country C3', molecules: 'Molecule N', dosage: 'Tablet', product: 'Product C3-γ', strength: '600mg', therapeutic: 'Antiretroviral', partnerStatus: 'Partner', company: 'Company C' },
+  { productCode: 'CPC-004', region: 'Region F', country: 'Country F1', molecules: 'Molecule O', dosage: 'Capsule', product: 'Product C4-γ', strength: '300mg', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'Company C' },
+  { productCode: 'CPC-005', region: 'Region B', country: 'Country B5', molecules: 'Molecule P', dosage: 'Tablet', product: 'Product C5-γ', strength: '50mg', therapeutic: 'Antiretroviral', partnerStatus: 'Licensed', company: 'Company C' },
+  { productCode: 'CPC-006', region: 'Region B', country: 'Country B6', molecules: 'Molecule L', dosage: 'Tablet', product: 'Product C6-γ', strength: '300mg', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'Company C' },
+  { productCode: 'CPC-007', region: 'Region B', country: 'Country B7', molecules: 'Molecule M', dosage: 'Oral Solution', product: 'Product C7-γ', strength: '50mg/5mL', therapeutic: 'Antiretroviral', partnerStatus: 'In-House', company: 'Company C' },
 
-  { productCode: 'NAR-001', region: 'Asia Pacific', country: 'India', molecules: 'Folic Acid', dosage: 'Tablet', product: 'FolaCare', strength: '5mg', therapeutic: "Women's Health", partnerStatus: 'In-House', company: 'Naari' },
-  { productCode: 'NAR-002', region: 'Middle East', country: 'Kuwait', molecules: 'Progesterone', dosage: 'Capsule', product: 'Utrogestan-N', strength: '200mg', therapeutic: "Women's Health", partnerStatus: 'Partner', company: 'Naari' },
-  { productCode: 'NAR-003', region: 'Europe', country: 'Italy', molecules: 'Estradiol', dosage: 'Patch', product: 'Estraderm-N', strength: '50mcg', therapeutic: "Women's Health", partnerStatus: 'Licensed', company: 'Naari' },
-  { productCode: 'NAR-004', region: 'Asia Pacific', country: 'Indonesia', molecules: 'Iron Sucrose', dosage: 'Injection', product: 'Venofer-N', strength: '20mg/mL', therapeutic: "Women's Health", partnerStatus: 'In-House', company: 'Naari' },
-  { productCode: 'NAR-005', region: 'Africa', country: 'Tanzania', molecules: 'Mifepristone', dosage: 'Tablet', product: 'Mifeprex-N', strength: '200mg', therapeutic: "Women's Health", partnerStatus: 'Partner', company: 'Naari' },
-  { productCode: 'NAR-006', region: 'Asia Pacific', country: 'India', molecules: 'Progesterone', dosage: 'Injection', product: 'Progest-N', strength: '100mg/mL', therapeutic: "Women's Health", partnerStatus: 'In-House', company: 'Naari' },
-  { productCode: 'NAR-007', region: 'Middle East', country: 'UAE', molecules: 'Folic Acid', dosage: 'Tablet', product: 'FolaMax-N', strength: '1mg', therapeutic: "Women's Health", partnerStatus: 'Partner', company: 'Naari' },
+  { productCode: 'CPD-001', region: 'Region C', country: 'Country C2', molecules: 'Molecule Q', dosage: 'Tablet', product: 'Product D1-δ', strength: '5mg', therapeutic: "Women's Health", partnerStatus: 'In-House', company: 'Company D' },
+  { productCode: 'CPD-002', region: 'Region E', country: 'Country E3', molecules: 'Molecule R', dosage: 'Capsule', product: 'Product D2-δ', strength: '200mg', therapeutic: "Women's Health", partnerStatus: 'Partner', company: 'Company D' },
+  { productCode: 'CPD-003', region: 'Region A', country: 'Country A5', molecules: 'Molecule S', dosage: 'Patch', product: 'Product D3-δ', strength: '50mcg', therapeutic: "Women's Health", partnerStatus: 'Licensed', company: 'Company D' },
+  { productCode: 'CPD-004', region: 'Region C', country: 'Country C4', molecules: 'Molecule T', dosage: 'Injection', product: 'Product D4-δ', strength: '20mg/mL', therapeutic: "Women's Health", partnerStatus: 'In-House', company: 'Company D' },
+  { productCode: 'CPD-005', region: 'Region B', country: 'Country B7', molecules: 'Molecule U', dosage: 'Tablet', product: 'Product D5-δ', strength: '200mg', therapeutic: "Women's Health", partnerStatus: 'Partner', company: 'Company D' },
+  { productCode: 'CPD-006', region: 'Region C', country: 'Country C2', molecules: 'Molecule R', dosage: 'Injection', product: 'Product D6-δ', strength: '100mg/mL', therapeutic: "Women's Health", partnerStatus: 'In-House', company: 'Company D' },
+  { productCode: 'CPD-007', region: 'Region E', country: 'Country E1', molecules: 'Molecule Q', dosage: 'Tablet', product: 'Product D7-δ', strength: '1mg', therapeutic: "Women's Health", partnerStatus: 'Partner', company: 'Company D' },
 
-  { productCode: 'SOL-001', region: 'Europe', country: 'Netherlands', molecules: 'Venlafaxine', dosage: 'Capsule', product: 'Effexor-SL', strength: '75mg', therapeutic: 'CNS', partnerStatus: 'In-House', company: 'Solara' },
-  { productCode: 'SOL-002', region: 'North America', country: 'USA', molecules: 'Quetiapine', dosage: 'Tablet', product: 'Seroquel-SL', strength: '200mg', therapeutic: 'CNS', partnerStatus: 'Partner', company: 'Solara' },
-  { productCode: 'SOL-003', region: 'Asia Pacific', country: 'Japan', molecules: 'Donepezil', dosage: 'Tablet', product: 'Aricept-SL', strength: '10mg', therapeutic: 'CNS', partnerStatus: 'Licensed', company: 'Solara' },
-  { productCode: 'SOL-004', region: 'Latin America', country: 'Mexico', molecules: 'Escitalopram', dosage: 'Tablet', product: 'Lexapro-SL', strength: '10mg', therapeutic: 'CNS', partnerStatus: 'In-House', company: 'Solara' },
-  { productCode: 'SOL-005', region: 'Middle East', country: 'Israel', molecules: 'Lamotrigine', dosage: 'Tablet', product: 'Lamictal-SL', strength: '100mg', therapeutic: 'CNS', partnerStatus: 'Partner', company: 'Solara' },
-  { productCode: 'SOL-006', region: 'North America', country: 'USA', molecules: 'Venlafaxine', dosage: 'Extended-Release Capsule', product: 'Effexor XR-SL', strength: '150mg', therapeutic: 'CNS', partnerStatus: 'In-House', company: 'Solara' },
-  { productCode: 'SOL-007', region: 'Europe', country: 'Germany', molecules: 'Quetiapine', dosage: 'Extended-Release Tablet', product: 'Seroquel XR-SL', strength: '400mg', therapeutic: 'CNS', partnerStatus: 'Partner', company: 'Solara' },
-  { productCode: 'SOL-008', region: 'Asia Pacific', country: 'Australia', molecules: 'Lamotrigine', dosage: 'Dispersible Tablet', product: 'Lamictal-D-SL', strength: '25mg', therapeutic: 'CNS', partnerStatus: 'Licensed', company: 'Solara' },
+  { productCode: 'CPE-001', region: 'Region A', country: 'Country A6', molecules: 'Molecule V', dosage: 'Capsule', product: 'Product E1-ε', strength: '75mg', therapeutic: 'CNS', partnerStatus: 'In-House', company: 'Company E' },
+  { productCode: 'CPE-002', region: 'Region D', country: 'Country D1', molecules: 'Molecule W', dosage: 'Tablet', product: 'Product E2-ε', strength: '200mg', therapeutic: 'CNS', partnerStatus: 'Partner', company: 'Company E' },
+  { productCode: 'CPE-003', region: 'Region C', country: 'Country C5', molecules: 'Molecule X', dosage: 'Tablet', product: 'Product E3-ε', strength: '10mg', therapeutic: 'CNS', partnerStatus: 'Licensed', company: 'Company E' },
+  { productCode: 'CPE-004', region: 'Region F', country: 'Country F2', molecules: 'Molecule Y', dosage: 'Tablet', product: 'Product E4-ε', strength: '10mg', therapeutic: 'CNS', partnerStatus: 'In-House', company: 'Company E' },
+  { productCode: 'CPE-005', region: 'Region E', country: 'Country E4', molecules: 'Molecule Z', dosage: 'Tablet', product: 'Product E5-ε', strength: '100mg', therapeutic: 'CNS', partnerStatus: 'Partner', company: 'Company E' },
+  { productCode: 'CPE-006', region: 'Region D', country: 'Country D1', molecules: 'Molecule V', dosage: 'Extended-Release Capsule', product: 'Product E6-ε', strength: '150mg', therapeutic: 'CNS', partnerStatus: 'In-House', company: 'Company E' },
+  { productCode: 'CPE-007', region: 'Region A', country: 'Country A1', molecules: 'Molecule W', dosage: 'Extended-Release Tablet', product: 'Product E7-ε', strength: '400mg', therapeutic: 'CNS', partnerStatus: 'Partner', company: 'Company E' },
+  { productCode: 'CPE-008', region: 'Region C', country: 'Country C1', molecules: 'Molecule Z', dosage: 'Dispersible Tablet', product: 'Product E8-ε', strength: '25mg', therapeutic: 'CNS', partnerStatus: 'Licensed', company: 'Company E' },
 ];
 
 export const companyMetrics: Record<string, { products: number; revenue: number; topRegion: string; topCustomer: string; sparkline: number[]; growth: number; color: string }> = {
-  Strides: { products: 10, revenue: 347420, topRegion: 'Europe', topCustomer: 'Cardinal Health USA', sparkline: [22, 25, 28, 24, 32, 35, 38, 36, 42, 40, 45, 48], growth: 12.4, color: '#3a7d44' },
-  Instapill: { products: 8, revenue: 456120, topRegion: 'Asia Pacific', topCustomer: 'Apollo Pharmacy', sparkline: [30, 28, 35, 40, 38, 42, 45, 48, 52, 50, 55, 60], growth: 18.2, color: '#df6d14' },
-  'One Source': { products: 7, revenue: 289650, topRegion: 'Africa', topCustomer: 'MoH South Africa', sparkline: [18, 20, 22, 25, 28, 26, 30, 32, 35, 33, 38, 40], growth: 9.8, color: '#c9a84c' },
-  Naari: { products: 7, revenue: 178340, topRegion: 'Asia Pacific', topCustomer: 'Medplus India', sparkline: [12, 14, 13, 15, 16, 18, 17, 20, 22, 21, 24, 26], growth: 15.6, color: '#4a90a4' },
-  Solara: { products: 8, revenue: 207800, topRegion: 'North America', topCustomer: 'AmerisourceBergen', sparkline: [15, 16, 18, 20, 19, 22, 25, 24, 28, 30, 32, 35], growth: 11.2, color: '#8a5fa8' },
+  'Company A': { products: 10, revenue: 347420, topRegion: 'Region A', topCustomer: 'Customer A1', sparkline: [22, 25, 28, 24, 32, 35, 38, 36, 42, 40, 45, 48], growth: 12.4, color: '#3a7d44' },
+  'Company B': { products: 8, revenue: 456120, topRegion: 'Region C', topCustomer: 'Customer B1', sparkline: [30, 28, 35, 40, 38, 42, 45, 48, 52, 50, 55, 60], growth: 18.2, color: '#df6d14' },
+  'Company C': { products: 7, revenue: 289650, topRegion: 'Region B', topCustomer: 'Customer C1', sparkline: [18, 20, 22, 25, 28, 26, 30, 32, 35, 33, 38, 40], growth: 9.8, color: '#c9a84c' },
+  'Company D': { products: 7, revenue: 178340, topRegion: 'Region C', topCustomer: 'Customer D1', sparkline: [12, 14, 13, 15, 16, 18, 17, 20, 22, 21, 24, 26], growth: 15.6, color: '#4a90a4' },
+  'Company E': { products: 8, revenue: 207800, topRegion: 'Region D', topCustomer: 'Customer E1', sparkline: [15, 16, 18, 20, 19, 22, 25, 24, 28, 30, 32, 35], growth: 11.2, color: '#8a5fa8' },
 };
 
 export type CustomerSKUDetail = {
@@ -61,90 +61,90 @@ export type CustomerSKUDetail = {
 };
 
 export const CUSTOMER_SKU_DETAILS: Record<string, CustomerSKUDetail[]> = {
-  'CUST-US-001': [
-    { sku: 'STR-005', product: 'Zestril-S 10mg Tablet', region: 'North America', revenue: 411760 },
-    { sku: 'STR-001', product: 'Glucophage-S 500mg Tablet', region: 'North America', revenue: 300000 },
+  'CUST-A1-001': [
+    { sku: 'CPA-005', product: 'Product A5-α 10mg Tablet', region: 'Region D', revenue: 411760 },
+    { sku: 'CPA-001', product: 'Product A1-α 500mg Tablet', region: 'Region D', revenue: 300000 },
   ],
-  'CUST-DE-001': [
-    { sku: 'STR-001', product: 'Glucophage-S 500mg Tablet', region: 'Europe', revenue: 485000 },
+  'CUST-A2-001': [
+    { sku: 'CPA-001', product: 'Product A1-α 500mg Tablet', region: 'Region A', revenue: 485000 },
   ],
-  'CUST-FR-001': [
-    { sku: 'STR-002', product: 'Lipitor-S 20mg Tablet', region: 'Europe', revenue: 384000 },
+  'CUST-A3-001': [
+    { sku: 'CPA-002', product: 'Product A2-α 20mg Tablet', region: 'Region A', revenue: 384000 },
   ],
-  'CUST-AE-001': [
-    { sku: 'STR-007', product: 'Pantop-S 40mg Tablet', region: 'Middle East', revenue: 294000 },
+  'CUST-E1-001': [
+    { sku: 'CPA-007', product: 'Product A7-α 40mg Tablet', region: 'Region E', revenue: 294000 },
   ],
-  'CUST-NG-001': [
-    { sku: 'STR-003', product: 'Amoxil-S 500mg Capsule', region: 'Africa', revenue: 340000 },
-    { sku: 'STR-010', product: 'Amoxil-S Susp 250mg/5mL', region: 'Africa', revenue: 254000 },
+  'CUST-B1-001': [
+    { sku: 'CPA-003', product: 'Product A3-α 500mg Capsule', region: 'Region B', revenue: 340000 },
+    { sku: 'CPA-010', product: 'Product A10-α 250mg/5mL Susp', region: 'Region B', revenue: 254000 },
   ],
-  'CUST-AU-001': [
-    { sku: 'STR-004', product: 'Losec-S 20mg Capsule', region: 'Asia Pacific', revenue: 420000 },
+  'CUST-C1-001': [
+    { sku: 'CPA-004', product: 'Product A4-α 20mg Capsule', region: 'Region C', revenue: 420000 },
   ],
-  'CUST-IN-001': [
-    { sku: 'INS-001', product: 'InsulGlar 100U/mL Injection', region: 'Asia Pacific', revenue: 2400000 },
+  'CUST-C2-001': [
+    { sku: 'CPB-001', product: 'Product B1-β 100U/mL Injection', region: 'Region C', revenue: 2400000 },
   ],
-  'CUST-CA-001': [
-    { sku: 'INS-004', product: 'Jardiance-I 10mg Tablet', region: 'North America', revenue: 825000 },
+  'CUST-D1-001': [
+    { sku: 'CPB-004', product: 'Product B4-β 10mg Tablet', region: 'Region D', revenue: 825000 },
   ],
-  'CUST-KW-002': [
-    { sku: 'INS-005', product: 'Victoza-I 6mg/mL Injection', region: 'Middle East', revenue: 310000 },
+  'CUST-E2-001': [
+    { sku: 'CPB-005', product: 'Product B5-β 6mg/mL Injection', region: 'Region E', revenue: 310000 },
   ],
-  'CUST-KE-001': [
-    { sku: 'INS-002', product: 'Glucomet-I 850mg Tablet', region: 'Africa', revenue: 960000 },
+  'CUST-B3-001': [
+    { sku: 'CPB-002', product: 'Product B2-β 850mg Tablet', region: 'Region B', revenue: 960000 },
   ],
-  'CUST-ES-001': [
-    { sku: 'INS-003', product: 'Januvia-I 100mg Tablet', region: 'Europe', revenue: 220000 },
-    { sku: 'INS-007', product: 'Omez-I 40mg Capsule', region: 'Europe', revenue: 160000 },
+  'CUST-A4-001': [
+    { sku: 'CPB-003', product: 'Product B3-β 100mg Tablet', region: 'Region A', revenue: 220000 },
+    { sku: 'CPB-007', product: 'Product B7-β 40mg Capsule', region: 'Region A', revenue: 160000 },
   ],
-  'CUST-ZA-001': [
-    { sku: 'ONE-001', product: 'Viread-O 300mg Tablet', region: 'Africa', revenue: 580000 },
-    { sku: 'ONE-005', product: 'Tivicay-O 50mg Tablet', region: 'Africa', revenue: 370000 },
+  'CUST-B2-001': [
+    { sku: 'CPC-001', product: 'Product C1-γ 300mg Tablet', region: 'Region B', revenue: 580000 },
+    { sku: 'CPC-005', product: 'Product C5-γ 50mg Tablet', region: 'Region B', revenue: 370000 },
   ],
-  'CUST-PH-001': [
-    { sku: 'ONE-003', product: 'Sustiva-O 600mg Tablet', region: 'Asia Pacific', revenue: 1225000 },
+  'CUST-C3-001': [
+    { sku: 'CPC-003', product: 'Product C3-γ 600mg Tablet', region: 'Region C', revenue: 1225000 },
   ],
-  'CUST-ET-001': [
-    { sku: 'ONE-002', product: 'Epivir-O 150mg Tablet', region: 'Africa', revenue: 450000 },
-    { sku: 'ONE-007', product: 'Epivir-Sol-O 50mg/5mL', region: 'Africa', revenue: 230000 },
+  'CUST-B4-001': [
+    { sku: 'CPC-002', product: 'Product C2-γ 150mg Tablet', region: 'Region B', revenue: 450000 },
+    { sku: 'CPC-007', product: 'Product C7-γ 50mg/5mL Solution', region: 'Region B', revenue: 230000 },
   ],
-  'CUST-GH-001': [
-    { sku: 'ONE-005', product: 'Tivicay-O 50mg Tablet', region: 'Africa', revenue: 520000 },
+  'CUST-B5-001': [
+    { sku: 'CPC-005', product: 'Product C5-γ 50mg Tablet', region: 'Region B', revenue: 520000 },
   ],
-  'CUST-BR-001': [
-    { sku: 'ONE-004', product: 'Reyataz-O 300mg Capsule', region: 'Latin America', revenue: 450000 },
+  'CUST-F1-001': [
+    { sku: 'CPC-004', product: 'Product C4-γ 300mg Capsule', region: 'Region F', revenue: 450000 },
   ],
-  'CUST-IN-002': [
-    { sku: 'NAR-001', product: 'FolaCare 5mg Tablet', region: 'Asia Pacific', revenue: 244000 },
-    { sku: 'NAR-004', product: 'Venofer-N 20mg/mL Injection', region: 'Asia Pacific', revenue: 200000 },
+  'CUST-C2-002': [
+    { sku: 'CPD-001', product: 'Product D1-δ 5mg Tablet', region: 'Region C', revenue: 244000 },
+    { sku: 'CPD-004', product: 'Product D4-δ 20mg/mL Injection', region: 'Region C', revenue: 200000 },
   ],
-  'CUST-KW-001': [
-    { sku: 'NAR-002', product: 'Utrogestan-N 200mg Capsule', region: 'Middle East', revenue: 357600 },
+  'CUST-E3-001': [
+    { sku: 'CPD-002', product: 'Product D2-δ 200mg Capsule', region: 'Region E', revenue: 357600 },
   ],
-  'CUST-IT-001': [
-    { sku: 'NAR-003', product: 'Estraderm-N 50mcg Patch', region: 'Europe', revenue: 450000 },
+  'CUST-A5-001': [
+    { sku: 'CPD-003', product: 'Product D3-δ 50mcg Patch', region: 'Region A', revenue: 450000 },
   ],
-  'CUST-ID-001': [
-    { sku: 'NAR-004', product: 'Venofer-N 20mg/mL Injection', region: 'Asia Pacific', revenue: 290000 },
+  'CUST-C4-001': [
+    { sku: 'CPD-004', product: 'Product D4-δ 20mg/mL Injection', region: 'Region C', revenue: 290000 },
   ],
-  'CUST-TZ-001': [
-    { sku: 'NAR-005', product: 'Mifeprex-N 200mg Tablet', region: 'Africa', revenue: 180000 },
+  'CUST-B7-001': [
+    { sku: 'CPD-005', product: 'Product D5-δ 200mg Tablet', region: 'Region B', revenue: 180000 },
   ],
-  'CUST-US-002': [
-    { sku: 'SOL-002', product: 'Seroquel-SL 200mg Tablet', region: 'North America', revenue: 430000 },
-    { sku: 'SOL-006', product: 'Effexor XR-SL 150mg Capsule', region: 'North America', revenue: 250000 },
+  'CUST-D2-001': [
+    { sku: 'CPE-002', product: 'Product E2-ε 200mg Tablet', region: 'Region D', revenue: 430000 },
+    { sku: 'CPE-006', product: 'Product E6-ε 150mg Capsule', region: 'Region D', revenue: 250000 },
   ],
-  'CUST-NL-001': [
-    { sku: 'SOL-001', product: 'Effexor-SL 75mg Capsule', region: 'Europe', revenue: 420000 },
+  'CUST-A6-001': [
+    { sku: 'CPE-001', product: 'Product E1-ε 75mg Capsule', region: 'Region A', revenue: 420000 },
   ],
-  'CUST-JP-001': [
-    { sku: 'SOL-003', product: 'Aricept-SL 10mg Tablet', region: 'Asia Pacific', revenue: 340000 },
+  'CUST-C5-001': [
+    { sku: 'CPE-003', product: 'Product E3-ε 10mg Tablet', region: 'Region C', revenue: 340000 },
   ],
-  'CUST-MX-001': [
-    { sku: 'SOL-004', product: 'Lexapro-SL 10mg Tablet', region: 'Latin America', revenue: 2800000 },
+  'CUST-F2-001': [
+    { sku: 'CPE-004', product: 'Product E4-ε 10mg Tablet', region: 'Region F', revenue: 2800000 },
   ],
-  'CUST-IL-001': [
-    { sku: 'SOL-005', product: 'Lamictal-SL 100mg Tablet', region: 'Middle East', revenue: 260000 },
+  'CUST-E4-001': [
+    { sku: 'CPE-005', product: 'Product E5-ε 100mg Tablet', region: 'Region E', revenue: 260000 },
   ],
 };
 
@@ -157,40 +157,40 @@ export const CUSTOMERS_BY_COMPANY: Record<string, {
   totalRevenue: number;
   products: string[];
 }[]> = {
-  Strides: [
-    { customerName: 'Cardinal Health USA', customerCode: 'CUST-US-001', country: 'USA', region: 'North America', segment: 'Wholesale', totalRevenue: 711760, products: ['STR-005', 'STR-001'] },
-    { customerName: 'Pharma Distrib GmbH', customerCode: 'CUST-DE-001', country: 'Germany', region: 'Europe', segment: 'Distributor', totalRevenue: 485000, products: ['STR-001'] },
-    { customerName: 'Sante Pharma SA', customerCode: 'CUST-FR-001', country: 'France', region: 'Europe', segment: 'Distributor', totalRevenue: 384000, products: ['STR-002'] },
-    { customerName: 'Aster UAE', customerCode: 'CUST-AE-001', country: 'UAE', region: 'Middle East', segment: 'Retail Chain', totalRevenue: 294000, products: ['STR-007'] },
-    { customerName: 'Emzor Pharma NG', customerCode: 'CUST-NG-001', country: 'Nigeria', region: 'Africa', segment: 'Distributor', totalRevenue: 594000, products: ['STR-003'] },
-    { customerName: 'Apotex Pty Ltd', customerCode: 'CUST-AU-001', country: 'Australia', region: 'Asia Pacific', segment: 'Retail Chain', totalRevenue: 420000, products: ['STR-004'] },
+  'Company A': [
+    { customerName: 'Customer A1', customerCode: 'CUST-A1-001', country: 'Country D1', region: 'Region D', segment: 'Wholesale', totalRevenue: 711760, products: ['CPA-005', 'CPA-001'] },
+    { customerName: 'Customer A2', customerCode: 'CUST-A2-001', country: 'Country A1', region: 'Region A', segment: 'Distributor', totalRevenue: 485000, products: ['CPA-001'] },
+    { customerName: 'Customer A3', customerCode: 'CUST-A3-001', country: 'Country A2', region: 'Region A', segment: 'Distributor', totalRevenue: 384000, products: ['CPA-002'] },
+    { customerName: 'Customer A4', customerCode: 'CUST-E1-001', country: 'Country E1', region: 'Region E', segment: 'Retail Chain', totalRevenue: 294000, products: ['CPA-007'] },
+    { customerName: 'Customer A5', customerCode: 'CUST-B1-001', country: 'Country B1', region: 'Region B', segment: 'Distributor', totalRevenue: 594000, products: ['CPA-003'] },
+    { customerName: 'Customer A6', customerCode: 'CUST-C1-001', country: 'Country C1', region: 'Region C', segment: 'Retail Chain', totalRevenue: 420000, products: ['CPA-004'] },
   ],
-  Instapill: [
-    { customerName: 'Apollo Pharmacy', customerCode: 'CUST-IN-001', country: 'India', region: 'Asia Pacific', segment: 'Retail Chain', totalRevenue: 2400000, products: ['INS-001'] },
-    { customerName: 'McKesson Canada', customerCode: 'CUST-CA-001', country: 'Canada', region: 'North America', segment: 'Wholesale', totalRevenue: 825000, products: ['INS-004'] },
-    { customerName: 'Al Dawaa KW', customerCode: 'CUST-KW-002', country: 'Kuwait', region: 'Middle East', segment: 'Retail Chain', totalRevenue: 310000, products: ['INS-005'] },
-    { customerName: 'Haltons Kenya', customerCode: 'CUST-KE-001', country: 'Kenya', region: 'Africa', segment: 'Distributor', totalRevenue: 960000, products: ['INS-002'] },
-    { customerName: 'Farmacia Central ES', customerCode: 'CUST-ES-001', country: 'Spain', region: 'Europe', segment: 'Retail Chain', totalRevenue: 380000, products: ['INS-003'] },
+  'Company B': [
+    { customerName: 'Customer B1', customerCode: 'CUST-C2-001', country: 'Country C2', region: 'Region C', segment: 'Retail Chain', totalRevenue: 2400000, products: ['CPB-001'] },
+    { customerName: 'Customer B2', customerCode: 'CUST-D1-001', country: 'Country D2', region: 'Region D', segment: 'Wholesale', totalRevenue: 825000, products: ['CPB-004'] },
+    { customerName: 'Customer B3', customerCode: 'CUST-E2-001', country: 'Country E2', region: 'Region E', segment: 'Retail Chain', totalRevenue: 310000, products: ['CPB-005'] },
+    { customerName: 'Customer B4', customerCode: 'CUST-B3-001', country: 'Country B3', region: 'Region B', segment: 'Distributor', totalRevenue: 960000, products: ['CPB-002'] },
+    { customerName: 'Customer B5', customerCode: 'CUST-A4-001', country: 'Country A4', region: 'Region A', segment: 'Retail Chain', totalRevenue: 380000, products: ['CPB-003'] },
   ],
-  'One Source': [
-    { customerName: 'MoH South Africa', customerCode: 'CUST-ZA-001', country: 'South Africa', region: 'Africa', segment: 'Government', totalRevenue: 950000, products: ['ONE-001', 'ONE-005'] },
-    { customerName: 'PhilHealth Procurement', customerCode: 'CUST-PH-001', country: 'Philippines', region: 'Asia Pacific', segment: 'Government', totalRevenue: 1225000, products: ['ONE-003'] },
-    { customerName: 'MoH Ethiopia', customerCode: 'CUST-ET-001', country: 'Ethiopia', region: 'Africa', segment: 'Government', totalRevenue: 680000, products: ['ONE-002'] },
-    { customerName: 'PEPFAR Ghana', customerCode: 'CUST-GH-001', country: 'Ghana', region: 'Africa', segment: 'Donor Funded', totalRevenue: 520000, products: ['ONE-005'] },
-    { customerName: 'Farmanguinhos Brazil', customerCode: 'CUST-BR-001', country: 'Brazil', region: 'Latin America', segment: 'Government', totalRevenue: 450000, products: ['ONE-004'] },
+  'Company C': [
+    { customerName: 'Customer C1', customerCode: 'CUST-B2-001', country: 'Country B2', region: 'Region B', segment: 'Government', totalRevenue: 950000, products: ['CPC-001', 'CPC-005'] },
+    { customerName: 'Customer C2', customerCode: 'CUST-C3-001', country: 'Country C3', region: 'Region C', segment: 'Government', totalRevenue: 1225000, products: ['CPC-003'] },
+    { customerName: 'Customer C3', customerCode: 'CUST-B4-001', country: 'Country B4', region: 'Region B', segment: 'Government', totalRevenue: 680000, products: ['CPC-002'] },
+    { customerName: 'Customer C4', customerCode: 'CUST-B5-001', country: 'Country B5', region: 'Region B', segment: 'Donor Funded', totalRevenue: 520000, products: ['CPC-005'] },
+    { customerName: 'Customer C5', customerCode: 'CUST-F1-001', country: 'Country F1', region: 'Region F', segment: 'Government', totalRevenue: 450000, products: ['CPC-004'] },
   ],
-  Naari: [
-    { customerName: 'Medplus India', customerCode: 'CUST-IN-002', country: 'India', region: 'Asia Pacific', segment: 'Retail Chain', totalRevenue: 444000, products: ['NAR-001', 'NAR-004'] },
-    { customerName: 'Al-Dawaa KW', customerCode: 'CUST-KW-001', country: 'Kuwait', region: 'Middle East', segment: 'Retail Chain', totalRevenue: 357600, products: ['NAR-002'] },
-    { customerName: 'Farmacia Milano', customerCode: 'CUST-IT-001', country: 'Italy', region: 'Europe', segment: 'Retail Chain', totalRevenue: 450000, products: ['NAR-003'] },
-    { customerName: 'Kimia Farma ID', customerCode: 'CUST-ID-001', country: 'Indonesia', region: 'Asia Pacific', segment: 'Distributor', totalRevenue: 290000, products: ['NAR-004'] },
-    { customerName: 'MEDS Tanzania', customerCode: 'CUST-TZ-001', country: 'Tanzania', region: 'Africa', segment: 'NGO', totalRevenue: 180000, products: ['NAR-005'] },
+  'Company D': [
+    { customerName: 'Customer D1', customerCode: 'CUST-C2-002', country: 'Country C2', region: 'Region C', segment: 'Retail Chain', totalRevenue: 444000, products: ['CPD-001', 'CPD-004'] },
+    { customerName: 'Customer D2', customerCode: 'CUST-E3-001', country: 'Country E3', region: 'Region E', segment: 'Retail Chain', totalRevenue: 357600, products: ['CPD-002'] },
+    { customerName: 'Customer D3', customerCode: 'CUST-A5-001', country: 'Country A5', region: 'Region A', segment: 'Retail Chain', totalRevenue: 450000, products: ['CPD-003'] },
+    { customerName: 'Customer D4', customerCode: 'CUST-C4-001', country: 'Country C4', region: 'Region C', segment: 'Distributor', totalRevenue: 290000, products: ['CPD-004'] },
+    { customerName: 'Customer D5', customerCode: 'CUST-B7-001', country: 'Country B7', region: 'Region B', segment: 'NGO', totalRevenue: 180000, products: ['CPD-005'] },
   ],
-  Solara: [
-    { customerName: 'AmerisourceBergen', customerCode: 'CUST-US-002', country: 'USA', region: 'North America', segment: 'Wholesale', totalRevenue: 680000, products: ['SOL-002'] },
-    { customerName: 'Apotheek Noord BV', customerCode: 'CUST-NL-001', country: 'Netherlands', region: 'Europe', segment: 'Retail Chain', totalRevenue: 420000, products: ['SOL-001'] },
-    { customerName: 'Astellia Japan', customerCode: 'CUST-JP-001', country: 'Japan', region: 'Asia Pacific', segment: 'Partner', totalRevenue: 340000, products: ['SOL-003'] },
-    { customerName: 'Farmacías Guadalajara', customerCode: 'CUST-MX-001', country: 'Mexico', region: 'Latin America', segment: 'Retail Chain', totalRevenue: 2800000, products: ['SOL-004'] },
-    { customerName: 'Teva Israel', customerCode: 'CUST-IL-001', country: 'Israel', region: 'Middle East', segment: 'Partner', totalRevenue: 260000, products: ['SOL-005'] },
+  'Company E': [
+    { customerName: 'Customer E1', customerCode: 'CUST-D2-001', country: 'Country D1', region: 'Region D', segment: 'Wholesale', totalRevenue: 680000, products: ['CPE-002'] },
+    { customerName: 'Customer E2', customerCode: 'CUST-A6-001', country: 'Country A6', region: 'Region A', segment: 'Retail Chain', totalRevenue: 420000, products: ['CPE-001'] },
+    { customerName: 'Customer E3', customerCode: 'CUST-C5-001', country: 'Country C5', region: 'Region C', segment: 'Partner', totalRevenue: 340000, products: ['CPE-003'] },
+    { customerName: 'Customer E4', customerCode: 'CUST-F2-001', country: 'Country F2', region: 'Region F', segment: 'Retail Chain', totalRevenue: 2800000, products: ['CPE-004'] },
+    { customerName: 'Customer E5', customerCode: 'CUST-E4-001', country: 'Country E4', region: 'Region E', segment: 'Partner', totalRevenue: 260000, products: ['CPE-005'] },
   ],
 };

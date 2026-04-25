@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, SafeAreaView, useWindowDimensions, Modal,
+  TextInput, useWindowDimensions, Modal,
   Animated, TouchableWithoutFeedback,
 } from 'react-native';
-import { Search, X, ChevronLeft, ChevronRight, Users, MapPin, TrendingUp, Package, Globe, ArrowUpRight } from 'lucide-react-native';
+import { Search, X, ChevronLeft, ChevronRight, Users, MapPin, TrendingUp, Package, Globe, ArrowUpRight, ChartBar as BarChart2 } from 'lucide-react-native';
+import Svg, { Polyline, Circle, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   COLORS, COMPANY_COLORS, CUSTOMERS_BY_COMPANY, CUSTOMER_SKU_DETAILS,
@@ -33,7 +34,7 @@ function fmt(v: number) {
   return `$${v}`;
 }
 
-const COMPANIES = ['All', 'Strides', 'Instapill', 'One Source', 'Naari', 'Solara'];
+const COMPANIES = ['All', 'Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
 const PAGE_SIZE = 6;
 
 type CustomerEntry = {
@@ -47,6 +48,445 @@ type CustomerEntry = {
   company: string;
 };
 
+const SIDEBAR_TABS = ['SKU', 'Region', 'Products', 'Revenue'] as const;
+type SidebarTab = typeof SIDEBAR_TABS[number];
+
+// ─── Shared pill ──────────────────────────────────────────────────────────────
+function Pill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      style={[pl.pill, active && pl.pillActive]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <Text style={[pl.text, active && pl.textActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+const pl = StyleSheet.create({
+  pill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: N.border, backgroundColor: N.cardBg, marginRight: 5 },
+  pillActive: { backgroundColor: N.green, borderColor: N.green },
+  text: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  textActive: { color: '#fff' },
+});
+
+// ─── Section header ───────────────────────────────────────────────────────────
+function SH({ label, icon }: { label: string; icon?: React.ReactNode }) {
+  return (
+    <View style={sh.row}>
+      {icon && <View style={sh.icon}>{icon}</View>}
+      <Text style={sh.text}>{label}</Text>
+      <View style={sh.line} />
+    </View>
+  );
+}
+const sh = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, marginBottom: 6 },
+  icon: { opacity: 0.6 },
+  text: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.7 },
+  line: { flex: 1, height: 1, backgroundColor: N.border },
+});
+
+// ─── Spark line ───────────────────────────────────────────────────────────────
+function SparkLine({ data, color, h = 40 }: { data: number[]; color: string; h?: number }) {
+  const [w, setW] = useState(0);
+  if (!data || data.length < 2) return null;
+  const mx = Math.max(...data), mn = Math.min(...data), range = mx - mn || 1, pad = 4;
+  if (w === 0) return <View style={{ height: h }} onLayout={e => setW(e.nativeEvent.layout.width)} />;
+  const pts = data.map((v, i) => `${pad + (i / (data.length - 1)) * (w - pad * 2)},${pad + ((mx - v) / range) * (h - pad * 2)}`);
+  const last = pts[pts.length - 1].split(',');
+  return (
+    <View onLayout={e => setW(e.nativeEvent.layout.width)}>
+      <Svg width={w} height={h}>
+        <Polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        <Circle cx={last[0]} cy={last[1]} r={3.5} fill={color} />
+      </Svg>
+    </View>
+  );
+}
+
+function MiniBar({ data, color, h = 44 }: { data: { label: string; value: number }[]; color: string; h?: number }) {
+  const [w, setW] = useState(0);
+  if (w === 0) return <View style={{ height: h }} onLayout={e => setW(e.nativeEvent.layout.width)} />;
+  const max = Math.max(...data.map(d => d.value)) || 1;
+  const gap = 4, barW = (w - gap * (data.length - 1)) / data.length;
+  return (
+    <View onLayout={e => setW(e.nativeEvent.layout.width)}>
+      <Svg width={w} height={h}>
+        {data.map((d, i) => {
+          const bh = Math.max(3, (d.value / max) * (h - 4));
+          return <Rect key={i} x={i * (barW + gap)} y={h - 4 - bh} width={barW} height={bh} rx={3} fill={color} opacity={0.75} />;
+        })}
+      </Svg>
+    </View>
+  );
+}
+
+// ─── Customer banner shown inside each tab ────────────────────────────────────
+function CustomerBanner({ customer, cc }: { customer: CustomerEntry; cc: string }) {
+  return (
+    <View style={cb.wrap}>
+      <View style={[cb.avatar, { backgroundColor: cc + '18' }]}>
+        <Text style={[cb.initials, { color: cc }]}>{customer.customerName.substring(0, 2).toUpperCase()}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={cb.name}>{customer.customerName}</Text>
+        <View style={cb.meta}>
+          <MapPin size={9} color={N.muted} />
+          <Text style={cb.metaText}>{customer.country} · {customer.region}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+const cb = StyleSheet.create({
+  wrap: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, marginBottom: 8 },
+  avatar: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  initials: { fontSize: 11, fontFamily: 'Poppins-Bold' },
+  name: { fontSize: 13, fontFamily: 'Poppins-Bold', color: N.dark },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
+  metaText: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+});
+
+// ─── SKU Tab ──────────────────────────────────────────────────────────────────
+function SkuTab({ customer, cc, skus }: { customer: CustomerEntry; cc: string; skus: CustomerSKUDetail[] }) {
+  const [regionFilter, setRegionFilter] = useState('All');
+  const regions = useMemo(() => [...new Set(skus.map(s => s.region))], [skus]);
+  const filtered = useMemo(() => skus.filter(s => regionFilter === 'All' || s.region === regionFilter), [skus, regionFilter]);
+
+  return (
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={st.content}>
+      <CustomerBanner customer={customer} cc={cc} />
+
+      <View style={st.filterBlock}>
+        <Text style={st.filterLabel}>Region</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.filterRow}>
+          {['All', ...regions].map(r => (
+            <Pill key={r} label={r} active={regionFilter === r} onPress={() => setRegionFilter(r)} />
+          ))}
+        </ScrollView>
+      </View>
+
+      <SH label={`${filtered.length} SKU${filtered.length !== 1 ? 's' : ''}`} icon={<Package size={12} color={COLORS.gray500} />} />
+
+      <View style={st.table}>
+        <View style={st.tableHead}>
+          <Text style={[st.tableH, { flex: 1 }]}>SKU</Text>
+          <Text style={[st.tableH, { flex: 2 }]}>Product</Text>
+          <Text style={[st.tableH, { flex: 1 }]}>Region</Text>
+          <Text style={[st.tableH, { flex: 1, textAlign: 'right' }]}>Revenue</Text>
+        </View>
+        {filtered.length === 0 ? (
+          <View style={st.empty}><Text style={st.emptyText}>No SKUs for selected region</Text></View>
+        ) : filtered.map((s, i) => (
+          <View key={s.sku} style={[st.row, i < filtered.length - 1 && st.rowBorder]}>
+            <View style={{ flex: 1 }}>
+              <View style={st.skuBadge}>
+                <Text style={st.skuBadgeText} numberOfLines={1}>{s.sku}</Text>
+              </View>
+            </View>
+            <Text style={[st.productText, { flex: 2 }]} numberOfLines={2}>{s.product}</Text>
+            <Text style={[st.regionText, { flex: 1 }]} numberOfLines={1}>{s.region}</Text>
+            <Text style={[st.revenueText, { flex: 1 }]}>{fmt(s.revenue)}</Text>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+const st = StyleSheet.create({
+  content: { padding: 10, paddingBottom: 32 },
+  filterBlock: { backgroundColor: N.headBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, padding: 8, marginBottom: 4 },
+  filterLabel: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 5 },
+  filterRow: { flexDirection: 'row', alignItems: 'center' },
+  table: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, overflow: 'hidden' },
+  tableHead: { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 7, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  tableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 9, gap: 6 },
+  rowBorder: { borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  skuBadge: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignSelf: 'flex-start' },
+  skuBadgeText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  productText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  regionText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
+  revenueText: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, textAlign: 'right' },
+  empty: { padding: 20, alignItems: 'center' },
+  emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
+});
+
+// ─── Region Tab ───────────────────────────────────────────────────────────────
+function RegionTab({ customer, cc, skus }: { customer: CustomerEntry; cc: string; skus: CustomerSKUDetail[] }) {
+  const regionDist = useMemo(() => {
+    const map: Record<string, { skus: CustomerSKUDetail[]; revenue: number }> = {};
+    skus.forEach(s => {
+      if (!map[s.region]) map[s.region] = { skus: [], revenue: 0 };
+      map[s.region].skus.push(s);
+      map[s.region].revenue += s.revenue;
+    });
+    return Object.entries(map).sort((a, b) => b[1].revenue - a[1].revenue);
+  }, [skus]);
+
+  return (
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={rgt.content}>
+      <CustomerBanner customer={customer} cc={cc} />
+      <SH label="Region Distribution" icon={<Globe size={12} color={COLORS.gray500} />} />
+      {regionDist.length === 0 ? (
+        <View style={rgt.empty}><Text style={rgt.emptyText}>No region data available</Text></View>
+      ) : regionDist.map(([region, info]) => (
+        <View key={region} style={rgt.regionCard}>
+          <View style={rgt.regionHead}>
+            <View style={rgt.regionIconWrap}><Globe size={14} color={N.muted} /></View>
+            <Text style={rgt.regionTitle}>{region}</Text>
+            <View style={rgt.regionRight}>
+              <Text style={rgt.regionSkuCount}>{info.skus.length} SKU{info.skus.length !== 1 ? 's' : ''}</Text>
+              <Text style={[rgt.regionRev, { color: cc }]}>{fmt(info.revenue)}</Text>
+            </View>
+          </View>
+          <View style={rgt.skuTable}>
+            <View style={rgt.skuTableHead}>
+              <Text style={[rgt.skuTableH, { flex: 1 }]}>SKU</Text>
+              <Text style={[rgt.skuTableH, { flex: 2 }]}>Product</Text>
+              <Text style={[rgt.skuTableH, { flex: 1, textAlign: 'right' }]}>Revenue</Text>
+            </View>
+            {info.skus.map((s, i) => (
+              <View key={s.sku} style={[rgt.skuRow, i < info.skus.length - 1 && rgt.skuRowBorder]}>
+                <View style={{ flex: 1 }}>
+                  <View style={rgt.skuBadge}>
+                    <Text style={rgt.skuBadgeText} numberOfLines={1}>{s.sku}</Text>
+                  </View>
+                </View>
+                <Text style={[rgt.skuProductText, { flex: 2 }]} numberOfLines={1}>{s.product}</Text>
+                <Text style={[rgt.skuRevText, { flex: 1 }]}>{fmt(s.revenue)}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+const rgt = StyleSheet.create({
+  content: { padding: 10, paddingBottom: 32 },
+  empty: { paddingVertical: 20, alignItems: 'center' },
+  emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
+  regionCard: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, padding: 10, marginBottom: 8 },
+  regionHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  regionIconWrap: { width: 24, height: 24, borderRadius: 6, backgroundColor: N.headBg, borderWidth: 1, borderColor: N.border, alignItems: 'center', justifyContent: 'center' },
+  regionTitle: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Bold', color: N.dark },
+  regionRight: { alignItems: 'flex-end', gap: 1 },
+  regionSkuCount: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted },
+  regionRev: { fontSize: 12, fontFamily: 'Poppins-Bold' },
+  skuTable: { backgroundColor: N.cardBg, borderRadius: 6, borderWidth: 1, borderColor: N.border, overflow: 'hidden' },
+  skuTableHead: { flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 5, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  skuTableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
+  skuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 7, gap: 6 },
+  skuRowBorder: { borderBottomWidth: 1, borderBottomColor: N.borderLt },
+  skuBadge: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignSelf: 'flex-start' },
+  skuBadgeText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  skuProductText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  skuRevText: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, textAlign: 'right' },
+});
+
+// ─── Products Tab ─────────────────────────────────────────────────────────────
+function ProductsTab({ customer, cc, skus }: { customer: CustomerEntry; cc: string; skus: CustomerSKUDetail[] }) {
+  const productDist = useMemo(() => {
+    const map: Record<string, { skus: CustomerSKUDetail[]; revenue: number }> = {};
+    skus.forEach(s => {
+      if (!map[s.product]) map[s.product] = { skus: [], revenue: 0 };
+      map[s.product].skus.push(s);
+      map[s.product].revenue += s.revenue;
+    });
+    return Object.entries(map).sort((a, b) => b[1].revenue - a[1].revenue);
+  }, [skus]);
+
+  const totalRev = skus.reduce((s, r) => s + r.revenue, 0) || customer.totalRevenue;
+
+  return (
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={pt.content}>
+      <CustomerBanner customer={customer} cc={cc} />
+      <View style={pt.kpiRow}>
+        <View style={pt.kpi}>
+          <Text style={[pt.kpiVal, { color: N.dark }]}>{productDist.length}</Text>
+          <Text style={pt.kpiLabel}>Products</Text>
+        </View>
+        <View style={pt.kpiDivider} />
+        <View style={pt.kpi}>
+          <Text style={[pt.kpiVal, { color: N.dark }]}>{skus.length}</Text>
+          <Text style={pt.kpiLabel}>SKUs</Text>
+        </View>
+        <View style={pt.kpiDivider} />
+        <View style={pt.kpi}>
+          <Text style={[pt.kpiVal, { color: cc }]}>{fmt(totalRev)}</Text>
+          <Text style={pt.kpiLabel}>Revenue</Text>
+        </View>
+      </View>
+      <SH label="Products" icon={<Package size={12} color={COLORS.gray500} />} />
+      {productDist.length === 0 ? (
+        <View style={pt.empty}><Text style={pt.emptyText}>No product data available</Text></View>
+      ) : productDist.map(([product, info]) => {
+        const pct = totalRev > 0 ? (info.revenue / totalRev) * 100 : 0;
+        return (
+          <View key={product} style={pt.productCard}>
+            <View style={pt.productHead}>
+              <View style={[pt.productIconWrap, { backgroundColor: cc + '18' }]}>
+                <Package size={13} color={cc} />
+              </View>
+              <Text style={pt.productName} numberOfLines={1}>{product}</Text>
+              <Text style={[pt.productRev, { color: cc }]}>{fmt(info.revenue)}</Text>
+            </View>
+            <View style={pt.progressRow}>
+              <View style={pt.progressTrack}>
+                <View style={[pt.progressFill, { width: `${pct}%`, backgroundColor: cc + 'aa' }]} />
+              </View>
+              <Text style={pt.progressPct}>{pct.toFixed(0)}%</Text>
+            </View>
+            <View style={pt.skuTagRow}>
+              {info.skus.map(s => (
+                <View key={s.sku} style={pt.skuTag}>
+                  <Text style={pt.skuTagText}>{s.sku}</Text>
+                </View>
+              ))}
+              <Text style={pt.skuTagMeta}>{info.skus.length} SKU{info.skus.length !== 1 ? 's' : ''} · {[...new Set(info.skus.map(s => s.region))].join(', ')}</Text>
+            </View>
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+const pt = StyleSheet.create({
+  content: { padding: 10, paddingBottom: 32 },
+  kpiRow: { flexDirection: 'row', backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, paddingVertical: 10, paddingHorizontal: 6, marginBottom: 4 },
+  kpi: { flex: 1, alignItems: 'center', gap: 2 },
+  kpiDivider: { width: 1, backgroundColor: N.border, marginVertical: 4 },
+  kpiVal: { fontSize: 15, fontFamily: 'Poppins-Bold' },
+  kpiLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, textAlign: 'center' },
+  empty: { paddingVertical: 20, alignItems: 'center' },
+  emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
+  productCard: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, padding: 10, marginBottom: 8 },
+  productHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  productIconWrap: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  productName: { flex: 1, fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  productRev: { fontSize: 12, fontFamily: 'Poppins-Bold' },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  progressTrack: { flex: 1, height: 4, backgroundColor: N.borderLt, borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: 4, borderRadius: 2 },
+  progressPct: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.muted, minWidth: 30, textAlign: 'right' },
+  skuTagRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4 },
+  skuTag: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
+  skuTagText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
+  skuTagMeta: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.faint },
+});
+
+// ─── Revenue Tab ──────────────────────────────────────────────────────────────
+function RevenueTab({ customer, cc, skus }: { customer: CustomerEntry; cc: string; skus: CustomerSKUDetail[] }) {
+  const totalRev = skus.reduce((s, r) => s + r.revenue, 0) || customer.totalRevenue;
+
+  const byRegion = useMemo(() => {
+    const map: Record<string, number> = {};
+    skus.forEach(s => { map[s.region] = (map[s.region] || 0) + s.revenue; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [skus]);
+
+  const byProduct = useMemo(() => {
+    const map: Record<string, number> = {};
+    skus.forEach(s => { map[s.product] = (map[s.product] || 0) + s.revenue; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [skus]);
+
+  const sparkData = skus.map(s => s.revenue);
+  const barData = byProduct.slice(0, 6).map(([label, value]) => ({ label: label.split(' ')[1] || label, value }));
+  const maxReg = Math.max(...byRegion.map(r => r[1])) || 1;
+
+  return (
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={rvt.content}>
+      <CustomerBanner customer={customer} cc={cc} />
+
+      <View style={[rvt.heroCard, { borderColor: cc + '40', backgroundColor: cc + '08' }]}>
+        <View>
+          <Text style={[rvt.heroAmount, { color: cc }]}>{fmt(totalRev)}</Text>
+          <Text style={rvt.heroLabel}>Total Revenue</Text>
+        </View>
+        <View style={rvt.heroStats}>
+          <View style={rvt.heroStat}>
+            <Text style={rvt.heroStatVal}>{skus.length}</Text>
+            <Text style={rvt.heroStatLabel}>{skus.length === 1 ? 'SKU' : 'SKUs'}</Text>
+          </View>
+          <View style={rvt.heroDivider} />
+          <View style={rvt.heroStat}>
+            <Text style={rvt.heroStatVal}>{byRegion.length}</Text>
+            <Text style={rvt.heroStatLabel}>{byRegion.length === 1 ? 'Region' : 'Regions'}</Text>
+          </View>
+        </View>
+      </View>
+
+      {sparkData.length > 1 && (
+        <View style={rvt.chartCard}>
+          <Text style={rvt.chartTitle}>Revenue by SKU</Text>
+          <SparkLine data={sparkData} color={cc} h={48} />
+        </View>
+      )}
+
+      {barData.length > 0 && (
+        <View style={rvt.chartCard}>
+          <Text style={rvt.chartTitle}>Top Products</Text>
+          <MiniBar data={barData} color={cc} h={48} />
+          <View style={rvt.barLabelRow}>
+            {barData.map((d, i) => <Text key={i} style={rvt.barLabel} numberOfLines={1}>{d.label}</Text>)}
+          </View>
+        </View>
+      )}
+
+      <SH label="By Region" icon={<Globe size={12} color={COLORS.gray500} />} />
+      {byRegion.map(([region, rev]) => (
+        <View key={region} style={rvt.listRow}>
+          <View style={rvt.listIcon}><Globe size={11} color={N.muted} /></View>
+          <Text style={rvt.listLabel} numberOfLines={1}>{region}</Text>
+          <View style={rvt.barTrack}>
+            <View style={[rvt.barFill, { width: `${(rev / maxReg) * 100}%`, backgroundColor: cc + '99' }]} />
+          </View>
+          <Text style={[rvt.listVal, { color: cc }]}>{fmt(rev)}</Text>
+        </View>
+      ))}
+
+      <SH label="By Product" icon={<Package size={12} color={COLORS.gray500} />} />
+      {byProduct.map(([prod, rev]) => {
+        const pct = totalRev > 0 ? (rev / totalRev) * 100 : 0;
+        return (
+          <View key={prod} style={rvt.listRow}>
+            <View style={rvt.listIcon}><Package size={11} color={N.muted} /></View>
+            <Text style={rvt.listLabel} numberOfLines={1}>{prod}</Text>
+            <View style={rvt.barTrack}>
+              <View style={[rvt.barFill, { width: `${pct}%`, backgroundColor: cc + '99' }]} />
+            </View>
+            <Text style={[rvt.listVal, { color: cc }]}>{fmt(rev)}</Text>
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+const rvt = StyleSheet.create({
+  content: { padding: 10, paddingBottom: 32 },
+  heroCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 8, padding: 14, marginBottom: 8 },
+  heroAmount: { fontSize: 20, fontFamily: 'Poppins-Bold' },
+  heroLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 2 },
+  heroStats: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  heroStat: { alignItems: 'center' },
+  heroStatVal: { fontSize: 16, fontFamily: 'Poppins-Bold', color: N.dark },
+  heroStatLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
+  heroDivider: { width: 1, height: 28, backgroundColor: N.border },
+  chartCard: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, padding: 10, marginBottom: 8 },
+  chartTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 },
+  barLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  barLabel: { flex: 1, fontSize: 9, fontFamily: 'Poppins-Regular', color: N.faint, textAlign: 'center' },
+  listRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: N.borderLt, gap: 7 },
+  listIcon: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignItems: 'center', justifyContent: 'center' },
+  listLabel: { flex: 1, fontSize: 11, fontFamily: 'Poppins-Regular', color: N.dark },
+  barTrack: { width: 60, height: 4, backgroundColor: N.borderLt, borderRadius: 2, overflow: 'hidden' },
+  barFill: { height: 4, borderRadius: 2 },
+  listVal: { fontSize: 11, fontFamily: 'Poppins-Bold', minWidth: 48, textAlign: 'right' },
+});
+
 // ─── Customer Sidebar ─────────────────────────────────────────────────────────
 function CustomerSidebar({ customer, visible, onClose }: {
   customer: CustomerEntry | null;
@@ -57,6 +497,7 @@ function CustomerSidebar({ customer, visible, onClose }: {
   const drawerW = Math.min(sw * 0.94, 500);
   const slideAnim = useRef(new Animated.Value(drawerW)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [activeTab, setActiveTab] = useState<SidebarTab>('SKU');
 
   useEffect(() => { slideAnim.setValue(drawerW); }, [drawerW]);
 
@@ -135,86 +576,34 @@ function CustomerSidebar({ customer, visible, onClose }: {
           </View>
         </View>
 
-        {/* SKU Details Table */}
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={csd.scrollContent}>
-          <View style={csd.sectionHeader}>
-            <Package size={12} color={N.muted} />
-            <Text style={csd.sectionTitle}>SKU Details</Text>
-            <View style={csd.sectionLine} />
-          </View>
+        {/* Tab bar */}
+        <View style={csd.tabBar}>
+          {SIDEBAR_TABS.map(t => {
+            const isActive = activeTab === t;
+            return (
+              <TouchableOpacity
+                key={t}
+                style={[csd.tabBtn, isActive && { borderBottomColor: cc }]}
+                onPress={() => setActiveTab(t)}
+                activeOpacity={0.8}
+              >
+                {t === 'SKU' && <Package size={13} color={isActive ? cc : N.faint} />}
+                {t === 'Region' && <Globe size={13} color={isActive ? cc : N.faint} />}
+                {t === 'Products' && <BarChart2 size={13} color={isActive ? cc : N.faint} />}
+                {t === 'Revenue' && <TrendingUp size={13} color={isActive ? cc : N.faint} />}
+                <Text style={[csd.tabText, isActive && { color: cc }]}>{t}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-          <View style={csd.table}>
-            <View style={csd.tableHead}>
-              <Text style={[csd.tableH, { flex: 1 }]}>SKU</Text>
-              <Text style={[csd.tableH, { flex: 2 }]}>Product</Text>
-              <Text style={[csd.tableH, { flex: 1 }]}>Region</Text>
-              <Text style={[csd.tableH, { flex: 1, textAlign: 'right' }]}>Revenue</Text>
-            </View>
-            {skus.length === 0 ? (
-              <View style={csd.empty}>
-                <Text style={csd.emptyText}>No SKU details available</Text>
-              </View>
-            ) : skus.map((s, i) => (
-              <View key={s.sku} style={[csd.tableRow, i < skus.length - 1 && csd.tableRowBorder]}>
-                <View style={{ flex: 1 }}>
-                  <View style={csd.skuBadge}>
-                    <Text style={csd.skuBadgeText} numberOfLines={1}>{s.sku}</Text>
-                  </View>
-                </View>
-                <Text style={[csd.productText, { flex: 2 }]} numberOfLines={2}>{s.product}</Text>
-                <Text style={[csd.regionText, { flex: 1 }]} numberOfLines={1}>{s.region}</Text>
-                <Text style={[csd.revenueText, { flex: 1 }]}>{fmt(s.revenue)}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Revenue Summary */}
-          <View style={csd.sectionHeader}>
-            <TrendingUp size={12} color={N.muted} />
-            <Text style={csd.sectionTitle}>Revenue Summary</Text>
-            <View style={csd.sectionLine} />
-          </View>
-          <View style={[csd.heroCard, { borderColor: cc + '40', backgroundColor: cc + '08' }]}>
-            <View>
-              <Text style={[csd.heroAmount, { color: cc }]}>{fmt(totalRev)}</Text>
-              <Text style={csd.heroLabel}>Total Revenue</Text>
-            </View>
-            <View style={csd.heroRight}>
-              <View style={csd.heroStat}>
-                <Text style={csd.heroStatVal}>{skus.length}</Text>
-                <Text style={csd.heroStatLabel}>{skus.length === 1 ? 'SKU' : 'SKUs'}</Text>
-              </View>
-              <View style={[csd.heroDivider]} />
-              <View style={csd.heroStat}>
-                <Text style={csd.heroStatVal}>{regions.length}</Text>
-                <Text style={csd.heroStatLabel}>{regions.length === 1 ? 'Region' : 'Regions'}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Region breakdown */}
-          {regions.length > 0 && (
-            <>
-              <View style={csd.sectionHeader}>
-                <Globe size={12} color={N.muted} />
-                <Text style={csd.sectionTitle}>By Region</Text>
-                <View style={csd.sectionLine} />
-              </View>
-              {regions.map(region => {
-                const regionSkus = skus.filter(s => s.region === region);
-                const regionRev = regionSkus.reduce((sum, s) => sum + s.revenue, 0);
-                return (
-                  <View key={region} style={csd.regionRow}>
-                    <Globe size={11} color={N.muted} />
-                    <Text style={csd.regionLabel}>{region}</Text>
-                    <Text style={csd.regionSkuCount}>{regionSkus.length} SKU{regionSkus.length !== 1 ? 's' : ''}</Text>
-                    <Text style={[csd.regionRev, { color: cc }]}>{fmt(regionRev)}</Text>
-                  </View>
-                );
-              })}
-            </>
-          )}
-        </ScrollView>
+        {/* Tab content */}
+        <View style={{ flex: 1 }}>
+          {activeTab === 'SKU' && <SkuTab customer={customer} cc={cc} skus={skus} />}
+          {activeTab === 'Region' && <RegionTab customer={customer} cc={cc} skus={skus} />}
+          {activeTab === 'Products' && <ProductsTab customer={customer} cc={cc} skus={skus} />}
+          {activeTab === 'Revenue' && <RevenueTab customer={customer} cc={cc} skus={skus} />}
+        </View>
       </Animated.View>
     </Modal>
   );
@@ -242,34 +631,9 @@ const csd = StyleSheet.create({
   compTagText: { fontSize: 11, fontFamily: 'Poppins-SemiBold' },
   segTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg },
   segTagText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  scrollContent: { padding: 12, paddingBottom: 32 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, marginBottom: 7 },
-  sectionTitle: { fontSize: 9, fontFamily: 'Poppins-Bold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.7 },
-  sectionLine: { flex: 1, height: 1, backgroundColor: N.border },
-  table: { backgroundColor: N.cardBg, borderRadius: 8, borderWidth: 1, borderColor: N.border, overflow: 'hidden' },
-  tableHead: { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 7, backgroundColor: N.headBg, borderBottomWidth: 1, borderBottomColor: N.border },
-  tableH: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
-  tableRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 9, gap: 6 },
-  tableRowBorder: { borderBottomWidth: 1, borderBottomColor: N.borderLt },
-  skuBadge: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: N.border, backgroundColor: N.headBg, alignSelf: 'flex-start' },
-  skuBadgeText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: N.mid },
-  productText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
-  regionText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
-  revenueText: { fontSize: 11, fontFamily: 'Poppins-Bold', color: N.green, textAlign: 'right' },
-  empty: { padding: 20, alignItems: 'center' },
-  emptyText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.faint },
-  heroCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 8, padding: 14, marginBottom: 4 },
-  heroAmount: { fontSize: 20, fontFamily: 'Poppins-Bold' },
-  heroLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted, marginTop: 2 },
-  heroRight: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  heroStat: { alignItems: 'center' },
-  heroStatVal: { fontSize: 16, fontFamily: 'Poppins-Bold', color: N.dark },
-  heroStatLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: N.muted },
-  heroDivider: { width: 1, height: 28, backgroundColor: N.border },
-  regionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: N.borderLt },
-  regionLabel: { flex: 1, fontSize: 11, fontFamily: 'Poppins-Regular', color: N.dark },
-  regionSkuCount: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.muted },
-  regionRev: { fontSize: 11, fontFamily: 'Poppins-Bold', minWidth: 48, textAlign: 'right' },
+  tabBar: { flexDirection: 'row', backgroundColor: N.cardBg, borderBottomWidth: 1, borderBottomColor: N.border },
+  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 10, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.faint },
 });
 
 // ─── Main Customer Details View ───────────────────────────────────────────────
@@ -292,8 +656,6 @@ export default function CustomerStatusTab() {
     return result;
   }, []);
 
-  const allCustomerNames = useMemo(() => ['All', ...allCustomers.map(c => c.customerName)], [allCustomers]);
-
   const filtered = useMemo(() => {
     let items = allCustomers;
     if (companyFilter !== 'All') items = items.filter(c => c.company === companyFilter);
@@ -314,7 +676,6 @@ export default function CustomerStatusTab() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const pageCustomers = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-
   const totalRevenue = filtered.reduce((s, c) => s + c.totalRevenue, 0);
 
   const openSidebar = (customer: CustomerEntry) => {

@@ -724,7 +724,7 @@ function RevenueTab({ group }: { group: MolGroup }) {
   const sparkData = useMemo(() =>
     monthlyRevenue.slice(-8).map(row =>
       group.companies.reduce((s, c) => {
-        const k = c === 'One Source' ? 'oneSource' : c === 'Instapill' ? 'instapill' : c.toLowerCase() as any;
+        const k = c === 'Company A' ? 'companyA' : c === 'Company B' ? 'companyB' : c === 'Company C' ? 'oneSource' : c === 'Company D' ? 'companyD' : 'companyE';
         return s + ((row as any)[k] || 0);
       }, 0)
     ), [group.companies]);
@@ -740,7 +740,7 @@ function RevenueTab({ group }: { group: MolGroup }) {
     const base = monthlyRevenue.slice(-6).map(row => ({
       label: row.month.replace(' 24', ''),
       value: group.companies.reduce((s, c) => {
-        const k = c === 'One Source' ? 'oneSource' : c === 'Instapill' ? 'instapill' : c.toLowerCase() as any;
+        const k = c === 'Company A' ? 'companyA' : c === 'Company B' ? 'companyB' : c === 'Company C' ? 'oneSource' : c === 'Company D' ? 'companyD' : 'companyE';
         return s + ((row as any)[k] || 0);
       }, 0),
     }));
@@ -1005,7 +1005,7 @@ const sid = StyleSheet.create({
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN PRODUCT PORTFOLIO VIEW
 // ─────────────────────────────────────────────────────────────────────────────
-const COMPANIES = ['All', 'Strides', 'Instapill', 'One Source', 'Naari', 'Solara'];
+const COMPANIES = ['All', 'Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
 const PAGE_SIZE = 6;
 const TOP_TABS = ['Product Portfolio', 'Customer Details'];
 
