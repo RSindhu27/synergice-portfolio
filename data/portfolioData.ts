@@ -50,7 +50,7 @@ export const companyMetrics: Record<string, { products: number; revenue: number;
   'Company B': { products: 8, revenue: 456120, topRegion: 'Region C', topCustomer: 'Customer B1', sparkline: [30, 28, 35, 40, 38, 42, 45, 48, 52, 50, 55, 60], growth: 18.2, color: '#df6d14' },
   'Company C': { products: 7, revenue: 289650, topRegion: 'Region B', topCustomer: 'Customer C1', sparkline: [18, 20, 22, 25, 28, 26, 30, 32, 35, 33, 38, 40], growth: 9.8, color: '#c9a84c' },
   'Company D': { products: 7, revenue: 178340, topRegion: 'Region C', topCustomer: 'Customer D1', sparkline: [12, 14, 13, 15, 16, 18, 17, 20, 22, 21, 24, 26], growth: 15.6, color: '#4a90a4' },
-  'Company E': { products: 8, revenue: 207800, topRegion: 'Region D', topCustomer: 'Customer E1', sparkline: [15, 16, 18, 20, 19, 22, 25, 24, 28, 30, 32, 35], growth: 11.2, color: '#8a5fa8' },
+  'Company E': { products: 8, revenue: 207800, topRegion: 'Region D', topCustomer: 'Customer E1', sparkline: [15, 16, 18, 20, 19, 22, 25, 24, 28, 30, 32, 35], growth: 11.2, color: '#5f7fbf' },
 };
 
 export type CustomerSKUDetail = {

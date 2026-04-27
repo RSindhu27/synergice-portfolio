@@ -86,50 +86,50 @@ interface Props {
 }
 
 const COMPANY_FOCUS: Record<string, { primary: string; region: string; risk: string; riskLevel: string; insights: string[]; regions: { label: string; pct: number }[]; countries: string[] }> = {
-  Strides: {
-    primary: 'Cardiovascular & GI',
-    region: 'Europe',
-    risk: 'Regulatory shifts in European markets may impact timeline for Q4 launches.',
+  'Company A': {
+    primary: 'Therapeutic Area A & B',
+    region: 'Region A',
+    risk: 'Regulatory changes in Region A markets may impact timeline for upcoming launches.',
     riskLevel: 'Medium',
-    insights: ['Generic portfolio expansion in EU', 'GI franchise strengthening in ME', 'Biosimilar pipeline diversification'],
-    regions: [{ label: 'Europe', pct: 45 }, { label: 'Africa', pct: 20 }, { label: 'Asia Pacific', pct: 18 }, { label: 'Others', pct: 17 }],
-    countries: ['Germany', 'France', 'Nigeria', 'Australia', 'UAE'],
+    insights: ['Generic portfolio expansion in Region A', 'Therapeutic Area B franchise strengthening', 'Biosimilar pipeline diversification'],
+    regions: [{ label: 'Region A', pct: 45 }, { label: 'Region B', pct: 20 }, { label: 'Region C', pct: 18 }, { label: 'Others', pct: 17 }],
+    countries: ['Country A1', 'Country A2', 'Country B1', 'Country C1', 'Country D1'],
   },
-  Instapill: {
-    primary: 'Diabetes & Metabolic',
-    region: 'Asia Pacific',
-    risk: 'Biosimilar price erosion in insulin segment may compress margins.',
+  'Company B': {
+    primary: 'Therapeutic Area A & C',
+    region: 'Region B',
+    risk: 'Price erosion in key product segments may compress margins in Region B.',
     riskLevel: 'High',
-    insights: ['Biosimilar insulin market leadership', 'SGLT2 inhibitor launch pipeline', 'Expansion into GLP-1 agonist space'],
-    regions: [{ label: 'Asia Pacific', pct: 40 }, { label: 'North America', pct: 28 }, { label: 'ME', pct: 18 }, { label: 'Others', pct: 14 }],
-    countries: ['India', 'Canada', 'Saudi Arabia', 'Spain', 'Kenya'],
+    insights: ['Market leadership in biosimilar segment', 'New molecule launch pipeline active', 'Expansion into adjacent therapeutic areas'],
+    regions: [{ label: 'Region B', pct: 40 }, { label: 'Region C', pct: 28 }, { label: 'Region D', pct: 18 }, { label: 'Others', pct: 14 }],
+    countries: ['Country B1', 'Country B2', 'Country C1', 'Country D1', 'Country E1'],
   },
-  'One Source': {
-    primary: 'Antiretroviral',
-    region: 'Africa',
-    risk: 'Donor funding dependency creates revenue concentration risk.',
+  'Company C': {
+    primary: 'Therapeutic Area C',
+    region: 'Region C',
+    risk: 'Tender funding dependency creates revenue concentration risk in Region C.',
     riskLevel: 'Medium',
-    insights: ['WHO PQ portfolio broadening', 'TLD FDC launch readiness', 'Sub-Saharan tender dominance'],
-    regions: [{ label: 'Africa', pct: 62 }, { label: 'Asia Pacific', pct: 18 }, { label: 'Latin America', pct: 12 }, { label: 'Others', pct: 8 }],
-    countries: ['South Africa', 'Ethiopia', 'Ghana', 'Philippines', 'Brazil'],
+    insights: ['Agency PQ portfolio broadening', 'FDC product launch readiness', 'Tender market dominance in Region C'],
+    regions: [{ label: 'Region C', pct: 62 }, { label: 'Region B', pct: 18 }, { label: 'Region D', pct: 12 }, { label: 'Others', pct: 8 }],
+    countries: ['Country C1', 'Country C2', 'Country C3', 'Country B1', 'Country D1'],
   },
-  Naari: {
-    primary: "Women's Health",
-    region: 'Asia Pacific',
-    risk: 'Regulatory approval delays in key markets may push revenue recognition.',
+  'Company D': {
+    primary: 'Therapeutic Area D',
+    region: 'Region D',
+    risk: 'Regulatory approval delays in key markets may push revenue recognition timelines.',
     riskLevel: 'Low',
-    insights: ["Women's health specialist positioning", 'ME market penetration accelerating', 'FDC sachet innovation pipeline'],
-    regions: [{ label: 'Asia Pacific', pct: 38 }, { label: 'Middle East', pct: 30 }, { label: 'Africa', pct: 20 }, { label: 'Europe', pct: 12 }],
-    countries: ['India', 'Kuwait', 'Indonesia', 'Tanzania', 'Italy'],
+    insights: ['Specialist positioning in Therapeutic Area D', 'Region E market penetration accelerating', 'FDC innovation pipeline active'],
+    regions: [{ label: 'Region D', pct: 38 }, { label: 'Region E', pct: 30 }, { label: 'Region B', pct: 20 }, { label: 'Region A', pct: 12 }],
+    countries: ['Country D1', 'Country D2', 'Country E1', 'Country B1', 'Country A1'],
   },
-  Solara: {
-    primary: 'CNS & Psychiatry',
-    region: 'North America',
-    risk: 'Generic competition intensifying in US CNS segment post-patent cliff.',
+  'Company E': {
+    primary: 'Therapeutic Area E',
+    region: 'Region E',
+    risk: 'Generic competition intensifying in Region E core segment post-patent cliff.',
     riskLevel: 'Medium',
-    insights: ['CNS extended-release portfolio', 'LATAM market entry strategy', 'Japan partnership for Donepezil'],
-    regions: [{ label: 'North America', pct: 40 }, { label: 'Europe', pct: 28 }, { label: 'Asia Pacific', pct: 18 }, { label: 'Latin America', pct: 14 }],
-    countries: ['USA', 'Netherlands', 'Japan', 'Mexico', 'Israel'],
+    insights: ['Extended-release portfolio leadership', 'Region F market entry strategy', 'Partnership for key molecules in Region A'],
+    regions: [{ label: 'Region E', pct: 40 }, { label: 'Region A', pct: 28 }, { label: 'Region B', pct: 18 }, { label: 'Region F', pct: 14 }],
+    countries: ['Country E1', 'Country E2', 'Country A1', 'Country F1', 'Country B1'],
   },
 };
 
@@ -159,9 +159,9 @@ export default function CompanyDrawerContent({ name }: Props) {
     color: THERAPEUTIC_COLORS[i % THERAPEUTIC_COLORS.length],
   }));
 
-  const companyMonthly = monthlyRevenue.slice(-6).map(m => {
-    const key = name.toLowerCase().replace(' ', '') as keyof typeof m;
-    return (m as any)[name === 'One Source' ? 'oneSource' : name === 'Instapill' ? 'instapill' : name === 'Strides' ? 'strides' : name === 'Naari' ? 'naari' : 'solara'] as number;
+  const companyMonthly = monthlyRevenue.slice(-6).map(row => {
+    const k = name === 'Company A' ? 'companyA' : name === 'Company B' ? 'companyB' : name === 'Company C' ? 'oneSource' : name === 'Company D' ? 'companyD' : 'companyE';
+    return (row as any)[k] as number;
   });
 
   const riskColor = focus?.riskLevel === 'High' ? COLORS.error : focus?.riskLevel === 'Medium' ? COLORS.warning : COLORS.success;
