@@ -5,7 +5,7 @@ import {
   Animated, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, X, ChevronLeft, ChevronRight, Upload, History, CreditCard as Edit2, Check, ChevronDown, Package, Briefcase, Clock, FileSpreadsheet, User, ArrowRight, Layers, Tag, MapPin, Building2, Activity } from 'lucide-react-native';
+import { Search, X, ChevronLeft, ChevronRight, Upload, History, Pencil, Check, ChevronDown, Package, Briefcase, Clock, FileSpreadsheet, User, ArrowRight, Layers, Tag, MapPin, Building2, Activity } from 'lucide-react-native';
 import { COLORS, COMPANY_COLORS } from '@/data/mockData';
 import {
   masterProducts, masterBD, auditLog,
@@ -162,7 +162,7 @@ function AuditLogDrawer({ visible, onClose }: { visible: boolean; onClose: () =>
 
   const actionIcon = (a: AuditEntry['action']) => {
     if (a === 'upload') return <FileSpreadsheet size={15} color={N.blue} />;
-    if (a === 'edit') return <Edit2 size={15} color={N.amber} />;
+    if (a === 'edit') return <Pencil size={15} color={N.amber} />;
     return <X size={15} color={N.red} />;
   };
 
@@ -420,7 +420,7 @@ function ProductCard({ item, labels, onEdit }: {
       <View style={pc.pillRow}>
         <Text style={pc.pillValue} numberOfLines={1}>{(item as any)[fkey]}</Text>
         <TouchableOpacity style={pc.editBtn} onPress={() => onEdit(fkey, labels[fkey], (item as any)[fkey])}>
-          <Edit2 size={10} color={COLORS.primary} />
+          <Pencil size={10} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -570,7 +570,7 @@ function BDCard({ item, labels, onEdit }: {
                 {ICONS[k]}
                 <Text style={bd.fieldCardLabel}>{labels[k]}</Text>
                 <TouchableOpacity style={bd.editBtn} onPress={() => onEdit(k, labels[k], (item as any)[k])}>
-                  <Edit2 size={9} color={COLORS.primary} />
+                  <Pencil size={9} color={COLORS.primary} />
                 </TouchableOpacity>
               </View>
               <Text style={bd.fieldCardValue} numberOfLines={1}>{(item as any)[k]}</Text>
@@ -768,37 +768,11 @@ export default function MasterDataScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
-      {/* ── Page header ── */}
-      <View style={s.pageHeader}>
-        <View style={s.pageHeaderLeft}>
-          <Text style={s.pageTitle}>Master Data</Text>
-          <Text style={s.pageSub}>Centralized product &amp; BD repository</Text>
-        </View>
-        <View style={s.headerActions}>
-          {/* Audit Log button */}
-          <TouchableOpacity
-            style={[s.auditBtn, auditHovered && s.auditBtnHover]}
-            onPress={() => setAuditVisible(true)}
-            // Web hover simulation via onPressIn/Out for RN
-            onPressIn={() => setAuditHovered(true)}
-            onPressOut={() => setAuditHovered(false)}
-          >
-            <History size={15} color={auditHovered ? COLORS.primary : N.muted} />
-            {auditHovered && (
-              <Text style={s.auditBtnText}>Audit Log</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Upload Excel */}
-          <TouchableOpacity style={s.uploadBtn}>
-            <Upload size={14} color="#fff" />
-            <Text style={s.uploadText}>Upload Excel</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* ── Global Filters ── */}
+      {/* ── Combined header + filters bar ── */}
       <View style={s.filtersBar}>
+        <View style={s.pageTitleWrap}>
+          <Text style={s.pageTitle}>Master Data</Text>
+        </View>
         <Dropdown label="Select Company" value={filterCompany} options={COMPANIES} onChange={v => { setFilterCompany(v); setProdPage(1); setBdPage(1); }} />
         <Dropdown label="Select Region" value={filterRegion} options={MASTER_REGIONS} onChange={v => { setFilterRegion(v); setProdPage(1); setBdPage(1); }} />
         {(filterCompany || filterRegion) && (
@@ -807,6 +781,24 @@ export default function MasterDataScreen() {
             <Text style={s.clearFiltersText}>Clear</Text>
           </TouchableOpacity>
         )}
+        <View style={s.filtersSpacer} />
+        {/* Audit Log button */}
+        <TouchableOpacity
+          style={[s.auditBtn, auditHovered && s.auditBtnHover]}
+          onPress={() => setAuditVisible(true)}
+          onPressIn={() => setAuditHovered(true)}
+          onPressOut={() => setAuditHovered(false)}
+        >
+          <History size={15} color={auditHovered ? COLORS.primary : N.muted} />
+          {auditHovered && (
+            <Text style={s.auditBtnText}>Audit Log</Text>
+          )}
+        </TouchableOpacity>
+        {/* Upload Excel */}
+        <TouchableOpacity style={s.uploadBtn}>
+          <Upload size={14} color="#fff" />
+          <Text style={s.uploadText}>Upload Excel</Text>
+        </TouchableOpacity>
       </View>
 
       {/* ── Tab bar ── */}
@@ -830,6 +822,7 @@ export default function MasterDataScreen() {
             </TouchableOpacity>
           );
         })}
+        <View style={s.tabBarFill} />
       </View>
 
       {/* ── Content ── */}
@@ -986,21 +979,8 @@ export default function MasterDataScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: N.pageBg },
 
-  pageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: N.cardBg,
-    borderBottomWidth: 1,
-    borderBottomColor: N.border,
-  },
-  pageHeaderLeft: {},
-  pageTitle: { fontSize: 18, fontFamily: 'Poppins-Bold', color: N.dark },
-  pageSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.faint, marginTop: 1 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  pageTitleWrap: { justifyContent: 'center', marginRight: 4 },
+  pageTitle: { fontSize: 15, fontFamily: 'Poppins-Bold', color: N.dark },
 
   auditBtn: {
     flexDirection: 'row',
@@ -1044,6 +1024,7 @@ const s = StyleSheet.create({
     flexWrap: 'wrap',
     zIndex: 10,
   },
+  filtersSpacer: { flex: 1 },
   clearFilters: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1062,14 +1043,14 @@ const s = StyleSheet.create({
     backgroundColor: N.cardBg,
     borderBottomWidth: 1,
     borderBottomColor: N.border,
-    paddingHorizontal: 16,
-    gap: 4,
   },
+  tabBarFill: { flex: 1 },
   tabBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
