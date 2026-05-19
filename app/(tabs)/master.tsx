@@ -140,138 +140,188 @@ const em = StyleSheet.create({
 // ─── Audit Log Drawer ─────────────────────────────────────────────────────────
 function AuditLogDrawer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
   const [mounted, setMounted] = useState(false);
   const { width: SW } = useWindowDimensions();
-  const drawerW = Math.min(SW * 0.92, 480);
+  const drawerW = Math.min(SW * 0.88, 460);
 
   useEffect(() => {
     if (visible) setMounted(true);
-    Animated.spring(slideAnim, {
-      toValue: visible ? 1 : 0,
-      useNativeDriver: true,
-      tension: 65,
-      friction: 11,
-    }).start(() => {
-      if (!visible) setMounted(false);
-    });
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: visible ? 1 : 0,
+        useNativeDriver: true,
+        tension: 70,
+        friction: 12,
+      }),
+      Animated.timing(overlayAnim, {
+        toValue: visible ? 1 : 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => { if (!visible) setMounted(false); });
   }, [visible]);
 
   const translateX = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [drawerW, 0] });
 
   if (!mounted) return null;
 
-  const actionIcon = (a: AuditEntry['action']) => {
-    if (a === 'upload') return <FileSpreadsheet size={15} color={N.blue} />;
-    if (a === 'edit') return <Pencil size={15} color={N.amber} />;
-    return <X size={15} color={N.red} />;
-  };
+  const uploadCount = auditLog.filter(e => e.action === 'upload').length;
+  const editCount = auditLog.filter(e => e.action === 'edit').length;
+  const totalRows = auditLog.reduce((s, e) => s + (e.rowsAffected || 0), 0);
 
-  const actionColors = (a: AuditEntry['action']) => {
-    if (a === 'upload') return { bg: N.blueBg, border: N.blueBdr, text: N.blue };
-    if (a === 'edit') return { bg: N.amberBg, border: N.amberBdr, text: N.amber };
-    return { bg: N.redBg, border: N.redBdr, text: N.red };
+  const actionMeta = (a: AuditEntry['action']) => {
+    if (a === 'upload') return { icon: <FileSpreadsheet size={14} color={N.blue} />, bg: N.blueBg, border: N.blueBdr, text: N.blue, label: 'Upload' };
+    if (a === 'edit') return { icon: <Pencil size={14} color={N.amber} />, bg: N.amberBg, border: N.amberBdr, text: N.amber, label: 'Edit' };
+    return { icon: <X size={14} color={N.red} />, bg: N.redBg, border: N.redBdr, text: N.red, label: 'Delete' };
   };
 
   return (
     <Modal visible transparent animationType="none">
-      <TouchableOpacity style={al.overlay} activeOpacity={1} onPress={onClose} />
+      <Animated.View style={[al.overlay, { opacity: overlayAnim }]} pointerEvents="box-none">
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+      </Animated.View>
       <Animated.View style={[al.drawer, { width: drawerW, transform: [{ translateX }] }]}>
-        {/* Header */}
-        <LinearGradient colors={[COLORS.primaryDark, COLORS.primary]} style={al.drawerHeader}>
-          <View style={al.drawerHeaderInner}>
-            <View style={al.headerIconWrap}>
+
+        {/* ── Gradient header ── */}
+        <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, '#3d8b4a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={al.drawerHeader}>
+          <View style={al.drawerHeaderTop}>
+            <View style={al.headerIconCircle}>
               <History size={18} color={COLORS.goldLight} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={al.drawerTitle}>Audit Log</Text>
-              <Text style={al.drawerSub}>{auditLog.length} entries · All modules</Text>
+              <Text style={al.drawerTitle}>Audit Trail</Text>
+              <Text style={al.drawerSub}>Complete change history · Master Data</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={al.closeBtn}>
-              <X size={18} color="rgba(255,255,255,0.8)" />
+              <X size={16} color="rgba(255,255,255,0.9)" />
             </TouchableOpacity>
           </View>
+
+          {/* Stats strip */}
+          <View style={al.statsStrip}>
+            <View style={al.statItem}>
+              <Text style={al.statNum}>{auditLog.length}</Text>
+              <Text style={al.statLabel}>Total Events</Text>
+            </View>
+            <View style={al.statDivider} />
+            <View style={al.statItem}>
+              <Text style={al.statNum}>{uploadCount}</Text>
+              <Text style={al.statLabel}>Uploads</Text>
+            </View>
+            <View style={al.statDivider} />
+            <View style={al.statItem}>
+              <Text style={al.statNum}>{editCount}</Text>
+              <Text style={al.statLabel}>Field Edits</Text>
+            </View>
+            <View style={al.statDivider} />
+            <View style={al.statItem}>
+              <Text style={al.statNum}>{totalRows}</Text>
+              <Text style={al.statLabel}>Rows Imported</Text>
+            </View>
+          </View>
+
+          <View style={al.headerGoldLine} />
         </LinearGradient>
 
+        {/* ── Timeline entries ── */}
         <ScrollView style={al.scroll} contentContainerStyle={al.scrollContent} showsVerticalScrollIndicator={false}>
           {auditLog.map((entry, idx) => {
-            const ac = actionColors(entry.action);
+            const am = actionMeta(entry.action);
             const isUpload = entry.action === 'upload';
+            const isLast = idx === auditLog.length - 1;
             return (
-              <View key={entry.id} style={al.entry}>
-                {/* Timeline line */}
-                {idx < auditLog.length - 1 && <View style={al.timelineLine} />}
-
-                {/* Timeline dot */}
-                <View style={[al.timelineDot, { backgroundColor: ac.bg, borderColor: ac.border }]}>
-                  {actionIcon(entry.action)}
+              <View key={entry.id} style={al.entryRow}>
+                {/* Timeline column */}
+                <View style={al.timelineCol}>
+                  <View style={[al.timelineDot, { backgroundColor: am.bg, borderColor: am.border }]}>
+                    {am.icon}
+                  </View>
+                  {!isLast && <View style={al.timelineLine} />}
                 </View>
 
-                <View style={al.entryContent}>
-                  {/* Top row */}
-                  <View style={al.entryTop}>
-                    <View style={[al.actionBadge, { backgroundColor: ac.bg, borderColor: ac.border }]}>
-                      <Text style={[al.actionBadgeText, { color: ac.text }]}>
-                        {entry.action.charAt(0).toUpperCase() + entry.action.slice(1)}
-                      </Text>
-                    </View>
-                    <View style={[al.moduleBadge, { backgroundColor: entry.module === 'Products' ? N.greenBg : N.amberBg }]}>
-                      <Text style={[al.moduleBadgeText, { color: entry.module === 'Products' ? N.green : N.amber }]}>
-                        {entry.module}
-                      </Text>
-                    </View>
-                    <Text style={al.timeAgo}>{timeAgo(entry.timestamp)}</Text>
-                  </View>
+                {/* Card */}
+                <View style={[al.card, isUpload && al.cardUpload]}>
+                  {/* Left accent bar */}
+                  <View style={[al.cardAccent, { backgroundColor: am.text }]} />
 
-                  {/* Record name */}
-                  <Text style={al.entryName} numberOfLines={1}>
-                    {isUpload ? entry.fileName : entry.recordName}
-                  </Text>
-
-                  {/* Meta row */}
-                  <View style={al.entryMeta}>
-                    <View style={al.metaItem}>
-                      <User size={11} color={N.faint} />
-                      <Text style={al.metaText}>{entry.user}</Text>
+                  <View style={al.cardBody}>
+                    {/* Row 1: badges + timestamp */}
+                    <View style={al.cardTopRow}>
+                      <View style={[al.badge, { backgroundColor: am.bg, borderColor: am.border }]}>
+                        <Text style={[al.badgeText, { color: am.text }]}>{am.label}</Text>
+                      </View>
+                      <View style={[al.modBadge, { backgroundColor: entry.module === 'Products' ? N.greenBg : N.amberBg }]}>
+                        <Text style={[al.modBadgeText, { color: entry.module === 'Products' ? N.green : N.amber }]}>
+                          {entry.module}
+                        </Text>
+                      </View>
+                      <View style={al.spacer} />
+                      <Text style={al.timeAgo}>{timeAgo(entry.timestamp)}</Text>
                     </View>
-                    <View style={al.metaDivider} />
-                    <View style={al.metaItem}>
-                      <Clock size={11} color={N.faint} />
-                      <Text style={al.metaText}>{formatTimestamp(entry.timestamp)}</Text>
-                    </View>
-                  </View>
 
-                  {/* Upload stats */}
-                  {isUpload && entry.rowsAffected !== undefined && (
-                    <View style={al.uploadStats}>
-                      <FileSpreadsheet size={13} color={N.blue} />
-                      <Text style={al.uploadStatsText}>{entry.rowsAffected} rows imported successfully</Text>
-                    </View>
-                  )}
+                    {/* Row 2: record name */}
+                    <Text style={al.cardName} numberOfLines={1}>
+                      {isUpload ? entry.fileName : entry.recordName}
+                    </Text>
 
-                  {/* Changes */}
-                  {!isUpload && entry.changes.length > 0 && (
-                    <View style={al.changesBox}>
-                      <Text style={al.changesTitle}>Field Changes</Text>
-                      {entry.changes.map((ch, ci) => (
-                        <View key={ci} style={al.changeRow}>
-                          <Text style={al.changeField} numberOfLines={1}>{ch.field}</Text>
-                          <View style={al.changeArrow}>
-                            <View style={al.changeBefore}>
-                              <Text style={al.changeBeforeText} numberOfLines={1}>{ch.before}</Text>
-                            </View>
-                            <ArrowRight size={11} color={N.faint} />
-                            <View style={al.changeAfter}>
-                              <Text style={al.changeAfterText} numberOfLines={1}>{ch.after}</Text>
+                    {/* Row 3: meta */}
+                    <View style={al.metaRow}>
+                      <View style={al.metaPill}>
+                        <User size={10} color={N.faint} />
+                        <Text style={al.metaText}>{entry.user}</Text>
+                      </View>
+                      <View style={al.metaSep} />
+                      <View style={al.metaPill}>
+                        <Clock size={10} color={N.faint} />
+                        <Text style={al.metaText}>{formatTimestamp(entry.timestamp)}</Text>
+                      </View>
+                    </View>
+
+                    {/* Upload pill */}
+                    {isUpload && entry.rowsAffected !== undefined && (
+                      <View style={al.uploadPill}>
+                        <FileSpreadsheet size={12} color={N.blue} />
+                        <Text style={al.uploadPillText}>{entry.rowsAffected} rows imported successfully</Text>
+                        <View style={al.uploadCheck}>
+                          <Check size={10} color={N.green} />
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Field changes */}
+                    {!isUpload && entry.changes.length > 0 && (
+                      <View style={al.changesWrap}>
+                        <View style={al.changesHeader}>
+                          <Pencil size={10} color={N.faint} />
+                          <Text style={al.changesHeaderText}>{entry.changes.length} field{entry.changes.length > 1 ? 's' : ''} changed</Text>
+                        </View>
+                        {entry.changes.map((ch, ci) => (
+                          <View key={ci} style={al.changeItem}>
+                            <Text style={al.changeFieldName} numberOfLines={1}>{ch.field}</Text>
+                            <View style={al.changeValues}>
+                              <View style={al.valueBefore}>
+                                <Text style={al.valueBeforeText} numberOfLines={1}>{ch.before}</Text>
+                              </View>
+                              <ArrowRight size={10} color={N.faint} />
+                              <View style={al.valueAfter}>
+                                <Text style={al.valueAfterText} numberOfLines={1}>{ch.after}</Text>
+                              </View>
                             </View>
                           </View>
-                        </View>
-                      ))}
-                    </View>
-                  )}
+                        ))}
+                      </View>
+                    )}
+                  </View>
                 </View>
               </View>
             );
           })}
+          {/* End of trail */}
+          <View style={al.endMark}>
+            <View style={al.endDot} />
+            <Text style={al.endText}>End of audit trail</Text>
+          </View>
         </ScrollView>
       </Animated.View>
     </Modal>
@@ -281,98 +331,134 @@ function AuditLogDrawer({ visible, onClose }: { visible: boolean; onClose: () =>
 const al = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   drawer: {
     position: 'absolute',
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: N.pageBg,
+    backgroundColor: '#f4f6f9',
     shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
-    shadowOffset: { width: -4, height: 0 },
-    elevation: 24,
+    shadowOpacity: 0.28,
+    shadowRadius: 28,
+    shadowOffset: { width: -6, height: 0 },
+    elevation: 28,
   },
+
+  // Header
   drawerHeader: {
-    paddingTop: Platform.OS === 'ios' ? 52 : 36,
-    paddingBottom: 16,
+    paddingTop: Platform.OS === 'ios' ? 54 : 40,
+    paddingBottom: 0,
     paddingHorizontal: 20,
   },
-  drawerHeaderInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+  drawerHeaderTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  headerIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.28)',
+  },
+  drawerTitle: { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#fff', letterSpacing: -0.3 },
+  drawerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: COLORS.goldLight, marginTop: 2, opacity: 0.9 },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
-  drawerTitle: { fontSize: 17, fontFamily: 'Poppins-Bold', color: '#fff' },
-  drawerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.65)', marginTop: 1 },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+
+  // Stats strip
+  statsStrip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginBottom: 14,
   },
+  statItem: { flex: 1, alignItems: 'center', gap: 1 },
+  statNum: { fontSize: 16, fontFamily: 'Poppins-Bold', color: '#fff' },
+  statLabel: { fontSize: 9, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.4 },
+  statDivider: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.2)' },
+  headerGoldLine: { height: 2, backgroundColor: COLORS.gold, opacity: 0.55 },
+
+  // Scroll
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32 },
-  entry: { flexDirection: 'row', gap: 12, marginBottom: 20, position: 'relative' },
-  timelineLine: {
-    position: 'absolute',
-    left: 15,
-    top: 36,
-    width: 2,
-    bottom: -20,
-    backgroundColor: N.border,
-    zIndex: 0,
-  },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 32 },
+
+  // Entry row layout
+  entryRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  timelineCol: { width: 32, alignItems: 'center', paddingTop: 2 },
   timelineDot: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: 9,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
-    marginTop: 2,
     zIndex: 1,
+    backgroundColor: '#fff',
   },
-  entryContent: {
+  timelineLine: {
     flex: 1,
-    backgroundColor: N.cardBg,
+    width: 2,
+    backgroundColor: N.border,
+    marginTop: 6,
+    marginBottom: -4,
+    borderRadius: 1,
+  },
+
+  // Card
+  card: {
+    flex: 1,
+    backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 14,
     borderWidth: 1,
     borderColor: N.border,
+    flexDirection: 'row',
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
-  entryTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
-  actionBadge: {
+  cardUpload: {
+    borderColor: N.blueBdr,
+    backgroundColor: '#fafcff',
+  },
+  cardAccent: { width: 3, flexShrink: 0 },
+  cardBody: { flex: 1, padding: 12, gap: 6 },
+
+  // Card internals
+  cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  badge: {
     borderRadius: 5,
     borderWidth: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
   },
-  actionBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  moduleBadge: { borderRadius: 5, paddingHorizontal: 7, paddingVertical: 2 },
-  moduleBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  timeAgo: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint, marginLeft: 'auto' },
-  entryName: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 6 },
-  entryMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  badgeText: { fontSize: 10, fontFamily: 'Poppins-Bold', letterSpacing: 0.2 },
+  modBadge: { borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
+  modBadgeText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
+  spacer: { flex: 1 },
+  timeAgo: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint },
+  cardName: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  metaPill: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   metaText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint },
-  metaDivider: { width: 3, height: 3, borderRadius: 2, backgroundColor: N.border },
-  uploadStats: {
+  metaSep: { width: 3, height: 3, borderRadius: 2, backgroundColor: N.border },
+
+  // Upload pill
+  uploadPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -382,24 +468,58 @@ const al = StyleSheet.create({
     paddingVertical: 6,
     borderWidth: 1,
     borderColor: N.blueBdr,
+    marginTop: 2,
   },
-  uploadStatsText: { fontSize: 11, fontFamily: 'Poppins-Medium', color: N.blue },
-  changesBox: {
-    backgroundColor: N.headBg,
+  uploadPillText: { flex: 1, fontSize: 11, fontFamily: 'Poppins-Medium', color: N.blue },
+  uploadCheck: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: N.greenBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: N.greenBdr,
+  },
+
+  // Changes
+  changesWrap: {
+    backgroundColor: '#f8f9fb',
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
     borderColor: N.border,
-    gap: 7,
+    gap: 6,
+    marginTop: 2,
   },
-  changesTitle: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  changeRow: { gap: 4 },
-  changeField: { fontSize: 11, fontFamily: 'Poppins-Medium', color: N.mid },
-  changeArrow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  changeBefore: { backgroundColor: N.redBg, borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: N.redBdr },
-  changeBeforeText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.red },
-  changeAfter: { backgroundColor: N.greenBg, borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: N.greenBdr },
-  changeAfterText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.green },
+  changesHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
+  changesHeaderText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.5 },
+  changeItem: { gap: 3 },
+  changeFieldName: { fontSize: 11, fontFamily: 'Poppins-Medium', color: N.mid },
+  changeValues: { flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
+  valueBefore: {
+    backgroundColor: '#fff0f0',
+    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+  },
+  valueBeforeText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.red },
+  valueAfter: {
+    backgroundColor: N.greenBg,
+    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: N.greenBdr,
+  },
+  valueAfterText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.green },
+
+  // End mark
+  endMark: { alignItems: 'center', gap: 6, paddingTop: 8 },
+  endDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: N.border },
+  endText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.faint },
 });
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
@@ -768,11 +888,20 @@ export default function MasterDataScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
-      {/* ── Combined header + filters bar ── */}
+      {/* ── Page header — matches other pages ── */}
+      <LinearGradient
+        colors={[COLORS.primaryDark, COLORS.primary, '#4a8f55']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={s.header}
+      >
+        <Text style={s.headerTitle}>Master Data</Text>
+        <Text style={s.headerSub}>Centralized product &amp; BD repository</Text>
+        <View style={s.headerGoldLine} />
+      </LinearGradient>
+
+      {/* ── Global Filters row ── */}
       <View style={s.filtersBar}>
-        <View style={s.pageTitleWrap}>
-          <Text style={s.pageTitle}>Master Data</Text>
-        </View>
         <Dropdown label="Select Company" value={filterCompany} options={COMPANIES} onChange={v => { setFilterCompany(v); setProdPage(1); setBdPage(1); }} />
         <Dropdown label="Select Region" value={filterRegion} options={MASTER_REGIONS} onChange={v => { setFilterRegion(v); setProdPage(1); setBdPage(1); }} />
         {(filterCompany || filterRegion) && (
@@ -782,7 +911,12 @@ export default function MasterDataScreen() {
           </TouchableOpacity>
         )}
         <View style={s.filtersSpacer} />
-        {/* Audit Log button */}
+        {/* Upload Excel */}
+        <TouchableOpacity style={s.uploadBtn}>
+          <Upload size={14} color="#fff" />
+          <Text style={s.uploadText}>Upload Excel</Text>
+        </TouchableOpacity>
+        {/* Audit Log button — icon only, expands on hover */}
         <TouchableOpacity
           style={[s.auditBtn, auditHovered && s.auditBtnHover]}
           onPress={() => setAuditVisible(true)}
@@ -790,14 +924,7 @@ export default function MasterDataScreen() {
           onPressOut={() => setAuditHovered(false)}
         >
           <History size={15} color={auditHovered ? COLORS.primary : N.muted} />
-          {auditHovered && (
-            <Text style={s.auditBtnText}>Audit Log</Text>
-          )}
-        </TouchableOpacity>
-        {/* Upload Excel */}
-        <TouchableOpacity style={s.uploadBtn}>
-          <Upload size={14} color="#fff" />
-          <Text style={s.uploadText}>Upload Excel</Text>
+          {auditHovered && <Text style={s.auditBtnText}>Audit Log</Text>}
         </TouchableOpacity>
       </View>
 
@@ -977,10 +1104,12 @@ export default function MasterDataScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: N.pageBg },
+  safe: { flex: 1, backgroundColor: COLORS.bg },
 
-  pageTitleWrap: { justifyContent: 'center', marginRight: 4 },
-  pageTitle: { fontSize: 15, fontFamily: 'Poppins-Bold', color: N.dark },
+  header: { paddingHorizontal: 20, paddingTop: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 6 },
+  headerTitle: { fontSize: 20, fontFamily: 'Poppins-Bold', color: COLORS.white },
+  headerSub: { fontSize: 12, fontFamily: 'Poppins-Regular', color: COLORS.goldLight, marginTop: 2, opacity: 0.85 },
+  headerGoldLine: { height: 2, backgroundColor: COLORS.gold, opacity: 0.5, marginTop: 16 },
 
   auditBtn: {
     flexDirection: 'row',
@@ -1018,10 +1147,10 @@ const s = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: N.cardBg,
+    backgroundColor: COLORS.cream,
     borderBottomWidth: 1,
-    borderBottomColor: N.border,
-    flexWrap: 'wrap',
+    borderBottomColor: COLORS.border,
+    flexWrap: 'nowrap',
     zIndex: 10,
   },
   filtersSpacer: { flex: 1 },
@@ -1040,9 +1169,9 @@ const s = StyleSheet.create({
 
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: N.cardBg,
+    backgroundColor: COLORS.cream,
     borderBottomWidth: 1,
-    borderBottomColor: N.border,
+    borderBottomColor: COLORS.border,
   },
   tabBarFill: { flex: 1 },
   tabBtn: {
