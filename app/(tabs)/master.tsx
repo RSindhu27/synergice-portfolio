@@ -622,12 +622,8 @@ function ProductCard({ item, labels, onEdit }: {
             <Text style={pc.subText}>{item.region}</Text>
           </View>
         </View>
-        <View style={[pc.statusChip, { backgroundColor: sc.bg, borderColor: sc.border }]}>
-          <Text style={[pc.statusText, { color: sc.text }]}>{item.fieldF}</Text>
-        </View>
         <TouchableOpacity style={pc.editBtn} onPress={() => onEdit(item)}>
           <Pencil size={12} color={COLORS.primary} />
-          <Text style={pc.editBtnText}>Edit</Text>
         </TouchableOpacity>
       </View>
 
@@ -655,48 +651,29 @@ const pc = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     backgroundColor: N.headBg,
     borderBottomWidth: 1,
     borderBottomColor: N.border,
   },
-  idBadge: { borderRadius: 7, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
-  idText: { fontSize: 10, fontFamily: 'Poppins-Bold', letterSpacing: 0.3 },
-  productName: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 2 },
+  idBadge: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
+  idText: { fontSize: 9, fontFamily: 'Poppins-Bold', letterSpacing: 0.3 },
+  productName: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 1 },
   subRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
+  dot: { width: 5, height: 5, borderRadius: 3 },
   subText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint },
-  statusChip: { borderRadius: 7, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0 },
-  statusText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  fieldGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    gap: 0,
-  },
-  pill: {
-    width: '50%',
-    paddingHorizontal: 6,
-    paddingVertical: 5,
-  },
-  pillLabel: { fontSize: 9, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 },
-  pillValue: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  fieldGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingVertical: 8, gap: 0 },
+  pill: { width: '50%', paddingHorizontal: 5, paddingVertical: 4 },
+  pillLabel: { fontSize: 9, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 1 },
+  pillValue: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
   editBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 7,
+    width: 28, height: 28, borderRadius: 7,
+    alignItems: 'center', justifyContent: 'center',
     backgroundColor: COLORS.primary + '12',
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
-    marginLeft: 4,
+    borderWidth: 1, borderColor: COLORS.primary + '30',
   },
-  editBtnText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.primary },
 });
 
 // ─── BD Card ──────────────────────────────────────────────────────────────────
@@ -730,12 +707,8 @@ function BDCard({ item, labels, onEdit }: {
               <Text style={bd.sub}>{item.company} · {item.region}</Text>
             </View>
           </View>
-          <View style={[bd.statusChip, { backgroundColor: sc.bg, borderColor: sc.border }]}>
-            <Text style={[bd.statusText, { color: sc.text }]}>{item.fieldD}</Text>
-          </View>
           <TouchableOpacity style={bd.editBtn} onPress={() => onEdit(item)}>
             <Pencil size={12} color={COLORS.primary} />
-            <Text style={bd.editBtnText}>Edit</Text>
           </TouchableOpacity>
         </View>
 
@@ -770,25 +743,21 @@ const bd = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
-  accent: { width: 4, flexShrink: 0 },
-  inner: { flex: 1, padding: 14 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
-  name: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 2 },
+  accent: { width: 3, flexShrink: 0 },
+  inner: { flex: 1, padding: 10 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  name: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 1 },
   subRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   dot: { width: 6, height: 6, borderRadius: 3 },
   sub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint },
   statusChip: { borderRadius: 7, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0 },
-  statusText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
   editBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 6,
-    borderRadius: 7,
+    width: 28, height: 28, borderRadius: 7,
+    alignItems: 'center', justifyContent: 'center',
     backgroundColor: COLORS.primary + '12',
     borderWidth: 1, borderColor: COLORS.primary + '30',
-    marginLeft: 4,
   },
-  editBtnText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.primary },
-  fieldsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  fieldsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   fieldCard: {
     flex: 1,
     minWidth: '30%',
