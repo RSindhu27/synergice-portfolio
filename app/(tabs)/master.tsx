@@ -5,7 +5,7 @@ import {
   Animated, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, X, ChevronLeft, ChevronRight, Upload, History, CreditCard as Edit2, Check, ChevronDown, Package, Briefcase, Clock, FileSpreadsheet, User, ArrowRight, Layers, Tag, MapPin, Building2, Beaker, Activity } from 'lucide-react-native';
+import { Search, X, ChevronLeft, ChevronRight, Upload, History, CreditCard as Edit2, Check, ChevronDown, Package, Briefcase, Clock, FileSpreadsheet, User, ArrowRight, Layers, Tag, MapPin, Building2, Activity } from 'lucide-react-native';
 import { COLORS, COMPANY_COLORS } from '@/data/mockData';
 import {
   masterProducts, masterBD, auditLog,
@@ -140,21 +140,25 @@ const em = StyleSheet.create({
 // ─── Audit Log Drawer ─────────────────────────────────────────────────────────
 function AuditLogDrawer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const [mounted, setMounted] = useState(false);
   const { width: SW } = useWindowDimensions();
   const drawerW = Math.min(SW * 0.92, 480);
 
   useEffect(() => {
+    if (visible) setMounted(true);
     Animated.spring(slideAnim, {
       toValue: visible ? 1 : 0,
       useNativeDriver: true,
       tension: 65,
       friction: 11,
-    }).start();
+    }).start(() => {
+      if (!visible) setMounted(false);
+    });
   }, [visible]);
 
   const translateX = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [drawerW, 0] });
 
-  if (!visible && slideAnim.__getValue() === 0) return null;
+  if (!mounted) return null;
 
   const actionIcon = (a: AuditEntry['action']) => {
     if (a === 'upload') return <FileSpreadsheet size={15} color={N.blue} />;
