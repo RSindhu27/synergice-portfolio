@@ -907,7 +907,7 @@ export default function MasterDataScreen() {
   };
 
   // Audit button hover state (web)
-  const [auditHovered, setAuditHovered] = useState(false);
+  const [auditTooltip, setAuditTooltip] = useState(false);
 
   return (
     <SafeAreaView style={s.safe}>
@@ -939,16 +939,23 @@ export default function MasterDataScreen() {
           <Upload size={14} color="#fff" />
           <Text style={s.uploadText}>Upload Excel</Text>
         </TouchableOpacity>
-        {/* Audit Log button — icon only, expands on hover */}
-        <TouchableOpacity
-          style={[s.auditBtn, auditHovered && s.auditBtnHover]}
-          onPress={() => { setAuditVisible(true); setAuditHovered(false); }}
-          onPressIn={() => setAuditHovered(true)}
-          onPressOut={() => setAuditHovered(false)}
-        >
-          <History size={15} color={auditHovered ? COLORS.primary : N.muted} />
-          <Text style={[s.auditBtnText, !auditHovered && s.auditBtnTextHidden]}>Audit Log</Text>
-        </TouchableOpacity>
+        {/* Audit Log button — icon only with tooltip */}
+        <View style={s.auditWrap}>
+          {auditTooltip && (
+            <View style={s.tooltip} pointerEvents="none">
+              <Text style={s.tooltipText}>Audit Log</Text>
+              <View style={s.tooltipArrow} />
+            </View>
+          )}
+          <TouchableOpacity
+            style={s.auditBtn}
+            onPress={() => { setAuditVisible(true); setAuditTooltip(false); }}
+            onPressIn={() => setAuditTooltip(true)}
+            onPressOut={() => setAuditTooltip(false)}
+          >
+            <History size={15} color={N.muted} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ── Tab bar ── */}
@@ -1131,25 +1138,45 @@ const s = StyleSheet.create({
   headerSub: { fontSize: 12, fontFamily: 'Poppins-Regular', color: COLORS.goldLight, marginTop: 2, opacity: 0.85 },
   headerGoldLine: { height: 2, backgroundColor: COLORS.gold, opacity: 0.5, marginTop: 16 },
 
+  auditWrap: { position: 'relative' },
   auditBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    width: 34,
+    height: 34,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: N.border,
     backgroundColor: N.cardBg,
-    overflow: 'hidden',
   },
-  auditBtnHover: {
-    borderColor: COLORS.primary + '60',
-    backgroundColor: COLORS.primary + '08',
-    paddingHorizontal: 12,
+  tooltip: {
+    position: 'absolute',
+    bottom: 40,
+    left: '50%',
+    transform: [{ translateX: -36 }],
+    backgroundColor: '#1a1a2e',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    zIndex: 99,
+    alignItems: 'center',
+    minWidth: 72,
   },
-  auditBtnText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.primary },
-  auditBtnTextHidden: { width: 0, overflow: 'hidden', fontSize: 0 },
+  tooltipText: { fontSize: 11, fontFamily: 'Poppins-Medium', color: '#fff', textAlign: 'center' },
+  tooltipArrow: {
+    position: 'absolute',
+    bottom: -5,
+    left: '50%',
+    transform: [{ translateX: -5 }],
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderTopWidth: 5,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#1a1a2e',
+  },
 
   uploadBtn: {
     flexDirection: 'row',
