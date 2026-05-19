@@ -1,9 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import {
-  LayoutDashboard, Layers, Globe, DollarSign,
-  Activity, BarChart2, ShieldAlert,
-} from 'lucide-react-native';
+import { LayoutDashboard, Layers, Globe, DollarSign, Activity, ChartBar as BarChart2, ShieldAlert, Database } from 'lucide-react-native';
 import { COLORS } from '@/data/mockData';
 import CustomTabBar from '@/components/ui/CustomTabBar';
 
@@ -45,6 +42,11 @@ const TAB_DEFINITIONS = [
     title: 'Regulatory',
     icon: (color: string) => <ShieldAlert size={ICON_SIZE} color={color} />,
   },
+  {
+    key: 'master',
+    title: 'Master Data',
+    icon: (color: string) => <Database size={ICON_SIZE} color={color} />,
+  },
 ];
 
 export default function TabLayout() {
@@ -62,6 +64,7 @@ export default function TabLayout() {
       <Tabs.Screen name="pipeline" options={{ title: 'Pipeline' }} />
       <Tabs.Screen name="competitor" options={{ title: 'Competitor' }} />
       <Tabs.Screen name="regulatory" options={{ title: 'Regulatory' }} />
+      <Tabs.Screen name="master" options={{ title: 'Master Data' }} />
     </Tabs>
   );
 }
