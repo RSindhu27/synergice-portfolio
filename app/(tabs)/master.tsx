@@ -70,70 +70,137 @@ function timeAgo(ts: string) {
 
 const PAGE_SIZE = 6;
 
-// ─── Edit Modal ───────────────────────────────────────────────────────────────
-function EditModal({
+// ─── Edit All Fields Modal ────────────────────────────────────────────────────
+type EditRecord = MasterProduct | BDRecord;
+
+function EditAllModal({
   visible,
-  fieldLabel,
-  currentValue,
+  record,
+  labels,
   onSave,
   onClose,
 }: {
   visible: boolean;
-  fieldLabel: string;
-  currentValue: string;
-  onSave: (val: string) => void;
+  record: EditRecord | null;
+  labels: Record<string, string>;
+  onSave: (updated: Record<string, string>) => void;
   onClose: () => void;
 }) {
-  const [val, setVal] = useState(currentValue);
-  useEffect(() => { setVal(currentValue); }, [currentValue]);
+  const [vals, setVals] = useState<Record<string, string>>({});
+  const { width: SW } = useWindowDimensions();
+
+  useEffect(() => {
+    if (record) {
+      const init: Record<string, string> = {};
+      Object.keys(labels).forEach(k => { init[k] = (record as any)[k] ?? ''; });
+      setVals(init);
+    }
+  }, [record]);
+
+  if (!record) return null;
+
+  const dot = companyDot(record.company);
+  const name = (record as any).fieldA ?? record.id;
+  const fieldKeys = Object.keys(labels);
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <TouchableOpacity style={em.overlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1}>
-          <View style={em.box}>
-            <View style={em.header}>
-              <Text style={em.title}>Edit Field</Text>
-              <TouchableOpacity onPress={onClose} style={em.closeBtn}>
-                <X size={16} color={N.muted} />
-              </TouchableOpacity>
+      <View style={em.overlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+        <View style={[em.sheet, { width: Math.min(SW * 0.94, 520) }]}>
+          {/* Header */}
+          <LinearGradient colors={[COLORS.primaryDark, COLORS.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={em.sheetHeader}>
+            <View style={[em.headerDot, { backgroundColor: dot }]} />
+            <View style={{ flex: 1 }}>
+              <Text style={em.sheetTitle} numberOfLines={1}>Edit Record</Text>
+              <Text style={em.sheetSub} numberOfLines={1}>{name} · {record.id}</Text>
             </View>
-            <Text style={em.label}>{fieldLabel}</Text>
-            <TextInput
-              style={em.input}
-              value={val}
-              onChangeText={setVal}
-              autoFocus
-              selectTextOnFocus
-            />
-            <View style={em.actions}>
-              <TouchableOpacity style={em.cancelBtn} onPress={onClose}>
-                <Text style={em.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={em.saveBtn} onPress={() => { onSave(val); onClose(); }}>
-                <Check size={14} color="#fff" />
-                <Text style={em.saveText}>Save</Text>
-              </TouchableOpacity>
+            <TouchableOpacity onPress={onClose} style={em.closeBtn}>
+              <X size={16} color="rgba(255,255,255,0.9)" />
+            </TouchableOpacity>
+          </LinearGradient>
+
+          {/* Fields */}
+          <ScrollView style={em.scroll} contentContainerStyle={em.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <View style={em.fieldGrid}>
+              {fieldKeys.map((k, i) => (
+                <View key={k} style={em.fieldWrap}>
+                  <Text style={em.fieldLabel}>{labels[k]}</Text>
+                  <TextInput
+                    style={em.input}
+                    value={vals[k] ?? ''}
+                    onChangeText={v => setVals(prev => ({ ...prev, [k]: v }))}
+                    selectTextOnFocus
+                    autoFocus={i === 0}
+                  />
+                </View>
+              ))}
             </View>
+          </ScrollView>
+
+          {/* Footer */}
+          <View style={em.footer}>
+            <TouchableOpacity style={em.cancelBtn} onPress={onClose}>
+              <Text style={em.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={em.saveBtn} onPress={() => { onSave(vals); onClose(); }}>
+              <Check size={14} color="#fff" />
+              <Text style={em.saveText}>Save Changes</Text>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </View>
+      </View>
     </Modal>
   );
 }
 
 const em = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  box: { backgroundColor: '#fff', borderRadius: 14, padding: 20, width: 320, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 20, shadowOffset: { width: 0, height: 8 } },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  title: { fontSize: 15, fontFamily: 'Poppins-SemiBold', color: N.dark },
-  closeBtn: { padding: 4 },
-  label: { fontSize: 11, fontFamily: 'Poppins-Medium', color: N.faint, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { borderWidth: 1, borderColor: N.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontFamily: 'Poppins-Regular', color: N.dark, backgroundColor: N.headBg, marginBottom: 16 },
-  actions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  sheet: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    maxHeight: '85%',
+    shadowColor: '#000',
+    shadowOpacity: 0.22,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+  headerDot: { width: 10, height: 10, borderRadius: 5 },
+  sheetTitle: { fontSize: 15, fontFamily: 'Poppins-Bold', color: '#fff' },
+  sheetSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.7)', marginTop: 1 },
+  closeBtn: {
+    width: 30, height: 30, borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  scroll: { flexShrink: 1 },
+  scrollContent: { padding: 16 },
+  fieldGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 0 },
+  fieldWrap: { width: '50%', paddingHorizontal: 6, paddingVertical: 6 },
+  fieldLabel: { fontSize: 10, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 },
+  input: {
+    borderWidth: 1, borderColor: N.border, borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 8,
+    fontSize: 13, fontFamily: 'Poppins-Regular', color: N.dark,
+    backgroundColor: N.headBg,
+  },
+  footer: {
+    flexDirection: 'row', gap: 10, justifyContent: 'flex-end',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderTopWidth: 1, borderTopColor: N.border,
+    backgroundColor: '#fff',
+  },
   cancelBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 8, borderWidth: 1, borderColor: N.border },
   cancelText: { fontSize: 13, fontFamily: 'Poppins-Medium', color: N.muted },
-  saveBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 8, backgroundColor: COLORS.primary },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, backgroundColor: COLORS.primary },
   saveText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: '#fff' },
 });
 
@@ -526,23 +593,16 @@ const al = StyleSheet.create({
 function ProductCard({ item, labels, onEdit }: {
   item: MasterProduct;
   labels: typeof PRODUCT_FIELD_LABELS;
-  onEdit: (field: string, label: string, value: string) => void;
+  onEdit: (item: MasterProduct) => void;
 }) {
   const sc = statusColor((item as any).fieldF);
   const dot = companyDot(item.company);
-  const topFields: (keyof typeof labels)[] = ['fieldA', 'fieldB', 'fieldC', 'fieldD'];
-  const midFields: (keyof typeof labels)[] = ['fieldE', 'fieldG', 'fieldH', 'fieldI'];
-  const botFields: (keyof typeof labels)[] = ['fieldJ', 'fieldK', 'fieldL'];
+  const allFields = Object.keys(labels) as (keyof typeof labels)[];
 
   const FieldPill = ({ fkey }: { fkey: keyof typeof labels }) => (
     <View style={pc.pill}>
       <Text style={pc.pillLabel}>{labels[fkey]}</Text>
-      <View style={pc.pillRow}>
-        <Text style={pc.pillValue} numberOfLines={1}>{(item as any)[fkey]}</Text>
-        <TouchableOpacity style={pc.editBtn} onPress={() => onEdit(fkey, labels[fkey], (item as any)[fkey])}>
-          <Pencil size={10} color={COLORS.primary} />
-        </TouchableOpacity>
-      </View>
+      <Text style={pc.pillValue} numberOfLines={1}>{(item as any)[fkey]}</Text>
     </View>
   );
 
@@ -565,22 +625,15 @@ function ProductCard({ item, labels, onEdit }: {
         <View style={[pc.statusChip, { backgroundColor: sc.bg, borderColor: sc.border }]}>
           <Text style={[pc.statusText, { color: sc.text }]}>{item.fieldF}</Text>
         </View>
+        <TouchableOpacity style={pc.editBtn} onPress={() => onEdit(item)}>
+          <Pencil size={12} color={COLORS.primary} />
+          <Text style={pc.editBtnText}>Edit</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Main fields grid */}
-      <View style={pc.sectionDivider} />
+      {/* Fields grid — all fields, no individual edit buttons */}
       <View style={pc.fieldGrid}>
-        {topFields.map(k => <FieldPill key={k} fkey={k} />)}
-      </View>
-
-      <View style={pc.sectionDivider} />
-      <View style={pc.fieldGrid}>
-        {midFields.map(k => <FieldPill key={k} fkey={k} />)}
-      </View>
-
-      <View style={pc.sectionDivider} />
-      <View style={[pc.fieldGrid, pc.fieldGridBot]}>
-        {botFields.map(k => <FieldPill key={k} fkey={k} />)}
+        {allFields.map(k => <FieldPill key={k} fkey={k} />)}
       </View>
     </View>
   );
@@ -617,40 +670,40 @@ const pc = StyleSheet.create({
   subText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint },
   statusChip: { borderRadius: 7, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0 },
   statusText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
-  sectionDivider: { height: 1, backgroundColor: N.borderLt, marginHorizontal: 14 },
   fieldGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 10,
     gap: 0,
   },
-  fieldGridBot: {},
   pill: {
     width: '50%',
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
     paddingVertical: 5,
   },
   pillLabel: { fontSize: 9, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 },
-  pillRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  pillValue: { flex: 1, fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  pillValue: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark },
   editBtn: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
-    backgroundColor: COLORS.primary + '12',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 7,
+    backgroundColor: COLORS.primary + '12',
     borderWidth: 1,
     borderColor: COLORS.primary + '30',
+    marginLeft: 4,
   },
+  editBtnText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.primary },
 });
 
 // ─── BD Card ──────────────────────────────────────────────────────────────────
 function BDCard({ item, labels, onEdit }: {
   item: BDRecord;
   labels: typeof BD_FIELD_LABELS;
-  onEdit: (field: string, label: string, value: string) => void;
+  onEdit: (item: BDRecord) => void;
 }) {
   const sc = statusColor((item as any).fieldD);
   const dot = companyDot(item.company);
@@ -680,6 +733,10 @@ function BDCard({ item, labels, onEdit }: {
           <View style={[bd.statusChip, { backgroundColor: sc.bg, borderColor: sc.border }]}>
             <Text style={[bd.statusText, { color: sc.text }]}>{item.fieldD}</Text>
           </View>
+          <TouchableOpacity style={bd.editBtn} onPress={() => onEdit(item)}>
+            <Pencil size={12} color={COLORS.primary} />
+            <Text style={bd.editBtnText}>Edit</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Field cards row */}
@@ -689,9 +746,6 @@ function BDCard({ item, labels, onEdit }: {
               <View style={bd.fieldCardTop}>
                 {ICONS[k]}
                 <Text style={bd.fieldCardLabel}>{labels[k]}</Text>
-                <TouchableOpacity style={bd.editBtn} onPress={() => onEdit(k, labels[k], (item as any)[k])}>
-                  <Pencil size={9} color={COLORS.primary} />
-                </TouchableOpacity>
               </View>
               <Text style={bd.fieldCardValue} numberOfLines={1}>{(item as any)[k]}</Text>
             </View>
@@ -725,6 +779,15 @@ const bd = StyleSheet.create({
   sub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint },
   statusChip: { borderRadius: 7, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0 },
   statusText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
+  editBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 7,
+    backgroundColor: COLORS.primary + '12',
+    borderWidth: 1, borderColor: COLORS.primary + '30',
+    marginLeft: 4,
+  },
+  editBtnText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.primary },
   fieldsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fieldCard: {
     flex: 1,
@@ -737,16 +800,6 @@ const bd = StyleSheet.create({
   },
   fieldCardTop: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
   fieldCardLabel: { flex: 1, fontSize: 9, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.3 },
-  editBtn: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    backgroundColor: COLORS.primary + '12',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
-  },
   fieldCardValue: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark },
 });
 
@@ -830,7 +883,7 @@ export default function MasterDataScreen() {
   const [bdPage, setBdPage] = useState(1);
   const [auditVisible, setAuditVisible] = useState(false);
 
-  const [editState, setEditState] = useState<{ field: string; label: string; value: string } | null>(null);
+  const [editRecord, setEditRecord] = useState<{ record: EditRecord; type: 'product' | 'bd' } | null>(null);
   const [products, setProducts] = useState<MasterProduct[]>(masterProducts);
   const [bdItems, setBdItems] = useState<BDRecord[]>(masterBD);
 
@@ -872,15 +925,16 @@ export default function MasterDataScreen() {
   const bdSlice = filteredBD.slice((bdPage - 1) * PAGE_SIZE, bdPage * PAGE_SIZE);
 
   // Edit handlers
-  const openEdit = (field: string, label: string, value: string) => {
-    setEditState({ field, label, value });
-  };
+  const openProductEdit = (item: MasterProduct) => setEditRecord({ record: item, type: 'product' });
+  const openBDEdit = (item: BDRecord) => setEditRecord({ record: item, type: 'bd' });
 
-  const saveEdit = (newVal: string) => {
-    if (!editState) return;
-    // In a real app this would update the DB. For now we update local state.
-    // We do nothing here since we don't know which record triggered it.
-    // In production, pass recordId through.
+  const saveEdit = (updated: Record<string, string>) => {
+    if (!editRecord) return;
+    if (editRecord.type === 'product') {
+      setProducts(prev => prev.map(p => p.id === editRecord.record.id ? { ...p, ...updated } : p));
+    } else {
+      setBdItems(prev => prev.map(b => b.id === editRecord.record.id ? { ...b, ...updated } : b));
+    }
   };
 
   // Audit button hover state (web)
@@ -919,12 +973,12 @@ export default function MasterDataScreen() {
         {/* Audit Log button — icon only, expands on hover */}
         <TouchableOpacity
           style={[s.auditBtn, auditHovered && s.auditBtnHover]}
-          onPress={() => setAuditVisible(true)}
+          onPress={() => { setAuditVisible(true); setAuditHovered(false); }}
           onPressIn={() => setAuditHovered(true)}
           onPressOut={() => setAuditHovered(false)}
         >
           <History size={15} color={auditHovered ? COLORS.primary : N.muted} />
-          {auditHovered && <Text style={s.auditBtnText}>Audit Log</Text>}
+          <Text style={[s.auditBtnText, !auditHovered && s.auditBtnTextHidden]}>Audit Log</Text>
         </TouchableOpacity>
       </View>
 
@@ -949,7 +1003,6 @@ export default function MasterDataScreen() {
             </TouchableOpacity>
           );
         })}
-        <View style={s.tabBarFill} />
       </View>
 
       {/* ── Content ── */}
@@ -992,7 +1045,7 @@ export default function MasterDataScreen() {
                   key={item.id}
                   item={item}
                   labels={PRODUCT_FIELD_LABELS}
-                  onEdit={openEdit}
+                  onEdit={openProductEdit}
                 />
               ))
             )}
@@ -1058,7 +1111,7 @@ export default function MasterDataScreen() {
                   key={item.id}
                   item={item}
                   labels={BD_FIELD_LABELS}
-                  onEdit={openEdit}
+                  onEdit={openBDEdit}
                 />
               ))
             )}
@@ -1087,16 +1140,14 @@ export default function MasterDataScreen() {
         </View>
       )}
 
-      {/* ── Modals ── */}
-      {editState && (
-        <EditModal
-          visible={!!editState}
-          fieldLabel={editState.label}
-          currentValue={editState.value}
-          onSave={saveEdit}
-          onClose={() => setEditState(null)}
-        />
-      )}
+      {/* ── Edit All Modal ── */}
+      <EditAllModal
+        visible={!!editRecord}
+        record={editRecord?.record ?? null}
+        labels={editRecord?.type === 'bd' ? BD_FIELD_LABELS : PRODUCT_FIELD_LABELS}
+        onSave={saveEdit}
+        onClose={() => setEditRecord(null)}
+      />
 
       <AuditLogDrawer visible={auditVisible} onClose={() => setAuditVisible(false)} />
     </SafeAreaView>
@@ -1121,14 +1172,15 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: N.border,
     backgroundColor: N.cardBg,
-    minWidth: 36,
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
   auditBtnHover: {
     borderColor: COLORS.primary + '60',
     backgroundColor: COLORS.primary + '08',
+    paddingHorizontal: 12,
   },
   auditBtnText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.primary },
+  auditBtnTextHidden: { width: 0, overflow: 'hidden', fontSize: 0 },
 
   uploadBtn: {
     flexDirection: 'row',
@@ -1173,7 +1225,6 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  tabBarFill: { flex: 1 },
   tabBtn: {
     flex: 1,
     flexDirection: 'row',
