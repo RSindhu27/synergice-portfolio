@@ -798,7 +798,7 @@ const pc = StyleSheet.create({
   dot: { width: 5, height: 5, borderRadius: 3 },
   subText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint },
   fieldGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingVertical: 8, gap: 0 },
-  pill: { width: '50%', paddingHorizontal: 5, paddingVertical: 4 },
+  pill: { width: '33.33%', paddingHorizontal: 5, paddingVertical: 4 },
   pillLabel: { fontSize: 9, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 1 },
   pillValue: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 6 },
