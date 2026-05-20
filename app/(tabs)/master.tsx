@@ -5,7 +5,7 @@ import {
   Animated, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, X, ChevronLeft, ChevronRight, Upload, History, Pencil, Check, ChevronDown, Package, Briefcase, Clock, FileSpreadsheet, User, ArrowRight, Layers, Tag, MapPin, Building2, Activity } from 'lucide-react-native';
+import { Search, X, ChevronLeft, ChevronRight, Upload, History, Pencil, Check, ChevronDown, Package, Briefcase, Clock, FileSpreadsheet, User, ArrowRight, Layers, Tag, MapPin, Building2, Activity, Plus } from 'lucide-react-native';
 import { COLORS, COMPANY_COLORS } from '@/data/mockData';
 import {
   masterProducts, masterBD, auditLog,
@@ -589,20 +589,143 @@ const al = StyleSheet.create({
   endText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.faint },
 });
 
+// ─── Add Field Modal ──────────────────────────────────────────────────────────
+function AddFieldModal({
+  visible,
+  onAdd,
+  onClose,
+}: {
+  visible: boolean;
+  onAdd: (name: string, value: string) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [value, setValue] = useState('');
+  const nameRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (visible) { setName(''); setValue(''); }
+  }, [visible]);
+
+  const canSave = name.trim().length > 0;
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={af.overlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+        <View style={af.box}>
+          <View style={af.header}>
+            <View style={af.iconCircle}>
+              <Plus size={14} color={COLORS.primary} />
+            </View>
+            <Text style={af.title}>Add Custom Field</Text>
+            <TouchableOpacity onPress={onClose} style={af.closeBtn}>
+              <X size={15} color={N.muted} />
+            </TouchableOpacity>
+          </View>
+          <View style={af.body}>
+            <View style={af.fieldWrap}>
+              <Text style={af.label}>Field Name</Text>
+              <TextInput
+                ref={nameRef}
+                style={af.input}
+                placeholder="e.g. Batch Number"
+                placeholderTextColor={N.faint}
+                value={name}
+                onChangeText={setName}
+                autoFocus
+                returnKeyType="next"
+                onSubmitEditing={() => {}}
+              />
+            </View>
+            <View style={af.fieldWrap}>
+              <Text style={af.label}>Value</Text>
+              <TextInput
+                style={af.input}
+                placeholder="e.g. BN-2024-001"
+                placeholderTextColor={N.faint}
+                value={value}
+                onChangeText={setValue}
+                returnKeyType="done"
+                onSubmitEditing={() => { if (canSave) { onAdd(name.trim(), value.trim()); onClose(); } }}
+              />
+            </View>
+          </View>
+          <View style={af.footer}>
+            <TouchableOpacity style={af.cancelBtn} onPress={onClose}>
+              <Text style={af.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[af.addBtn, !canSave && af.addBtnDisabled]}
+              onPress={() => { if (canSave) { onAdd(name.trim(), value.trim()); onClose(); } }}
+            >
+              <Plus size={13} color="#fff" />
+              <Text style={af.addText}>Add Field</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const af = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  box: {
+    backgroundColor: '#fff', borderRadius: 14, width: 320,
+    shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 20, shadowOffset: { width: 0, height: 8 },
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: N.border,
+    backgroundColor: N.headBg,
+  },
+  iconCircle: {
+    width: 28, height: 28, borderRadius: 8,
+    backgroundColor: COLORS.primary + '12',
+    borderWidth: 1, borderColor: COLORS.primary + '30',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  title: { flex: 1, fontSize: 14, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  closeBtn: { padding: 2 },
+  body: { padding: 16, gap: 12 },
+  fieldWrap: { gap: 5 },
+  label: { fontSize: 10, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: {
+    borderWidth: 1, borderColor: N.border, borderRadius: 8,
+    paddingHorizontal: 11, paddingVertical: 9,
+    fontSize: 13, fontFamily: 'Poppins-Regular', color: N.dark,
+    backgroundColor: N.headBg,
+  },
+  footer: {
+    flexDirection: 'row', gap: 8, justifyContent: 'flex-end',
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: N.border,
+  },
+  cancelBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 7, borderWidth: 1, borderColor: N.border },
+  cancelText: { fontSize: 12, fontFamily: 'Poppins-Medium', color: N.muted },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 7, backgroundColor: COLORS.primary },
+  addBtnDisabled: { opacity: 0.4 },
+  addText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: '#fff' },
+});
+
 // ─── Product Card ─────────────────────────────────────────────────────────────
-function ProductCard({ item, labels, onEdit }: {
+function ProductCard({ item, labels, customFields, onEdit, onAddField }: {
   item: MasterProduct;
   labels: typeof PRODUCT_FIELD_LABELS;
+  customFields: { name: string; value: string }[];
   onEdit: (item: MasterProduct) => void;
+  onAddField: (item: MasterProduct) => void;
 }) {
-  const sc = statusColor((item as any).fieldF);
   const dot = companyDot(item.company);
   const allFields = Object.keys(labels) as (keyof typeof labels)[];
 
-  const FieldPill = ({ fkey }: { fkey: keyof typeof labels }) => (
+  const FieldPill = ({ label, value }: { label: string; value: string }) => (
     <View style={pc.pill}>
-      <Text style={pc.pillLabel}>{labels[fkey]}</Text>
-      <Text style={pc.pillValue} numberOfLines={1}>{(item as any)[fkey]}</Text>
+      <Text style={pc.pillLabel}>{label}</Text>
+      <Text style={pc.pillValue} numberOfLines={1}>{value}</Text>
     </View>
   );
 
@@ -622,14 +745,24 @@ function ProductCard({ item, labels, onEdit }: {
             <Text style={pc.subText}>{item.region}</Text>
           </View>
         </View>
-        <TouchableOpacity style={pc.editBtn} onPress={() => onEdit(item)}>
-          <Pencil size={12} color={COLORS.primary} />
-        </TouchableOpacity>
+        <View style={pc.headerBtns}>
+          <TouchableOpacity style={pc.addBtn} onPress={() => onAddField(item)}>
+            <Plus size={12} color={COLORS.accent} />
+          </TouchableOpacity>
+          <TouchableOpacity style={pc.editBtn} onPress={() => onEdit(item)}>
+            <Pencil size={12} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Fields grid — all fields, no individual edit buttons */}
+      {/* Fields grid */}
       <View style={pc.fieldGrid}>
-        {allFields.map(k => <FieldPill key={k} fkey={k} />)}
+        {allFields.map(k => (
+          <FieldPill key={k} label={labels[k]} value={(item as any)[k]} />
+        ))}
+        {customFields.map((cf, i) => (
+          <FieldPill key={`custom-${i}`} label={cf.name} value={cf.value} />
+        ))}
       </View>
     </View>
   );
@@ -668,6 +801,13 @@ const pc = StyleSheet.create({
   pill: { width: '50%', paddingHorizontal: 5, paddingVertical: 4 },
   pillLabel: { fontSize: 9, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 1 },
   pillValue: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: N.dark },
+  headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  addBtn: {
+    width: 28, height: 28, borderRadius: 7,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.accent + '15',
+    borderWidth: 1, borderColor: COLORS.accent + '40',
+  },
   editBtn: {
     width: 28, height: 28, borderRadius: 7,
     alignItems: 'center', justifyContent: 'center',
@@ -855,6 +995,8 @@ export default function MasterDataScreen() {
   const [editRecord, setEditRecord] = useState<{ record: EditRecord; type: 'product' | 'bd' } | null>(null);
   const [products, setProducts] = useState<MasterProduct[]>(masterProducts);
   const [bdItems, setBdItems] = useState<BDRecord[]>(masterBD);
+  const [customFields, setCustomFields] = useState<Record<string, { name: string; value: string }[]>>({});
+  const [addFieldTarget, setAddFieldTarget] = useState<MasterProduct | null>(null);
 
   const tabAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -896,6 +1038,14 @@ export default function MasterDataScreen() {
   // Edit handlers
   const openProductEdit = (item: MasterProduct) => setEditRecord({ record: item, type: 'product' });
   const openBDEdit = (item: BDRecord) => setEditRecord({ record: item, type: 'bd' });
+
+  const handleAddField = (name: string, value: string) => {
+    if (!addFieldTarget) return;
+    setCustomFields(prev => ({
+      ...prev,
+      [addFieldTarget.id]: [...(prev[addFieldTarget.id] ?? []), { name, value }],
+    }));
+  };
 
   const saveEdit = (updated: Record<string, string>) => {
     if (!editRecord) return;
@@ -1021,7 +1171,9 @@ export default function MasterDataScreen() {
                   key={item.id}
                   item={item}
                   labels={PRODUCT_FIELD_LABELS}
+                  customFields={customFields[item.id] ?? []}
                   onEdit={openProductEdit}
+                  onAddField={setAddFieldTarget}
                 />
               ))
             )}
@@ -1115,6 +1267,13 @@ export default function MasterDataScreen() {
           </View>
         </View>
       )}
+
+      {/* ── Add Field Modal ── */}
+      <AddFieldModal
+        visible={!!addFieldTarget}
+        onAdd={handleAddField}
+        onClose={() => setAddFieldTarget(null)}
+      />
 
       {/* ── Edit All Modal ── */}
       <EditAllModal
