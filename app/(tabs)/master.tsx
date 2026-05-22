@@ -204,6 +204,300 @@ const em = StyleSheet.create({
   saveText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: '#fff' },
 });
 
+// ─── Upload Confirm Modal ────────────────────────────────────────────────────
+function UploadConfirmModal({
+  visible,
+  tab,
+  onClose,
+}: {
+  visible: boolean;
+  tab: 'products' | 'bd';
+  onClose: () => void;
+}) {
+  const { width: SW } = useWindowDimensions();
+  const label = tab === 'products' ? 'Products' : 'Business Development';
+
+  const handleDownload = () => {
+    if (Platform.OS === 'web') {
+      const headers = tab === 'products'
+        ? ['molecule', 'therapeutic', 'skuName', 'product', 'comparator', 'region', 'country', 'strength', 'dosage']
+        : ['molecule', 'partner', 'status'];
+      const csv = headers.join(',') + '\n';
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tab}_template.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={uc.overlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+        <View style={[uc.box, { width: Math.min(SW * 0.9, 400) }]}>
+          <LinearGradient colors={[COLORS.primaryDark, COLORS.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={uc.header}>
+            <View style={uc.headerIcon}>
+              <Upload size={15} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={uc.headerTitle}>Upload Excel</Text>
+              <Text style={uc.headerSub}>{label}</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={uc.closeBtn}>
+              <X size={15} color="rgba(255,255,255,0.85)" />
+            </TouchableOpacity>
+          </LinearGradient>
+
+          <View style={uc.body}>
+            <View style={uc.warningBox}>
+              <FileSpreadsheet size={20} color={COLORS.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={uc.warningTitle}>Before uploading, download the template</Text>
+                <Text style={uc.warningDesc}>
+                  Please use the official Excel template to ensure your data is formatted correctly. Uploads with incorrect columns will be rejected.
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity style={uc.downloadBtn} onPress={handleDownload}>
+              <FileSpreadsheet size={15} color={COLORS.primary} />
+              <Text style={uc.downloadText}>Download {label} Template</Text>
+              <ChevronRight size={14} color={COLORS.primary} />
+            </TouchableOpacity>
+
+            <View style={uc.uploadArea}>
+              <Upload size={22} color={N.border} />
+              <Text style={uc.uploadAreaTitle}>Drop your file here or tap to browse</Text>
+              <Text style={uc.uploadAreaSub}>Accepts .xlsx and .csv files only</Text>
+            </View>
+          </View>
+
+          <View style={uc.footer}>
+            <TouchableOpacity style={uc.cancelBtn} onPress={onClose}>
+              <Text style={uc.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={uc.uploadBtn}>
+              <Upload size={13} color="#fff" />
+              <Text style={uc.uploadBtnText}>Upload File</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const uc = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  box: {
+    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 24, shadowOffset: { width: 0, height: 8 },
+  },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 14 },
+  headerIcon: {
+    width: 32, height: 32, borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitle: { fontSize: 14, fontFamily: 'Poppins-Bold', color: '#fff' },
+  headerSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.7)', marginTop: 1 },
+  closeBtn: {
+    width: 28, height: 28, borderRadius: 7,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  body: { padding: 16, gap: 12 },
+  warningBox: {
+    flexDirection: 'row', gap: 12, alignItems: 'flex-start',
+    backgroundColor: COLORS.accent + '0D',
+    borderWidth: 1, borderColor: COLORS.accent + '30',
+    borderRadius: 10, padding: 12,
+  },
+  warningTitle: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: N.dark, marginBottom: 3 },
+  warningDesc: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.muted, lineHeight: 16 },
+  downloadBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderWidth: 1.5, borderColor: COLORS.primary + '50',
+    borderRadius: 9, paddingHorizontal: 14, paddingVertical: 10,
+    backgroundColor: COLORS.primary + '08',
+  },
+  downloadText: { flex: 1, fontSize: 12, fontFamily: 'Poppins-SemiBold', color: COLORS.primary },
+  uploadArea: {
+    borderWidth: 1.5, borderColor: N.border, borderRadius: 10, borderStyle: 'dashed',
+    paddingVertical: 20, alignItems: 'center', gap: 5,
+    backgroundColor: N.headBg,
+  },
+  uploadAreaTitle: { fontSize: 12, fontFamily: 'Poppins-Medium', color: N.mid, marginTop: 4 },
+  uploadAreaSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint },
+  footer: {
+    flexDirection: 'row', gap: 8, justifyContent: 'flex-end',
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: N.border,
+  },
+  cancelBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 8, borderWidth: 1, borderColor: N.border },
+  cancelText: { fontSize: 12, fontFamily: 'Poppins-Medium', color: N.muted },
+  uploadBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 8, backgroundColor: COLORS.primary },
+  uploadBtnText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: '#fff' },
+});
+
+// ─── Add Product Modal ────────────────────────────────────────────────────────
+function AddProductModal({
+  visible,
+  onAdd,
+  onClose,
+}: {
+  visible: boolean;
+  onAdd: (product: Omit<MasterProduct, 'id'>) => void;
+  onClose: () => void;
+}) {
+  const { width: SW } = useWindowDimensions();
+  const COMPANIES_LIST = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
+
+  const blank = (): Record<string, string> => ({
+    company: '', region: '', molecule: '', therapeutic: '', skuName: '',
+    product: '', comparator: '', country: '', strength: '', dosage: '',
+  });
+
+  const [vals, setVals] = useState<Record<string, string>>(blank());
+
+  useEffect(() => {
+    if (visible) setVals(blank());
+  }, [visible]);
+
+  const FIELD_LABELS: Record<string, string> = {
+    company: 'Company',
+    region: 'Region',
+    molecule: 'Molecule',
+    therapeutic: 'Therapeutic Area',
+    skuName: 'SKU Name',
+    product: 'Product Name',
+    comparator: 'Comparator',
+    country: 'Country',
+    strength: 'Strength',
+    dosage: 'Dosage Form',
+  };
+
+  const canSave = vals.product.trim().length > 0 && vals.company.trim().length > 0;
+
+  const handleSave = () => {
+    if (!canSave) return;
+    onAdd({
+      company: vals.company, region: vals.region,
+      molecule: vals.molecule, therapeutic: vals.therapeutic,
+      skuName: vals.skuName, product: vals.product,
+      comparator: vals.comparator, country: vals.country,
+      strength: vals.strength, dosage: vals.dosage,
+      fieldA: vals.product, fieldB: vals.skuName, fieldC: vals.dosage,
+      fieldD: vals.strength, fieldE: vals.molecule, fieldF: 'Active',
+      fieldG: '', fieldH: '', fieldI: '', fieldJ: vals.therapeutic,
+      fieldK: '', fieldL: '',
+    });
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={ap.overlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+        <View style={[ap.sheet, { width: Math.min(SW * 0.94, 520) }]}>
+          <LinearGradient colors={[COLORS.primaryDark, COLORS.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={ap.header}>
+            <View style={ap.headerIcon}>
+              <Plus size={15} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={ap.headerTitle}>Add New Product</Text>
+              <Text style={ap.headerSub}>Fill in the product details below</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={ap.closeBtn}>
+              <X size={16} color="rgba(255,255,255,0.9)" />
+            </TouchableOpacity>
+          </LinearGradient>
+
+          <ScrollView style={ap.scroll} contentContainerStyle={ap.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <View style={ap.fieldGrid}>
+              {Object.entries(FIELD_LABELS).map(([k, label], i) => (
+                <View key={k} style={ap.fieldWrap}>
+                  <Text style={ap.fieldLabel}>
+                    {label}
+                    {(k === 'product' || k === 'company') && <Text style={{ color: N.red }}> *</Text>}
+                  </Text>
+                  <TextInput
+                    style={[ap.input, (k === 'product' || k === 'company') && vals[k].length === 0 && ap.inputRequired]}
+                    value={vals[k]}
+                    onChangeText={v => setVals(prev => ({ ...prev, [k]: v }))}
+                    placeholder={`Enter ${label.toLowerCase()}`}
+                    placeholderTextColor={N.faint}
+                    autoFocus={i === 0}
+                    selectTextOnFocus
+                  />
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+
+          <View style={ap.footer}>
+            <TouchableOpacity style={ap.cancelBtn} onPress={onClose}>
+              <Text style={ap.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[ap.saveBtn, !canSave && ap.saveBtnDisabled]} onPress={handleSave}>
+              <Plus size={14} color="#fff" />
+              <Text style={ap.saveText}>Add Product</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const ap = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  sheet: {
+    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
+    maxHeight: '85%',
+    shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 24, shadowOffset: { width: 0, height: 8 },
+  },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 16 },
+  headerIcon: {
+    width: 32, height: 32, borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitle: { fontSize: 15, fontFamily: 'Poppins-Bold', color: '#fff' },
+  headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.7)', marginTop: 1 },
+  closeBtn: {
+    width: 30, height: 30, borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  scroll: { flexShrink: 1 },
+  scrollContent: { padding: 16 },
+  fieldGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 0 },
+  fieldWrap: { width: '50%', paddingHorizontal: 6, paddingVertical: 6 },
+  fieldLabel: { fontSize: 10, fontFamily: 'Poppins-Medium', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 },
+  input: {
+    borderWidth: 1, borderColor: N.border, borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 8,
+    fontSize: 13, fontFamily: 'Poppins-Regular', color: N.dark,
+    backgroundColor: N.headBg,
+  },
+  inputRequired: { borderColor: COLORS.primary + '60' },
+  footer: {
+    flexDirection: 'row', gap: 10, justifyContent: 'flex-end',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderTopWidth: 1, borderTopColor: N.border,
+    backgroundColor: '#fff',
+  },
+  cancelBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 8, borderWidth: 1, borderColor: N.border },
+  cancelText: { fontSize: 13, fontFamily: 'Poppins-Medium', color: N.muted },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, backgroundColor: COLORS.primary },
+  saveBtnDisabled: { opacity: 0.4 },
+  saveText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: '#fff' },
+});
+
 // ─── Audit Log Drawer ─────────────────────────────────────────────────────────
 function AuditLogDrawer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -994,6 +1288,8 @@ export default function MasterDataScreen() {
   const [bdItems, setBdItems] = useState<BDRecord[]>(masterBD);
   const [customFields, setCustomFields] = useState<Record<string, { name: string; value: string }[]>>({});
   const [addFieldTarget, setAddFieldTarget] = useState<MasterProduct | null>(null);
+  const [uploadModal, setUploadModal] = useState<'products' | 'bd' | null>(null);
+  const [addProductVisible, setAddProductVisible] = useState(false);
 
   const tabAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -1044,6 +1340,11 @@ export default function MasterDataScreen() {
     }));
   };
 
+  const handleAddProduct = (data: Omit<MasterProduct, 'id'>) => {
+    const newId = `MP-${String(products.length + 1).padStart(3, '0')}`;
+    setProducts(prev => [...prev, { id: newId, ...data } as MasterProduct]);
+  };
+
   const saveEdit = (updated: Record<string, string>) => {
     if (!editRecord) return;
     if (editRecord.type === 'product') {
@@ -1081,11 +1382,6 @@ export default function MasterDataScreen() {
           </TouchableOpacity>
         )}
         <View style={s.filtersSpacer} />
-        {/* Upload Excel */}
-        <TouchableOpacity style={s.uploadBtn}>
-          <Upload size={14} color="#fff" />
-          <Text style={s.uploadText}>Upload Excel</Text>
-        </TouchableOpacity>
         {/* Audit Log button — icon only with tooltip */}
         <View style={s.auditWrap}>
           {auditTooltip && (
@@ -1148,11 +1444,21 @@ export default function MasterDataScreen() {
             )}
           </View>
 
-          {/* Summary bar */}
+          {/* Summary bar + tab actions */}
           <View style={s.summaryBar}>
             <Text style={s.summaryText}>
               <Text style={s.summaryCount}>{filteredProducts.length}</Text> product{filteredProducts.length !== 1 ? 's' : ''} · Page {prodPage} of {Math.max(prodTotal, 1)}
             </Text>
+            <View style={s.tabActions}>
+              <TouchableOpacity style={s.tabActionBtn} onPress={() => setUploadModal('products')}>
+                <Upload size={13} color={COLORS.primary} />
+                <Text style={s.tabActionText}>Upload Excel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.tabActionBtn, s.tabActionBtnPrimary]} onPress={() => setAddProductVisible(true)}>
+                <Plus size={13} color="#fff" />
+                <Text style={[s.tabActionText, s.tabActionTextWhite]}>Add Product</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Cards */}
@@ -1216,11 +1522,17 @@ export default function MasterDataScreen() {
             )}
           </View>
 
-          {/* Summary bar */}
+          {/* Summary bar + tab actions */}
           <View style={s.summaryBar}>
             <Text style={s.summaryText}>
               <Text style={s.summaryCount}>{filteredBD.length}</Text> record{filteredBD.length !== 1 ? 's' : ''} · Page {bdPage} of {Math.max(bdTotal, 1)}
             </Text>
+            <View style={s.tabActions}>
+              <TouchableOpacity style={s.tabActionBtn} onPress={() => setUploadModal('bd')}>
+                <Upload size={13} color={COLORS.primary} />
+                <Text style={s.tabActionText}>Upload Excel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Cards */}
@@ -1264,6 +1576,20 @@ export default function MasterDataScreen() {
           </View>
         </View>
       )}
+
+      {/* ── Upload Confirm Modal ── */}
+      <UploadConfirmModal
+        visible={!!uploadModal}
+        tab={uploadModal ?? 'products'}
+        onClose={() => setUploadModal(null)}
+      />
+
+      {/* ── Add Product Modal ── */}
+      <AddProductModal
+        visible={addProductVisible}
+        onAdd={handleAddProduct}
+        onClose={() => setAddProductVisible(false)}
+      />
 
       {/* ── Add Field Modal ── */}
       <AddFieldModal
@@ -1334,16 +1660,16 @@ const s = StyleSheet.create({
     borderTopColor: '#1a1a2e',
   },
 
-  uploadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: COLORS.primary,
+  tabActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  tabActionBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 11, paddingVertical: 6, borderRadius: 7,
+    borderWidth: 1, borderColor: COLORS.primary + '50',
+    backgroundColor: COLORS.primary + '08',
   },
-  uploadText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: '#fff' },
+  tabActionBtnPrimary: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  tabActionText: { fontSize: 11, fontFamily: 'Poppins-SemiBold', color: COLORS.primary },
+  tabActionTextWhite: { color: '#fff' },
 
   filtersBar: {
     flexDirection: 'row',
@@ -1413,8 +1739,11 @@ const s = StyleSheet.create({
   },
 
   summaryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 6,
+    paddingVertical: 6,
   },
   summaryText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.faint },
   summaryCount: { fontFamily: 'Poppins-SemiBold', color: N.mid },
