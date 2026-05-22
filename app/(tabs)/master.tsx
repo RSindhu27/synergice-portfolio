@@ -204,6 +204,413 @@ const em = StyleSheet.create({
   saveText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: '#fff' },
 });
 
+// ─── BD Upload Review Modal ───────────────────────────────────────────────────
+interface BDUploadRow {
+  id: string;
+  molecule: string;
+  partner: string;
+  status: string;
+  description: string;
+  isDuplicate: boolean;
+  isValid: boolean;
+  checked: boolean;
+}
+
+const SAMPLE_BD_ROWS: Omit<BDUploadRow, 'id' | 'isDuplicate' | 'isValid' | 'checked'>[] = [
+  { molecule: 'Molecule A', partner: 'Partner X1', status: 'Active', description: 'License agreement for Region A' },
+  { molecule: 'Molecule B', partner: 'Partner X2', status: 'Negotiation', description: 'Co-development deal in progress' },
+  { molecule: 'Molecule C', partner: 'Partner Y1', status: '', description: 'Missing status field' },
+  { molecule: 'Molecule D', partner: 'Partner Y2', status: 'Active', description: 'Distribution rights - Region B' },
+  { molecule: '', partner: 'Partner Z1', status: 'Active', description: 'Missing molecule identifier' },
+  { molecule: 'Molecule F', partner: 'Partner Z2', status: 'Pending', description: 'Co-promotion agreement' },
+  { molecule: 'Molecule G', partner: 'Partner W1', status: 'Active', description: 'Supply chain collaboration' },
+  { molecule: 'Molecule A', partner: 'Partner X1', status: 'Active', description: 'License agreement for Region A' },
+  { molecule: 'Molecule H', partner: '', status: 'Active', description: 'Partner name not provided' },
+  { molecule: 'Molecule I', partner: 'Partner W2', status: 'Closed', description: 'Deal concluded Q4 2024' },
+  { molecule: 'Molecule J', partner: 'Partner V1', status: 'Active', description: 'Phase II co-development' },
+  { molecule: 'Molecule K', partner: 'Partner V2', status: 'InvalidStatus', description: 'Unrecognized status value' },
+  { molecule: 'Molecule L', partner: 'Partner X3', status: 'Negotiation', description: 'Term sheet under review' },
+  { molecule: 'Molecule M', partner: 'Partner Y3', status: 'Active', description: 'Regional licensing deal' },
+  { molecule: 'Molecule N', partner: 'Partner Z3', status: 'Active', description: 'New partnership - Region F' },
+];
+
+const VALID_STATUSES = ['Active', 'Inactive', 'Pending', 'Negotiation', 'Closed'];
+
+function validateBDRow(row: Pick<BDUploadRow, 'molecule' | 'partner' | 'status'>): { valid: boolean; reason: string } {
+  if (!row.molecule.trim()) return { valid: false, reason: 'Molecule is required' };
+  if (!row.partner.trim()) return { valid: false, reason: 'Partner is required' };
+  if (!row.status.trim()) return { valid: false, reason: 'Status is required' };
+  if (!VALID_STATUSES.includes(row.status)) return { valid: false, reason: `Status "${row.status}" is not recognised` };
+  return { valid: true, reason: '' };
+}
+
+function buildUploadRows(raw: typeof SAMPLE_BD_ROWS): BDUploadRow[] {
+  const rows: BDUploadRow[] = raw.map((r, i) => {
+    const { valid, reason } = validateBDRow(r);
+    return { id: `row-${i}`, ...r, description: r.description, isDuplicate: false, isValid: valid, checked: valid };
+  });
+  // mark duplicates — same molecule + partner combination
+  const seen = new Map<string, number>();
+  rows.forEach((r, i) => {
+    const key = `${r.molecule.trim().toLowerCase()}|${r.partner.trim().toLowerCase()}`;
+    if (seen.has(key)) {
+      r.isDuplicate = true;
+      r.isValid = false;
+      r.checked = false;
+    } else {
+      seen.set(key, i);
+    }
+  });
+  return rows;
+}
+
+function BDUploadReviewModal({
+  visible,
+  onClose,
+  onConfirm,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: (rows: BDUploadRow[]) => void;
+}) {
+  const { width: SW, height: SH } = useWindowDimensions();
+  const [rows, setRows] = useState<BDUploadRow[]>([]);
+
+  useEffect(() => {
+    if (visible) setRows(buildUploadRows(SAMPLE_BD_ROWS));
+  }, [visible]);
+
+  const updateField = (id: string, field: 'molecule' | 'partner' | 'status', value: string) => {
+    setRows(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      const updated = { ...r, [field]: value };
+      const { valid } = validateBDRow(updated);
+      // re-check duplicate against all other non-self rows
+      const isDup = prev.some(other =>
+        other.id !== id &&
+        other.molecule.trim().toLowerCase() === updated.molecule.trim().toLowerCase() &&
+        other.partner.trim().toLowerCase() === updated.partner.trim().toLowerCase()
+      );
+      return { ...updated, isDuplicate: isDup, isValid: valid && !isDup, checked: valid && !isDup };
+    }));
+  };
+
+  const toggleCheck = (id: string) => {
+    setRows(prev => prev.map(r => r.id === id ? { ...r, checked: !r.checked } : r));
+  };
+
+  const toggleAll = (val: boolean) => {
+    setRows(prev => prev.map(r => ({ ...r, checked: val })));
+  };
+
+  const checkedCount = rows.filter(r => r.checked).length;
+  const validCount = rows.filter(r => r.isValid).length;
+  const invalidCount = rows.filter(r => !r.isValid).length;
+  const allChecked = rows.length > 0 && rows.every(r => r.checked);
+
+  const handleUpload = () => {
+    onConfirm(rows.filter(r => r.checked));
+    onClose();
+  };
+
+  const COL = { cb: 36, mol: 130, partner: 120, status: 100, vs: 120, desc: 180 };
+  const tableW = COL.cb + COL.mol + COL.partner + COL.status + COL.vs + COL.desc;
+
+  const StatusPill = ({ row }: { row: BDUploadRow }) => {
+    if (row.isValid) {
+      return (
+        <View style={rv.validBadge}>
+          <Check size={10} color={N.green} />
+          <Text style={rv.validText}>Valid</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={rv.invalidWrap}>
+        <View style={rv.invalidBadge}>
+          <X size={10} color={N.red} />
+          <Text style={rv.invalidText}>Invalid</Text>
+        </View>
+        {row.isDuplicate && <View style={rv.dupChip}><Text style={rv.dupText}>Duplicate</Text></View>}
+      </View>
+    );
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={rv.overlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+        <View style={[rv.sheet, { width: Math.min(SW * 0.97, 820), maxHeight: SH * 0.88 }]}>
+
+          {/* Header */}
+          <LinearGradient colors={[COLORS.primaryDark, COLORS.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={rv.header}>
+            <View style={rv.headerIcon}><FileSpreadsheet size={16} color="#fff" /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={rv.headerTitle}>Review Upload — Business Development</Text>
+              <Text style={rv.headerSub}>{rows.length} rows parsed · {validCount} valid · {invalidCount} invalid</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={rv.closeBtn}>
+              <X size={15} color="rgba(255,255,255,0.85)" />
+            </TouchableOpacity>
+          </LinearGradient>
+
+          {/* Stats bar */}
+          <View style={rv.statsBar}>
+            <View style={rv.statItem}>
+              <View style={[rv.statDot, { backgroundColor: N.green }]} />
+              <Text style={rv.statLabel}>{validCount} Valid</Text>
+            </View>
+            <View style={rv.statDivider} />
+            <View style={rv.statItem}>
+              <View style={[rv.statDot, { backgroundColor: N.red }]} />
+              <Text style={rv.statLabel}>{invalidCount} Invalid</Text>
+            </View>
+            <View style={rv.statDivider} />
+            <View style={rv.statItem}>
+              <View style={[rv.statDot, { backgroundColor: COLORS.primary }]} />
+              <Text style={rv.statLabel}>{checkedCount} Selected</Text>
+            </View>
+            <View style={{ flex: 1 }} />
+            <Text style={rv.hintText}>Edit invalid rows to fix validation errors</Text>
+          </View>
+
+          {/* Table */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexShrink: 0 }}>
+            <View style={{ minWidth: tableW }}>
+              {/* Column headers */}
+              <View style={rv.thead}>
+                <TouchableOpacity style={[rv.th, { width: COL.cb }]} onPress={() => toggleAll(!allChecked)}>
+                  <View style={[rv.checkbox, allChecked && rv.checkboxChecked]}>
+                    {allChecked && <Check size={10} color="#fff" />}
+                  </View>
+                </TouchableOpacity>
+                <Text style={[rv.th, rv.thText, { width: COL.mol }]}>Molecule</Text>
+                <Text style={[rv.th, rv.thText, { width: COL.partner }]}>Partner</Text>
+                <Text style={[rv.th, rv.thText, { width: COL.status }]}>Status</Text>
+                <Text style={[rv.th, rv.thText, { width: COL.vs }]}>Validation</Text>
+                <Text style={[rv.th, rv.thText, { width: COL.desc }]}>Description</Text>
+              </View>
+
+              {/* Rows */}
+              <ScrollView style={rv.tbody} showsVerticalScrollIndicator={false}>
+                {rows.map((row, idx) => {
+                  const isInvalid = !row.isValid;
+                  const rowBg = isInvalid ? '#fff9f9' : idx % 2 === 0 ? '#fff' : N.headBg;
+                  return (
+                    <View key={row.id} style={[rv.tr, { backgroundColor: rowBg }, isInvalid && rv.trInvalid]}>
+                      {/* Checkbox */}
+                      <TouchableOpacity style={[rv.td, { width: COL.cb }]} onPress={() => toggleCheck(row.id)}>
+                        <View style={[rv.checkbox, row.checked && rv.checkboxChecked]}>
+                          {row.checked && <Check size={10} color="#fff" />}
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* Molecule */}
+                      <View style={[rv.td, { width: COL.mol }]}>
+                        {isInvalid ? (
+                          <TextInput
+                            style={[rv.cellInput, !row.molecule && rv.cellInputError]}
+                            value={row.molecule}
+                            onChangeText={v => updateField(row.id, 'molecule', v)}
+                            placeholder="Molecule"
+                            placeholderTextColor={N.faint}
+                          />
+                        ) : (
+                          <Text style={rv.cellText} numberOfLines={1}>{row.molecule}</Text>
+                        )}
+                      </View>
+
+                      {/* Partner */}
+                      <View style={[rv.td, { width: COL.partner }]}>
+                        {isInvalid ? (
+                          <TextInput
+                            style={[rv.cellInput, !row.partner && rv.cellInputError]}
+                            value={row.partner}
+                            onChangeText={v => updateField(row.id, 'partner', v)}
+                            placeholder="Partner"
+                            placeholderTextColor={N.faint}
+                          />
+                        ) : (
+                          <Text style={rv.cellText} numberOfLines={1}>{row.partner}</Text>
+                        )}
+                      </View>
+
+                      {/* Status */}
+                      <View style={[rv.td, { width: COL.status }]}>
+                        {isInvalid ? (
+                          <TextInput
+                            style={[rv.cellInput, (!row.status || !VALID_STATUSES.includes(row.status)) && rv.cellInputError]}
+                            value={row.status}
+                            onChangeText={v => updateField(row.id, 'status', v)}
+                            placeholder="Status"
+                            placeholderTextColor={N.faint}
+                          />
+                        ) : (
+                          <View style={[rv.statusChip, { backgroundColor: statusColor(row.status).bg, borderColor: statusColor(row.status).border }]}>
+                            <Text style={[rv.statusChipText, { color: statusColor(row.status).text }]}>{row.status}</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Validation status */}
+                      <View style={[rv.td, { width: COL.vs }]}>
+                        <StatusPill row={row} />
+                      </View>
+
+                      {/* Description */}
+                      <View style={[rv.td, { width: COL.desc }]}>
+                        <Text style={rv.cellTextMuted} numberOfLines={2}>{row.description}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </ScrollView>
+
+          {/* Footer */}
+          <View style={rv.footer}>
+            <Text style={rv.footerNote}>
+              <Text style={{ fontFamily: 'Poppins-SemiBold', color: N.dark }}>{checkedCount}</Text> row{checkedCount !== 1 ? 's' : ''} will be uploaded
+            </Text>
+            <View style={rv.footerBtns}>
+              <TouchableOpacity style={rv.cancelBtn} onPress={onClose}>
+                <Text style={rv.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[rv.uploadBtn, checkedCount === 0 && rv.uploadBtnDisabled]}
+                onPress={handleUpload}
+                disabled={checkedCount === 0}
+              >
+                <Upload size={13} color="#fff" />
+                <Text style={rv.uploadBtnText}>Upload {checkedCount} Row{checkedCount !== 1 ? 's' : ''}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const rv = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 12 },
+  sheet: {
+    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 28, shadowOffset: { width: 0, height: 10 },
+    flexShrink: 1,
+  },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 14 },
+  headerIcon: {
+    width: 32, height: 32, borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitle: { fontSize: 14, fontFamily: 'Poppins-Bold', color: '#fff' },
+  headerSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.72)', marginTop: 1 },
+  closeBtn: {
+    width: 28, height: 28, borderRadius: 7,
+    backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center',
+  },
+  statsBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderBottomWidth: 1, borderBottomColor: N.borderLt,
+    backgroundColor: N.headBg,
+  },
+  statItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statDot: { width: 8, height: 8, borderRadius: 4 },
+  statLabel: { fontSize: 11, fontFamily: 'Poppins-Medium', color: N.muted },
+  statDivider: { width: 1, height: 14, backgroundColor: N.border },
+  hintText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint, fontStyle: 'italic' },
+
+  // Table
+  thead: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: N.headBg,
+    borderBottomWidth: 1.5, borderBottomColor: N.border,
+    paddingVertical: 0,
+  },
+  th: { paddingHorizontal: 10, paddingVertical: 10, alignItems: 'center', justifyContent: 'center' },
+  thText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.5 },
+  tbody: { maxHeight: 380 },
+  tr: {
+    flexDirection: 'row', alignItems: 'center',
+    borderBottomWidth: 1, borderBottomColor: N.borderLt,
+    minHeight: 48,
+  },
+  trInvalid: { borderLeftWidth: 3, borderLeftColor: N.red + '80' },
+  td: { paddingHorizontal: 8, paddingVertical: 6, justifyContent: 'center' },
+
+  // Cells
+  cellText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.dark },
+  cellTextMuted: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.faint, lineHeight: 15 },
+  cellInput: {
+    borderWidth: 1, borderColor: N.border, borderRadius: 6,
+    paddingHorizontal: 7, paddingVertical: 5,
+    fontSize: 12, fontFamily: 'Poppins-Regular', color: N.dark,
+    backgroundColor: '#fff',
+    minWidth: 80,
+  },
+  cellInputError: { borderColor: N.red + '80', backgroundColor: N.redBg },
+
+  statusChip: {
+    borderWidth: 1, borderRadius: 5, paddingHorizontal: 7, paddingVertical: 3,
+    alignSelf: 'flex-start',
+  },
+  statusChipText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
+
+  // Checkbox
+  checkbox: {
+    width: 16, height: 16, borderRadius: 4,
+    borderWidth: 1.5, borderColor: N.border,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  checkboxChecked: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+
+  // Validation badges
+  validBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: N.greenBg, borderWidth: 1, borderColor: N.greenBdr,
+    borderRadius: 5, paddingHorizontal: 7, paddingVertical: 3,
+    alignSelf: 'flex-start',
+  },
+  validText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.green },
+  invalidWrap: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
+  invalidBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: N.redBg, borderWidth: 1, borderColor: N.redBdr,
+    borderRadius: 5, paddingHorizontal: 7, paddingVertical: 3,
+    alignSelf: 'flex-start',
+  },
+  invalidText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.red },
+  dupChip: {
+    backgroundColor: '#fff3e0', borderWidth: 1, borderColor: '#ffb74d',
+    borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2,
+    alignSelf: 'flex-start',
+  },
+  dupText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: '#e65100' },
+
+  // Footer
+  footer: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: N.border,
+    backgroundColor: '#fff',
+  },
+  footerNote: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.muted },
+  footerBtns: { flexDirection: 'row', gap: 8 },
+  cancelBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: N.border },
+  cancelText: { fontSize: 12, fontFamily: 'Poppins-Medium', color: N.muted },
+  uploadBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
+    backgroundColor: COLORS.primary,
+  },
+  uploadBtnDisabled: { opacity: 0.4 },
+  uploadBtnText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: '#fff' },
+});
+
 // ─── Upload Confirm Modal ────────────────────────────────────────────────────
 function UploadConfirmModal({
   visible,
@@ -1290,6 +1697,7 @@ export default function MasterDataScreen() {
   const [addFieldTarget, setAddFieldTarget] = useState<MasterProduct | null>(null);
   const [uploadModal, setUploadModal] = useState<'products' | 'bd' | null>(null);
   const [addProductVisible, setAddProductVisible] = useState(false);
+  const [bdReviewVisible, setBdReviewVisible] = useState(false);
 
   const tabAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -1343,6 +1751,20 @@ export default function MasterDataScreen() {
   const handleAddProduct = (data: Omit<MasterProduct, 'id'>) => {
     const newId = `MP-${String(products.length + 1).padStart(3, '0')}`;
     setProducts(prev => [...prev, { id: newId, ...data } as MasterProduct]);
+  };
+
+  const handleBdUploadConfirm = (uploadedRows: BDUploadRow[]) => {
+    const newItems: BDRecord[] = uploadedRows.map((r, i) => ({
+      id: `BD-${String(bdItems.length + i + 1).padStart(3, '0')}`,
+      company: 'Company A',
+      region: 'Region A',
+      molecule: r.molecule,
+      partner: r.partner,
+      status: r.status,
+      fieldA: r.molecule, fieldB: r.partner, fieldC: r.status,
+      fieldD: r.status, fieldE: '', fieldF: '',
+    }));
+    setBdItems(prev => [...prev, ...newItems]);
   };
 
   const saveEdit = (updated: Record<string, string>) => {
@@ -1528,6 +1950,10 @@ export default function MasterDataScreen() {
               <Text style={s.summaryCount}>{filteredBD.length}</Text> record{filteredBD.length !== 1 ? 's' : ''} · Page {bdPage} of {Math.max(bdTotal, 1)}
             </Text>
             <View style={s.tabActions}>
+              <TouchableOpacity style={s.tabActionBtn} onPress={() => setBdReviewVisible(true)}>
+                <FileSpreadsheet size={13} color={N.muted} />
+                <Text style={[s.tabActionText, { color: N.muted }]}>Sample</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={s.tabActionBtn} onPress={() => setUploadModal('bd')}>
                 <Upload size={13} color={COLORS.primary} />
                 <Text style={s.tabActionText}>Upload Excel</Text>
@@ -1576,6 +2002,13 @@ export default function MasterDataScreen() {
           </View>
         </View>
       )}
+
+      {/* ── BD Upload Review Modal ── */}
+      <BDUploadReviewModal
+        visible={bdReviewVisible}
+        onClose={() => setBdReviewVisible(false)}
+        onConfirm={handleBdUploadConfirm}
+      />
 
       {/* ── Upload Confirm Modal ── */}
       <UploadConfirmModal
