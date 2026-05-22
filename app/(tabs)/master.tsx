@@ -714,13 +714,13 @@ const af = StyleSheet.create({
 // ─── Product Card ─────────────────────────────────────────────────────────────
 function ProductCard({ item, labels, customFields, onEdit, onAddField }: {
   item: MasterProduct;
-  labels: typeof PRODUCT_FIELD_LABELS;
+  labels: Record<string, string>;
   customFields: { name: string; value: string }[];
   onEdit: (item: MasterProduct) => void;
   onAddField: (item: MasterProduct) => void;
 }) {
   const dot = companyDot(item.company);
-  const allFields = Object.keys(labels) as (keyof typeof labels)[];
+  const allFields = Object.keys(labels);
 
   const FieldPill = ({ label, value }: { label: string; value: string }) => (
     <View style={pc.pill}>
@@ -737,7 +737,7 @@ function ProductCard({ item, labels, customFields, onEdit, onAddField }: {
           <Text style={[pc.idText, { color: dot }]}>{item.id}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={pc.productName} numberOfLines={1}>{item.fieldA}</Text>
+          <Text style={pc.productName} numberOfLines={1}>{item.product}</Text>
           <View style={pc.subRow}>
             <View style={[pc.dot, { backgroundColor: dot }]} />
             <Text style={pc.subText}>{item.company}</Text>
@@ -819,19 +819,16 @@ const pc = StyleSheet.create({
 // ─── BD Card ──────────────────────────────────────────────────────────────────
 function BDCard({ item, labels, onEdit }: {
   item: BDRecord;
-  labels: typeof BD_FIELD_LABELS;
+  labels: Record<string, string>;
   onEdit: (item: BDRecord) => void;
 }) {
-  const sc = statusColor((item as any).fieldD);
+  const sc = statusColor(item.status);
   const dot = companyDot(item.company);
 
   const ICONS: Record<string, React.ReactNode> = {
-    fieldA: <Briefcase size={13} color={dot} />,
-    fieldB: <Building2 size={13} color={COLORS.info} />,
-    fieldC: <Layers size={13} color={COLORS.accent} />,
-    fieldD: <Activity size={13} color={sc.text} />,
-    fieldE: <Clock size={13} color={COLORS.gold} />,
-    fieldF: <Tag size={13} color={N.green} />,
+    molecule: <Layers size={13} color={COLORS.accent} />,
+    partner: <Building2 size={13} color={COLORS.info} />,
+    status: <Activity size={13} color={sc.text} />,
   };
 
   return (
@@ -841,7 +838,7 @@ function BDCard({ item, labels, onEdit }: {
         {/* Header */}
         <View style={bd.header}>
           <View style={{ flex: 1 }}>
-            <Text style={bd.name} numberOfLines={1}>{item.fieldA}</Text>
+            <Text style={bd.name} numberOfLines={1}>{item.molecule} — {item.partner}</Text>
             <View style={bd.subRow}>
               <View style={[bd.dot, { backgroundColor: dot }]} />
               <Text style={bd.sub}>{item.company} · {item.region}</Text>
@@ -854,7 +851,7 @@ function BDCard({ item, labels, onEdit }: {
 
         {/* Field cards row */}
         <View style={bd.fieldsRow}>
-          {(Object.keys(labels) as (keyof typeof labels)[]).map(k => (
+          {Object.keys(labels).map(k => (
             <View key={k} style={bd.fieldCard}>
               <View style={bd.fieldCardTop}>
                 {ICONS[k]}
