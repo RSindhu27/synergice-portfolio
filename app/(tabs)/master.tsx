@@ -313,165 +313,166 @@ function BDUploadReviewModal({
     onClose();
   };
 
-  const COL = { cb: 36, mol: 130, partner: 120, status: 100, vs: 120, desc: 180 };
-  const tableW = COL.cb + COL.mol + COL.partner + COL.status + COL.vs + COL.desc;
-
-  const StatusPill = ({ row }: { row: BDUploadRow }) => {
-    if (row.isValid) {
-      return (
-        <View style={rv.validBadge}>
-          <Check size={10} color={N.green} />
-          <Text style={rv.validText}>Valid</Text>
-        </View>
-      );
-    }
-    return (
-      <View style={rv.invalidWrap}>
-        <View style={rv.invalidBadge}>
-          <X size={10} color={N.red} />
-          <Text style={rv.invalidText}>Invalid</Text>
-        </View>
-        {row.isDuplicate && <View style={rv.dupChip}><Text style={rv.dupText}>Duplicate</Text></View>}
-      </View>
-    );
-  };
+  // Column widths — fixed so every cell lines up precisely
+  const COL = { cb: 44, mol: 148, partner: 140, status: 112, vs: 96, desc: 220, dup: 0 };
 
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={rv.overlay}>
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
-        <View style={[rv.sheet, { width: Math.min(SW * 0.97, 820), maxHeight: SH * 0.88 }]}>
+        <View style={[rv.sheet, { width: Math.min(SW * 0.97, 940), maxHeight: SH * 0.88 }]}>
 
-          {/* Header */}
-          <LinearGradient colors={[COLORS.primaryDark, COLORS.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={rv.header}>
-            <View style={rv.headerIcon}><FileSpreadsheet size={16} color="#fff" /></View>
-            <View style={{ flex: 1 }}>
-              <Text style={rv.headerTitle}>Review Upload — Business Development</Text>
-              <Text style={rv.headerSub}>{rows.length} rows parsed · {validCount} valid · {invalidCount} invalid</Text>
+          {/* ── Header ── */}
+          <View style={rv.header}>
+            <View style={rv.headerLeft}>
+              <View style={rv.headerIconWrap}>
+                <FileSpreadsheet size={16} color={COLORS.primary} />
+              </View>
+              <View>
+                <Text style={rv.headerTitle}>Review Upload</Text>
+                <Text style={rv.headerSub}>Business Development · {rows.length} rows</Text>
+              </View>
+            </View>
+            <View style={rv.statsRow}>
+              <View style={[rv.statPill, { backgroundColor: N.greenBg, borderColor: N.greenBdr }]}>
+                <View style={[rv.statDot, { backgroundColor: '#22c55e' }]} />
+                <Text style={[rv.statPillText, { color: N.green }]}>{validCount} Valid</Text>
+              </View>
+              <View style={[rv.statPill, { backgroundColor: N.redBg, borderColor: N.redBdr }]}>
+                <View style={[rv.statDot, { backgroundColor: '#ef4444' }]} />
+                <Text style={[rv.statPillText, { color: N.red }]}>{invalidCount} Invalid</Text>
+              </View>
+              <View style={[rv.statPill, { backgroundColor: COLORS.primary + '12', borderColor: COLORS.primary + '40' }]}>
+                <View style={[rv.statDot, { backgroundColor: COLORS.primary }]} />
+                <Text style={[rv.statPillText, { color: COLORS.primary }]}>{checkedCount} Selected</Text>
+              </View>
             </View>
             <TouchableOpacity onPress={onClose} style={rv.closeBtn}>
-              <X size={15} color="rgba(255,255,255,0.85)" />
+              <X size={14} color={N.muted} />
             </TouchableOpacity>
-          </LinearGradient>
-
-          {/* Stats bar */}
-          <View style={rv.statsBar}>
-            <View style={rv.statItem}>
-              <View style={[rv.statDot, { backgroundColor: N.green }]} />
-              <Text style={rv.statLabel}>{validCount} Valid</Text>
-            </View>
-            <View style={rv.statDivider} />
-            <View style={rv.statItem}>
-              <View style={[rv.statDot, { backgroundColor: N.red }]} />
-              <Text style={rv.statLabel}>{invalidCount} Invalid</Text>
-            </View>
-            <View style={rv.statDivider} />
-            <View style={rv.statItem}>
-              <View style={[rv.statDot, { backgroundColor: COLORS.primary }]} />
-              <Text style={rv.statLabel}>{checkedCount} Selected</Text>
-            </View>
-            <View style={{ flex: 1 }} />
-            <Text style={rv.hintText}>Edit invalid rows to fix validation errors</Text>
           </View>
 
-          {/* Table */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexShrink: 0 }}>
-            <View style={{ minWidth: tableW }}>
-              {/* Column headers */}
-              <View style={rv.thead}>
-                <TouchableOpacity style={[rv.th, { width: COL.cb }]} onPress={() => toggleAll(!allChecked)}>
-                  <View style={[rv.checkbox, allChecked && rv.checkboxChecked]}>
-                    {allChecked && <Check size={10} color="#fff" />}
-                  </View>
-                </TouchableOpacity>
-                <Text style={[rv.th, rv.thText, { width: COL.mol }]}>Molecule</Text>
-                <Text style={[rv.th, rv.thText, { width: COL.partner }]}>Partner</Text>
-                <Text style={[rv.th, rv.thText, { width: COL.status }]}>Status</Text>
-                <Text style={[rv.th, rv.thText, { width: COL.vs }]}>Validation</Text>
-                <Text style={[rv.th, rv.thText, { width: COL.desc }]}>Description</Text>
-              </View>
+          {/* ── Hint bar ── */}
+          <View style={rv.hintBar}>
+            <Text style={rv.hintText}>
+              Invalid rows are editable. Fix the fields and the row will automatically become valid.
+            </Text>
+          </View>
 
-              {/* Rows */}
-              <ScrollView style={rv.tbody} showsVerticalScrollIndicator={false}>
-                {rows.map((row, idx) => {
-                  const isInvalid = !row.isValid;
-                  const rowBg = isInvalid ? '#fff9f9' : idx % 2 === 0 ? '#fff' : N.headBg;
-                  return (
-                    <View key={row.id} style={[rv.tr, { backgroundColor: rowBg }, isInvalid && rv.trInvalid]}>
-                      {/* Checkbox */}
-                      <TouchableOpacity style={[rv.td, { width: COL.cb }]} onPress={() => toggleCheck(row.id)}>
-                        <View style={[rv.checkbox, row.checked && rv.checkboxChecked]}>
-                          {row.checked && <Check size={10} color="#fff" />}
-                        </View>
-                      </TouchableOpacity>
-
-                      {/* Molecule */}
-                      <View style={[rv.td, { width: COL.mol }]}>
-                        {isInvalid ? (
-                          <TextInput
-                            style={[rv.cellInput, !row.molecule && rv.cellInputError]}
-                            value={row.molecule}
-                            onChangeText={v => updateField(row.id, 'molecule', v)}
-                            placeholder="Molecule"
-                            placeholderTextColor={N.faint}
-                          />
-                        ) : (
-                          <Text style={rv.cellText} numberOfLines={1}>{row.molecule}</Text>
-                        )}
-                      </View>
-
-                      {/* Partner */}
-                      <View style={[rv.td, { width: COL.partner }]}>
-                        {isInvalid ? (
-                          <TextInput
-                            style={[rv.cellInput, !row.partner && rv.cellInputError]}
-                            value={row.partner}
-                            onChangeText={v => updateField(row.id, 'partner', v)}
-                            placeholder="Partner"
-                            placeholderTextColor={N.faint}
-                          />
-                        ) : (
-                          <Text style={rv.cellText} numberOfLines={1}>{row.partner}</Text>
-                        )}
-                      </View>
-
-                      {/* Status */}
-                      <View style={[rv.td, { width: COL.status }]}>
-                        {isInvalid ? (
-                          <TextInput
-                            style={[rv.cellInput, (!row.status || !VALID_STATUSES.includes(row.status)) && rv.cellInputError]}
-                            value={row.status}
-                            onChangeText={v => updateField(row.id, 'status', v)}
-                            placeholder="Status"
-                            placeholderTextColor={N.faint}
-                          />
-                        ) : (
-                          <View style={[rv.statusChip, { backgroundColor: statusColor(row.status).bg, borderColor: statusColor(row.status).border }]}>
-                            <Text style={[rv.statusChipText, { color: statusColor(row.status).text }]}>{row.status}</Text>
-                          </View>
-                        )}
-                      </View>
-
-                      {/* Validation status */}
-                      <View style={[rv.td, { width: COL.vs }]}>
-                        <StatusPill row={row} />
-                      </View>
-
-                      {/* Description */}
-                      <View style={[rv.td, { width: COL.desc }]}>
-                        <Text style={rv.cellTextMuted} numberOfLines={2}>{row.description}</Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </ScrollView>
+          {/* ── Table ── */}
+          <View style={rv.tableWrap}>
+            {/* Column headers */}
+            <View style={rv.thead}>
+              <TouchableOpacity style={[rv.thCell, { width: COL.cb }]} onPress={() => toggleAll(!allChecked)}>
+                <View style={[rv.checkbox, allChecked && rv.checkboxChecked]}>
+                  {allChecked && <Check size={9} color="#fff" strokeWidth={3} />}
+                </View>
+              </TouchableOpacity>
+              <Text style={[rv.thCell, rv.thText, { width: COL.mol }]}>Molecule</Text>
+              <Text style={[rv.thCell, rv.thText, { width: COL.partner }]}>Partner</Text>
+              <Text style={[rv.thCell, rv.thText, { width: COL.status }]}>Status</Text>
+              <Text style={[rv.thCell, rv.thText, { width: COL.vs }]}>Validation</Text>
+              <Text style={[rv.thCell, rv.thText, { flex: 1 }]}>Description</Text>
             </View>
-          </ScrollView>
 
-          {/* Footer */}
+            {/* Body */}
+            <ScrollView style={rv.tbody} showsVerticalScrollIndicator={false}>
+              {rows.map((row) => {
+                const isInvalid = !row.isValid;
+                const sc = statusColor(row.status);
+                return (
+                  <View key={row.id} style={rv.tr}>
+                    {/* Left accent line for invalid */}
+                    {isInvalid && <View style={rv.invalidAccent} />}
+
+                    {/* Checkbox */}
+                    <TouchableOpacity style={[rv.tdCell, { width: COL.cb }]} onPress={() => toggleCheck(row.id)}>
+                      <View style={[rv.checkbox, row.checked && rv.checkboxChecked]}>
+                        {row.checked && <Check size={9} color="#fff" strokeWidth={3} />}
+                      </View>
+                    </TouchableOpacity>
+
+                    {/* Molecule */}
+                    <View style={[rv.tdCell, { width: COL.mol }]}>
+                      {isInvalid ? (
+                        <TextInput
+                          style={[rv.cellInput, !row.molecule && rv.cellInputError]}
+                          value={row.molecule}
+                          onChangeText={v => updateField(row.id, 'molecule', v)}
+                          placeholder="Enter molecule"
+                          placeholderTextColor={N.faint}
+                        />
+                      ) : (
+                        <Text style={rv.cellText} numberOfLines={1}>{row.molecule}</Text>
+                      )}
+                    </View>
+
+                    {/* Partner */}
+                    <View style={[rv.tdCell, { width: COL.partner }]}>
+                      {isInvalid ? (
+                        <TextInput
+                          style={[rv.cellInput, !row.partner && rv.cellInputError]}
+                          value={row.partner}
+                          onChangeText={v => updateField(row.id, 'partner', v)}
+                          placeholder="Enter partner"
+                          placeholderTextColor={N.faint}
+                        />
+                      ) : (
+                        <Text style={rv.cellText} numberOfLines={1}>{row.partner}</Text>
+                      )}
+                    </View>
+
+                    {/* Status */}
+                    <View style={[rv.tdCell, { width: COL.status }]}>
+                      {isInvalid ? (
+                        <TextInput
+                          style={[rv.cellInput, (!row.status || !VALID_STATUSES.includes(row.status)) && rv.cellInputError]}
+                          value={row.status}
+                          onChangeText={v => updateField(row.id, 'status', v)}
+                          placeholder="Status"
+                          placeholderTextColor={N.faint}
+                        />
+                      ) : (
+                        <View style={[rv.pill, { backgroundColor: sc.bg, borderColor: sc.border }]}>
+                          <Text style={[rv.pillText, { color: sc.text }]}>{row.status}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Validation */}
+                    <View style={[rv.tdCell, { width: COL.vs }]}>
+                      {row.isValid ? (
+                        <View style={[rv.pill, { backgroundColor: N.greenBg, borderColor: N.greenBdr }]}>
+                          <Check size={9} color={N.green} strokeWidth={2.5} />
+                          <Text style={[rv.pillText, { color: N.green }]}>Valid</Text>
+                        </View>
+                      ) : (
+                        <View style={[rv.pill, { backgroundColor: N.redBg, borderColor: N.redBdr }]}>
+                          <X size={9} color={N.red} strokeWidth={2.5} />
+                          <Text style={[rv.pillText, { color: N.red }]}>Invalid</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Description + Duplicate chip */}
+                    <View style={[rv.tdCell, { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                      <Text style={[rv.cellTextMuted, { flex: 1 }]} numberOfLines={1}>{row.description}</Text>
+                      {row.isDuplicate && (
+                        <View style={rv.dupChip}>
+                          <Text style={rv.dupText}>Duplicate</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          {/* ── Footer ── */}
           <View style={rv.footer}>
             <Text style={rv.footerNote}>
-              <Text style={{ fontFamily: 'Poppins-SemiBold', color: N.dark }}>{checkedCount}</Text> row{checkedCount !== 1 ? 's' : ''} will be uploaded
+              <Text style={rv.footerCount}>{checkedCount}</Text> of {rows.length} rows selected for upload
             </Text>
             <View style={rv.footerBtns}>
               <TouchableOpacity style={rv.cancelBtn} onPress={onClose}>
@@ -494,120 +495,152 @@ function BDUploadReviewModal({
 }
 
 const rv = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 12 },
+  overlay: {
+    flex: 1, backgroundColor: 'rgba(10,20,10,0.6)',
+    justifyContent: 'center', alignItems: 'center', padding: 16,
+  },
   sheet: {
-    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 28, shadowOffset: { width: 0, height: 10 },
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    overflow: 'hidden',
     flexShrink: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 32,
+    shadowOffset: { width: 0, height: 12 },
   },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 14 },
-  headerIcon: {
-    width: 32, height: 32, borderRadius: 9,
-    backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center',
+
+  // ── Header ──────────────────────────────────────────────────────────────────
+  header: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: N.borderLt,
+    backgroundColor: '#fff',
   },
-  headerTitle: { fontSize: 14, fontFamily: 'Poppins-Bold', color: '#fff' },
-  headerSub: { fontSize: 10, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.72)', marginTop: 1 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  headerIconWrap: {
+    width: 34, height: 34, borderRadius: 9,
+    backgroundColor: COLORS.primary + '12',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitle: { fontSize: 14, fontFamily: 'Poppins-Bold', color: N.dark },
+  headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.faint, marginTop: 1 },
+  statsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    borderWidth: 1, borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 4,
+  },
+  statDot: { width: 6, height: 6, borderRadius: 3 },
+  statPillText: { fontSize: 11, fontFamily: 'Poppins-SemiBold' },
   closeBtn: {
     width: 28, height: 28, borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: N.headBg, borderWidth: 1, borderColor: N.borderLt,
+    alignItems: 'center', justifyContent: 'center', marginLeft: 8,
   },
-  statsBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 16, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: N.borderLt,
-    backgroundColor: N.headBg,
-  },
-  statItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statDot: { width: 8, height: 8, borderRadius: 4 },
-  statLabel: { fontSize: 11, fontFamily: 'Poppins-Medium', color: N.muted },
-  statDivider: { width: 1, height: 14, backgroundColor: N.border },
-  hintText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: N.faint, fontStyle: 'italic' },
 
-  // Table
+  // ── Hint bar ─────────────────────────────────────────────────────────────────
+  hintBar: {
+    paddingHorizontal: 20, paddingVertical: 8,
+    backgroundColor: '#fffbeb',
+    borderBottomWidth: 1, borderBottomColor: '#fde68a',
+  },
+  hintText: { fontSize: 11, fontFamily: 'Poppins-Regular', color: '#92400e' },
+
+  // ── Table ────────────────────────────────────────────────────────────────────
+  tableWrap: { flex: 1, overflow: 'hidden' },
   thead: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: N.headBg,
-    borderBottomWidth: 1.5, borderBottomColor: N.border,
-    paddingVertical: 0,
+    borderBottomWidth: 1, borderBottomColor: N.border,
   },
-  th: { paddingHorizontal: 10, paddingVertical: 10, alignItems: 'center', justifyContent: 'center' },
-  thText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.faint, textTransform: 'uppercase', letterSpacing: 0.5 },
-  tbody: { maxHeight: 380 },
+  thCell: {
+    paddingHorizontal: 12, paddingVertical: 9,
+    justifyContent: 'center',
+  },
+  thText: {
+    fontSize: 10, fontFamily: 'Poppins-SemiBold',
+    color: N.muted, textTransform: 'uppercase', letterSpacing: 0.6,
+  },
+  tbody: { maxHeight: 400 },
   tr: {
     flexDirection: 'row', alignItems: 'center',
     borderBottomWidth: 1, borderBottomColor: N.borderLt,
-    minHeight: 48,
+    backgroundColor: '#fff',
+    minHeight: 44,
   },
-  trInvalid: { borderLeftWidth: 3, borderLeftColor: N.red + '80' },
-  td: { paddingHorizontal: 8, paddingVertical: 6, justifyContent: 'center' },
+  invalidAccent: {
+    position: 'absolute', left: 0, top: 0, bottom: 0,
+    width: 3, backgroundColor: '#fca5a5',
+  },
+  tdCell: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    justifyContent: 'center',
+  },
 
-  // Cells
+  // ── Cells ────────────────────────────────────────────────────────────────────
   cellText: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.dark },
-  cellTextMuted: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.faint, lineHeight: 15 },
+  cellTextMuted: { fontSize: 11, fontFamily: 'Poppins-Regular', color: N.muted },
   cellInput: {
     borderWidth: 1, borderColor: N.border, borderRadius: 6,
-    paddingHorizontal: 7, paddingVertical: 5,
+    paddingHorizontal: 8, paddingVertical: 4,
     fontSize: 12, fontFamily: 'Poppins-Regular', color: N.dark,
     backgroundColor: '#fff',
-    minWidth: 80,
   },
-  cellInputError: { borderColor: N.red + '80', backgroundColor: N.redBg },
+  cellInputError: {
+    borderColor: '#fca5a5',
+    backgroundColor: '#fff5f5',
+  },
 
-  statusChip: {
-    borderWidth: 1, borderRadius: 5, paddingHorizontal: 7, paddingVertical: 3,
+  // ── Pills (shared) ───────────────────────────────────────────────────────────
+  pill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    borderWidth: 1, borderRadius: 999,
+    paddingHorizontal: 9, paddingVertical: 3,
     alignSelf: 'flex-start',
   },
-  statusChipText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
+  pillText: { fontSize: 10, fontFamily: 'Poppins-SemiBold' },
 
-  // Checkbox
+  // ── Checkbox ─────────────────────────────────────────────────────────────────
   checkbox: {
-    width: 16, height: 16, borderRadius: 4,
+    width: 15, height: 15, borderRadius: 4,
     borderWidth: 1.5, borderColor: N.border,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#fff',
   },
   checkboxChecked: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
 
-  // Validation badges
-  validBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: N.greenBg, borderWidth: 1, borderColor: N.greenBdr,
-    borderRadius: 5, paddingHorizontal: 7, paddingVertical: 3,
-    alignSelf: 'flex-start',
-  },
-  validText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.green },
-  invalidWrap: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  invalidBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: N.redBg, borderWidth: 1, borderColor: N.redBdr,
-    borderRadius: 5, paddingHorizontal: 7, paddingVertical: 3,
-    alignSelf: 'flex-start',
-  },
-  invalidText: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: N.red },
+  // ── Duplicate chip ───────────────────────────────────────────────────────────
   dupChip: {
-    backgroundColor: '#fff3e0', borderWidth: 1, borderColor: '#ffb74d',
-    borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2,
+    borderWidth: 1, borderRadius: 999,
+    borderColor: '#fb923c',
+    backgroundColor: '#fff7ed',
+    paddingHorizontal: 8, paddingVertical: 2,
     alignSelf: 'flex-start',
   },
-  dupText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: '#e65100' },
+  dupText: { fontSize: 9, fontFamily: 'Poppins-SemiBold', color: '#c2410c' },
 
-  // Footer
+  // ── Footer ───────────────────────────────────────────────────────────────────
   footer: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderTopWidth: 1, borderTopColor: N.border,
-    backgroundColor: '#fff',
+    paddingHorizontal: 20, paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: N.borderLt,
+    backgroundColor: N.headBg,
   },
   footerNote: { fontSize: 12, fontFamily: 'Poppins-Regular', color: N.muted },
+  footerCount: { fontFamily: 'Poppins-Bold', color: N.dark },
   footerBtns: { flexDirection: 'row', gap: 8 },
-  cancelBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: N.border },
+  cancelBtn: {
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
+    borderWidth: 1, borderColor: N.border, backgroundColor: '#fff',
+  },
   cancelText: { fontSize: 12, fontFamily: 'Poppins-Medium', color: N.muted },
   uploadBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
     backgroundColor: COLORS.primary,
   },
-  uploadBtnDisabled: { opacity: 0.4 },
+  uploadBtnDisabled: { opacity: 0.38 },
   uploadBtnText: { fontSize: 12, fontFamily: 'Poppins-SemiBold', color: '#fff' },
 });
 
