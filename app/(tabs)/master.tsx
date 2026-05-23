@@ -275,23 +275,25 @@ function BDUploadReviewModal({
 }) {
   const { width: SW, height: SH } = useWindowDimensions();
   const [rows, setRows] = useState<BDUploadRow[]>([]);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     if (visible) setRows(buildUploadRows(SAMPLE_BD_ROWS));
   }, [visible]);
 
   const updateField = (id: string, field: 'molecule' | 'partner' | 'status', value: string) => {
+    setUploadError('');
     setRows(prev => prev.map(r => {
       if (r.id !== id) return r;
       const updated = { ...r, [field]: value };
       const { valid } = validateBDRow(updated);
-      // re-check duplicate against all other non-self rows
       const isDup = prev.some(other =>
         other.id !== id &&
         other.molecule.trim().toLowerCase() === updated.molecule.trim().toLowerCase() &&
         other.partner.trim().toLowerCase() === updated.partner.trim().toLowerCase()
       );
-      return { ...updated, isDuplicate: isDup, isValid: valid && !isDup, checked: valid && !isDup };
+      const nowValid = valid && !isDup;
+      return { ...updated, isDuplicate: isDup, isValid: nowValid, checked: nowValid ? true : r.checked };
     }));
   };
 
@@ -308,16 +310,42 @@ function BDUploadReviewModal({
   const invalidCount = rows.filter(r => !r.isValid).length;
   const allChecked = rows.length > 0 && rows.every(r => r.checked);
 
+  const handleToggleCheck = (id: string) => {
+    const row = rows.find(r => r.id === id);
+    if (!row) return;
+    // If trying to check an invalid row, show error instead
+    if (!row.checked && !row.isValid) {
+      setUploadError('Please fill in all required fields for the selected row before including it in the upload.');
+      return;
+    }
+    setUploadError('');
+    toggleCheck(id);
+  };
+
+  const handleToggleAll = (val: boolean) => {
+    if (val) {
+      const hasInvalid = rows.some(r => !r.isValid);
+      if (hasInvalid) {
+        setUploadError('Some rows are still invalid. Fix all required fields before selecting all rows.');
+        return;
+      }
+    }
+    setUploadError('');
+    toggleAll(val);
+  };
+
   const handleUpload = () => {
+    const checkedInvalid = rows.filter(r => r.checked && !r.isValid);
+    if (checkedInvalid.length > 0) {
+      setUploadError('One or more selected rows are still invalid. Please fix all required fields before uploading.');
+      return;
+    }
+    setUploadError('');
     onConfirm(rows.filter(r => r.checked));
     onClose();
   };
 
-  // Each column has identical horizontal padding (16px each side = 32px total)
-  // Widths are content-only; padding is applied uniformly in tdCell / thCell
-  const P = 14; // cell horizontal padding
-  const COL = { cb: 48, mol: 160, partner: 160, status: 120, vs: 110, desc: 1 }; // desc: flex:1
-
+  const COL = { cb: 48, mol: 160, partner: 160, status: 120, vs: 100, desc: 1 };
   const rowNum = rows.length;
 
   return (
@@ -326,30 +354,41 @@ function BDUploadReviewModal({
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
         <View style={[rv.sheet, { width: Math.min(SW - 32, 1100), maxHeight: SH * 0.88 }]}>
 
-          {/* ── Header ── */}
-          <View style={rv.header}>
-            <View style={{ flex: 1 }}>
-              <Text style={rv.headerTitle}>Review Upload — Business Development</Text>
-              <Text style={rv.headerSub}>{rowNum} rows parsed from file</Text>
+          {/* ── Header — matches other dialogs ── */}
+          <LinearGradient
+            colors={[COLORS.primaryDark, COLORS.primary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={rv.header}
+          >
+            <View style={rv.headerIcon}>
+              <FileSpreadsheet size={15} color="#fff" />
             </View>
-            <View style={rv.headerMeta}>
-              <Text style={rv.metaItem}><Text style={rv.metaNum}>{validCount}</Text> valid</Text>
-              <View style={rv.metaSep} />
-              <Text style={rv.metaItem}><Text style={[rv.metaNum, invalidCount > 0 && { color: '#b91c1c' }]}>{invalidCount}</Text> invalid</Text>
-              <View style={rv.metaSep} />
-              <Text style={rv.metaItem}><Text style={rv.metaNum}>{checkedCount}</Text> selected</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={rv.headerTitle}>Review Upload</Text>
+              <Text style={rv.headerSub}>
+                Business Development · {rowNum} rows · {validCount} valid · {invalidCount} invalid
+              </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={rv.closeBtn}>
-              <X size={14} color={N.muted} />
+              <X size={15} color="rgba(255,255,255,0.85)" />
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
-          {/* ── Sub-header hint ── */}
+          {/* ── Instruction strip ── */}
           <View style={rv.subHeader}>
             <Text style={rv.subHeaderText}>
-              Rows marked Invalid are editable — update the fields to resolve validation errors. Only checked rows will be uploaded.
+              Invalid rows are editable — fill in all required fields to mark them as valid. Only checked rows will be uploaded.
             </Text>
           </View>
+
+          {/* ── Error banner ── */}
+          {uploadError ? (
+            <View style={rv.errorBanner}>
+              <X size={12} color={N.red} />
+              <Text style={rv.errorBannerText}>{uploadError}</Text>
+            </View>
+          ) : null}
 
           {/* ── Table ── */}
           <View style={rv.tableWrap}>
@@ -358,7 +397,7 @@ function BDUploadReviewModal({
             <View style={rv.thead}>
               <TouchableOpacity
                 style={[rv.thCell, { width: COL.cb, alignItems: 'center' }]}
-                onPress={() => toggleAll(!allChecked)}
+                onPress={() => handleToggleAll(!allChecked)}
               >
                 <View style={[rv.checkbox, allChecked && rv.checkboxChecked]}>
                   {allChecked && <Check size={9} color="#fff" strokeWidth={3} />}
@@ -382,7 +421,7 @@ function BDUploadReviewModal({
                     {/* Checkbox */}
                     <TouchableOpacity
                       style={[rv.tdCell, { width: COL.cb, alignItems: 'center' }]}
-                      onPress={() => toggleCheck(row.id)}
+                      onPress={() => handleToggleCheck(row.id)}
                     >
                       <View style={[rv.checkbox, row.checked && rv.checkboxChecked]}>
                         {row.checked && <Check size={9} color="#fff" strokeWidth={3} />}
@@ -434,17 +473,11 @@ function BDUploadReviewModal({
                       )}
                     </View>
 
-                    {/* Validation badge */}
+                    {/* Validation — plain colored text, no chip */}
                     <View style={[rv.tdCell, { width: COL.vs }]}>
-                      {row.isValid ? (
-                        <View style={rv.badgeValid}>
-                          <Text style={rv.badgeValidText}>Valid</Text>
-                        </View>
-                      ) : (
-                        <View style={rv.badgeInvalid}>
-                          <Text style={rv.badgeInvalidText}>Invalid</Text>
-                        </View>
-                      )}
+                      <Text style={row.isValid ? rv.validText : rv.invalidText}>
+                        {row.isValid ? 'Valid' : 'Invalid'}
+                      </Text>
                     </View>
 
                     {/* Description + duplicate */}
@@ -506,61 +539,46 @@ const rv = StyleSheet.create({
     shadowOffset: { width: 0, height: 16 },
   },
 
-  // Header — clean, borderless, white bg
+  // Header — LinearGradient, matches UploadConfirmModal / AddProductModal
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 18,
-    paddingBottom: 12,
-    gap: 16,
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+  headerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Poppins-Bold',
-    color: '#0f172a',
-    letterSpacing: -0.2,
+    color: '#fff',
   },
   headerSub: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'Poppins-Regular',
-    color: '#94a3b8',
+    color: 'rgba(255,255,255,0.7)',
     marginTop: 1,
-  },
-  headerMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  metaItem: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748b',
-  },
-  metaNum: {
-    fontFamily: 'Poppins-SemiBold',
-    color: '#0f172a',
-  },
-  metaSep: {
-    width: 1,
-    height: 12,
-    backgroundColor: '#e2e8f0',
   },
   closeBtn: {
     width: 28,
     height: 28,
-    borderRadius: 6,
-    backgroundColor: '#f1f5f9',
+    borderRadius: 7,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  // Sub-header — single-line muted instruction strip
+  // Sub-header instruction strip
   subHeader: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 18,
     paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
     backgroundColor: '#f8fafc',
@@ -569,6 +587,24 @@ const rv = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Poppins-Regular',
     color: '#64748b',
+  },
+
+  // Error banner
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    backgroundColor: N.redBg,
+    borderBottomWidth: 1,
+    borderBottomColor: N.redBdr,
+  },
+  errorBannerText: {
+    fontSize: 11,
+    fontFamily: 'Poppins-Medium',
+    color: N.red,
+    flex: 1,
   },
 
   // Table
@@ -642,34 +678,16 @@ const rv = StyleSheet.create({
     backgroundColor: '#fff',
   },
 
-  // Validation badges — monochrome, text-only, minimal
-  badgeValid: {
-    alignSelf: 'flex-start',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: '#f0fdf4',
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-  },
-  badgeValidText: {
-    fontSize: 11,
+  // Validation — plain colored text, no chip/badge
+  validText: {
+    fontSize: 12,
     fontFamily: 'Poppins-SemiBold',
-    color: '#15803d',
+    color: N.green,
   },
-  badgeInvalid: {
-    alignSelf: 'flex-start',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: '#fff1f2',
-    borderWidth: 1,
-    borderColor: '#fecdd3',
-  },
-  badgeInvalidText: {
-    fontSize: 11,
+  invalidText: {
+    fontSize: 12,
     fontFamily: 'Poppins-SemiBold',
-    color: '#be123c',
+    color: N.red,
   },
 
   // Duplicate tag — neutral amber, subdued
