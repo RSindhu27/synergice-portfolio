@@ -1067,6 +1067,222 @@ const ap = StyleSheet.create({
   saveText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: '#fff' },
 });
 
+// ─── Add BD Modal ─────────────────────────────────────────────────────────────
+function AddBDModal({
+  visible,
+  onAdd,
+  onClose,
+}: {
+  visible: boolean;
+  onAdd: (record: Omit<BDRecord, 'id'>) => void;
+  onClose: () => void;
+}) {
+  const { width: SW } = useWindowDimensions();
+
+  const COMPANIES_LIST = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
+  const REGIONS_LIST = ['Region A', 'Region B', 'Region C', 'Region D', 'Region E', 'Region F'];
+
+  const blank = () => ({
+    company: '', region: '', molecule: '', partner: '', status: '', description: '',
+  });
+
+  const [vals, setVals] = useState<Record<string, string>>(blank());
+
+  useEffect(() => {
+    if (visible) setVals(blank());
+  }, [visible]);
+
+  const FIELD_CONFIG: { key: string; label: string; required: boolean; options?: string[] }[] = [
+    { key: 'company', label: 'Company', required: true, options: COMPANIES_LIST },
+    { key: 'region', label: 'Region', required: true, options: REGIONS_LIST },
+    { key: 'molecule', label: 'Molecule', required: true },
+    { key: 'partner', label: 'Partner', required: true },
+    { key: 'status', label: 'Status', required: true, options: ['Active', 'Inactive', 'Pending', 'Negotiation', 'Closed'] },
+    { key: 'description', label: 'Description', required: false },
+  ];
+
+  const canSave = vals.company.trim().length > 0 && vals.molecule.trim().length > 0 &&
+    vals.partner.trim().length > 0 && vals.status.trim().length > 0;
+
+  const handleSave = () => {
+    if (!canSave) return;
+    onAdd({
+      company: vals.company,
+      region: vals.region,
+      molecule: vals.molecule,
+      partner: vals.partner,
+      status: vals.status,
+      fieldA: vals.molecule,
+      fieldB: vals.partner,
+      fieldC: vals.status,
+      fieldD: vals.status,
+      fieldE: vals.description,
+      fieldF: '',
+    });
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={ab.overlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+        <View style={[ab.sheet, { width: Math.min(SW * 0.94, 520) }]}>
+
+          <LinearGradient
+            colors={[COLORS.primaryDark, COLORS.primary]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={ab.header}
+          >
+            <View style={ab.headerIcon}>
+              <Plus size={15} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={ab.headerTitle}>Add New BD Record</Text>
+              <Text style={ab.headerSub}>Fill in the business development details below</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={ab.closeBtn}>
+              <X size={16} color="rgba(255,255,255,0.9)" />
+            </TouchableOpacity>
+          </LinearGradient>
+
+          <ScrollView
+            style={ab.scroll}
+            contentContainerStyle={ab.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={ab.fieldGrid}>
+              {FIELD_CONFIG.map((f, i) => (
+                <View key={f.key} style={[ab.fieldWrap, f.key === 'description' && ab.fieldWrapFull]}>
+                  <Text style={ab.fieldLabel}>
+                    {f.label}
+                    {f.required && <Text style={{ color: N.red }}> *</Text>}
+                  </Text>
+                  {f.options ? (
+                    <View style={ab.pickerWrap}>
+                      {f.options.map(opt => (
+                        <TouchableOpacity
+                          key={opt}
+                          style={[ab.optionChip, vals[f.key] === opt && ab.optionChipSelected]}
+                          onPress={() => setVals(prev => ({ ...prev, [f.key]: opt }))}
+                        >
+                          <Text style={[ab.optionChipText, vals[f.key] === opt && ab.optionChipTextSelected]}>
+                            {opt}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : (
+                    <TextInput
+                      style={[ab.input, f.required && vals[f.key].length === 0 && ab.inputRequired]}
+                      value={vals[f.key]}
+                      onChangeText={v => setVals(prev => ({ ...prev, [f.key]: v }))}
+                      placeholder={`Enter ${f.label.toLowerCase()}`}
+                      placeholderTextColor={N.faint}
+                      autoFocus={i === 0}
+                      selectTextOnFocus
+                      multiline={f.key === 'description'}
+                      numberOfLines={f.key === 'description' ? 3 : 1}
+                    />
+                  )}
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+
+          <View style={ab.footer}>
+            <TouchableOpacity style={ab.cancelBtn} onPress={onClose}>
+              <Text style={ab.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[ab.saveBtn, !canSave && ab.saveBtnDisabled]} onPress={handleSave}>
+              <Plus size={14} color="#fff" />
+              <Text style={ab.saveText}>Add Record</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const ab = StyleSheet.create({
+  overlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center', padding: 20,
+  },
+  sheet: {
+    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
+    maxHeight: '88%',
+    shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 24, shadowOffset: { width: 0, height: 8 },
+  },
+  header: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingHorizontal: 18, paddingVertical: 16,
+  },
+  headerIcon: {
+    width: 32, height: 32, borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitle: { fontSize: 15, fontFamily: 'Poppins-Bold', color: '#fff' },
+  headerSub: { fontSize: 11, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.7)', marginTop: 1 },
+  closeBtn: {
+    width: 30, height: 30, borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  scroll: { flexShrink: 1 },
+  scrollContent: { padding: 16 },
+  fieldGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 0 },
+  fieldWrap: { width: '50%', paddingHorizontal: 6, paddingVertical: 6 },
+  fieldWrapFull: { width: '100%' },
+  fieldLabel: {
+    fontSize: 10, fontFamily: 'Poppins-Medium', color: N.faint,
+    textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4,
+  },
+  input: {
+    borderWidth: 1, borderColor: N.border, borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 8,
+    fontSize: 13, fontFamily: 'Poppins-Regular', color: N.dark,
+    backgroundColor: N.headBg,
+  },
+  inputRequired: { borderColor: COLORS.primary + '60' },
+  pickerWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  optionChip: {
+    borderWidth: 1, borderColor: N.border, borderRadius: 6,
+    paddingHorizontal: 10, paddingVertical: 6,
+    backgroundColor: N.headBg,
+  },
+  optionChipSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '12',
+  },
+  optionChipText: {
+    fontSize: 12, fontFamily: 'Poppins-Regular', color: N.muted,
+  },
+  optionChipTextSelected: {
+    fontFamily: 'Poppins-SemiBold', color: COLORS.primary,
+  },
+  footer: {
+    flexDirection: 'row', gap: 10, justifyContent: 'flex-end',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderTopWidth: 1, borderTopColor: N.border,
+    backgroundColor: '#fff',
+  },
+  cancelBtn: {
+    paddingHorizontal: 16, paddingVertical: 9, borderRadius: 8,
+    borderWidth: 1, borderColor: N.border,
+  },
+  cancelText: { fontSize: 13, fontFamily: 'Poppins-Medium', color: N.muted },
+  saveBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8,
+    backgroundColor: COLORS.primary,
+  },
+  saveBtnDisabled: { opacity: 0.4 },
+  saveText: { fontSize: 13, fontFamily: 'Poppins-SemiBold', color: '#fff' },
+});
+
 // ─── Audit Log Drawer ─────────────────────────────────────────────────────────
 function AuditLogDrawer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -1859,6 +2075,7 @@ export default function MasterDataScreen() {
   const [addFieldTarget, setAddFieldTarget] = useState<MasterProduct | null>(null);
   const [uploadModal, setUploadModal] = useState<'products' | 'bd' | null>(null);
   const [addProductVisible, setAddProductVisible] = useState(false);
+  const [addBDVisible, setAddBDVisible] = useState(false);
   const [bdReviewVisible, setBdReviewVisible] = useState(false);
 
   const tabAnim = useRef(new Animated.Value(0)).current;
@@ -1913,6 +2130,11 @@ export default function MasterDataScreen() {
   const handleAddProduct = (data: Omit<MasterProduct, 'id'>) => {
     const newId = `MP-${String(products.length + 1).padStart(3, '0')}`;
     setProducts(prev => [...prev, { id: newId, ...data } as MasterProduct]);
+  };
+
+  const handleAddBD = (data: Omit<BDRecord, 'id'>) => {
+    const newId = `BD-${String(bdItems.length + 1).padStart(3, '0')}`;
+    setBdItems(prev => [...prev, { id: newId, ...data } as BDRecord]);
   };
 
   const handleBdUploadConfirm = (uploadedRows: BDUploadRow[]) => {
@@ -2120,6 +2342,10 @@ export default function MasterDataScreen() {
                 <Upload size={13} color={COLORS.primary} />
                 <Text style={s.tabActionText}>Upload Excel</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={[s.tabActionBtn, s.tabActionBtnPrimary]} onPress={() => setAddBDVisible(true)}>
+                <Plus size={13} color="#fff" />
+                <Text style={[s.tabActionText, s.tabActionTextWhite]}>Add Record</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -2184,6 +2410,13 @@ export default function MasterDataScreen() {
         visible={addProductVisible}
         onAdd={handleAddProduct}
         onClose={() => setAddProductVisible(false)}
+      />
+
+      {/* ── Add BD Modal ── */}
+      <AddBDModal
+        visible={addBDVisible}
+        onAdd={handleAddBD}
+        onClose={() => setAddBDVisible(false)}
       />
 
       {/* ── Add Field Modal ── */}
