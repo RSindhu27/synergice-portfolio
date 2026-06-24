@@ -1,13 +1,16 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Dimensions, Platform, SafeAreaView,
+  Dimensions, Platform, SafeAreaView, Pressable, Animated,
 } from 'react-native';
 import {
   LayoutDashboard, TrendingUp, Layers, Globe,
   DollarSign, Activity, ShieldCheck, Users,
-  ChevronRight, ArrowUpRight,
+  ChevronRight, ArrowUpRight, LogOut,
 } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { setAuthenticated } from '@/hooks/useAuth';
+import AdminPrivilegesModal from '@/components/ui/AdminPrivilegesModal';
 import {
   COLORS, COMPANIES, COMPANY_COLORS, companyMetrics, productPortfolio,
   revenueData, rdData, goLanzarData, monthlyRevenue,
@@ -100,6 +103,30 @@ function CompanyTileDesktop({ name, onPress }: { name: string; onPress: () => vo
   );
 }
 
+// Pressable extended with React Native Web hover events
+const PH = Pressable as React.ComponentType<
+  React.ComponentProps<typeof Pressable> & {
+    onHoverIn?: () => void;
+    onHoverOut?: () => void;
+  }
+>;
+
+function HeaderBtn({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
+  const expand = useRef(new Animated.Value(0)).current;
+  const animate = (to: number) =>
+    Animated.timing(expand, { toValue: to, duration: 170, useNativeDriver: false }).start();
+  const btnWidth = expand.interpolate({ inputRange: [0, 1], outputRange: [34, 42 + label.length * 8] });
+
+  return (
+    <PH onPress={onPress} onHoverIn={() => animate(1)} onHoverOut={() => animate(0)}>
+      <Animated.View style={[styles.headerBtn, { width: btnWidth }]}>
+        {icon}
+        <Text style={styles.headerBtnText} numberOfLines={1}>{label}</Text>
+      </Animated.View>
+    </PH>
+  );
+}
+
 function RevenueRow({ month, value, prev }: { month: string; value: number; prev: number }) {
   const pct = prev > 0 ? Math.round(((value - prev) / prev) * 100) : 0;
   const max = Math.max(value, prev);
@@ -121,11 +148,18 @@ export default function ExecutiveOverview() {
   const windowWidth = useWindowWidth();
   const isTablet = windowWidth >= 768;
   const isDesktop = windowWidth >= 1100;
+  const router = useRouter();
 
   const [drawerTitle, setDrawerTitle] = useState('');
   const [drawerContent, setDrawerContent] = useState<React.ReactNode>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [adminVisible, setAdminVisible] = useState(false);
+
+  const handleLogout = useCallback(() => {
+    setAuthenticated(false);
+    router.replace('/login');
+  }, [router]);
 
   const openDrawer = useCallback((title: string, content: React.ReactNode) => {
     setDrawerTitle(title);
@@ -241,6 +275,18 @@ export default function ExecutiveOverview() {
                 <Text style={styles.greeting}>Good Morning, Executive</Text>
                 <Text style={styles.appTitle}>Synergice Portfolio</Text>
               </View>
+              <View style={styles.headerActions}>
+                <HeaderBtn
+                  icon={<ShieldCheck size={15} color="#fff" />}
+                  label="Admin"
+                  onPress={() => setAdminVisible(true)}
+                />
+                <HeaderBtn
+                  icon={<LogOut size={15} color="#fff" />}
+                  label="Logout"
+                  onPress={handleLogout}
+                />
+              </View>
             </View>
             <View style={styles.headerGoldLine} />
           </LinearGradient>
@@ -347,6 +393,8 @@ export default function ExecutiveOverview() {
       <DrawerModal visible={drawerVisible} onClose={() => setDrawerVisible(false)} title={drawerTitle}>
         {drawerContent}
       </DrawerModal>
+
+      <AdminPrivilegesModal visible={adminVisible} onClose={() => setAdminVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -367,6 +415,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerBtn: {
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 9,
+    paddingRight: 6,
+    gap: 5,
+    overflow: 'hidden',
+  },
+  headerBtnText: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Medium',
+    color: '#fff',
   },
   headerGoldLine: {
     height: 2,
