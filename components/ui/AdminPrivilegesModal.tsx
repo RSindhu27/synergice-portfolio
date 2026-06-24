@@ -4,52 +4,55 @@ import {
   ScrollView, Animated, TouchableWithoutFeedback,
   useWindowDimensions,
 } from 'react-native';
-import { X, ShieldCheck } from 'lucide-react-native';
+import { X, ShieldCheck, Check, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '@/data/theme';
 
-type Perm = { view: boolean; edit: boolean; delete: boolean };
-type PermKey = keyof Perm;
-type ScopeKey = 'modules' | 'regions' | 'companies';
-type AllPerms = Record<string, Record<ScopeKey, Record<string, Perm>>>;
+// ─── Types ────────────────────────────────────────────────────────────
+type PermKey  = 'view' | 'edit' | 'delete';
+type PermScope = 'modules' | 'regions' | 'companies';
+type Perm     = Record<PermKey, boolean>;
+type UserPerms = Record<PermScope, Record<string, Perm>>;
+type AllPerms  = Record<string, UserPerms>;
 
-const USERS = [
-  { id: 'u1', name: 'Sarah Chen',    initials: 'SC', role: 'Regional Director' },
-  { id: 'u2', name: 'Marcus Webb',   initials: 'MW', role: 'Portfolio Mgr'     },
-  { id: 'u3', name: 'Priya Nair',    initials: 'PN', role: 'Reg. Analyst'      },
-  { id: 'u4', name: 'James Okafor',  initials: 'JO', role: 'Revenue Lead'      },
-  { id: 'u5', name: 'Elena Rossi',   initials: 'ER', role: 'Pipeline Analyst'  },
-  { id: 'u6', name: 'Tom Bradley',   initials: 'TB', role: 'Data Steward'      },
-];
-
-const MODULES   = ['Overview', 'Portfolio', 'Geo Intel', 'Revenue', 'Pipeline', 'Competitor', 'Regulatory', 'Master Data'];
-const REGIONS   = ['Region A', 'Region B', 'Region C', 'Region D', 'Region E'];
-const CO_NAMES  = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
-
-const SCOPE_TABS: { key: ScopeKey; label: string }[] = [
-  { key: 'modules',   label: 'Modules'   },
-  { key: 'regions',   label: 'Regions'   },
-  { key: 'companies', label: 'Companies' },
-];
-
-const PERM_COLORS: Record<PermKey, string> = {
-  view:   '#4a90a4',
-  edit:   '#c9a84c',
-  delete: '#c0392b',
-};
-
-const AVATAR_COLORS = [
-  COLORS.primary, COLORS.accent, '#4a90a4', COLORS.gold, '#5f7fbf', COLORS.primaryDark,
-];
-
-function mkPerm(v = true, e = false, d = false): Perm {
-  return { view: v, edit: e, delete: d };
+interface User {
+  id: string; name: string; initials: string; role: string; color: string;
 }
+
+// ─── Static data ─────────────────────────────────────────────────────
+const USERS: User[] = [
+  { id: 'u1', name: 'Sarah Chen',   initials: 'SC', role: 'Regional Director',  color: COLORS.primary     },
+  { id: 'u2', name: 'Marcus Webb',  initials: 'MW', role: 'Portfolio Manager',  color: COLORS.accent      },
+  { id: 'u3', name: 'Priya Nair',   initials: 'PN', role: 'Reg. Analyst',       color: '#4a90a4'          },
+  { id: 'u4', name: 'James Okafor', initials: 'JO', role: 'Revenue Lead',       color: COLORS.gold        },
+  { id: 'u5', name: 'Elena Rossi',  initials: 'ER', role: 'Pipeline Analyst',   color: '#5f7fbf'          },
+  { id: 'u6', name: 'Tom Bradley',  initials: 'TB', role: 'Data Steward',       color: COLORS.primaryDark },
+];
+
+const MODULES  = ['Overview', 'Portfolio', 'Geo Intel', 'Revenue', 'Pipeline', 'Competitor', 'Regulatory', 'Master Data'];
+const REGIONS  = ['Region A', 'Region B', 'Region C', 'Region D', 'Region E'];
+const CO_NAMES = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
+
+const GROUPS: { scope: PermScope; label: string; items: string[]; color: string }[] = [
+  { scope: 'modules',   label: 'Modules',   items: MODULES,  color: COLORS.primary },
+  { scope: 'regions',   label: 'Regions',   items: REGIONS,  color: '#4a90a4'      },
+  { scope: 'companies', label: 'Companies', items: CO_NAMES, color: COLORS.accent  },
+];
+
+const PERM_META: { key: PermKey; label: string; color: string }[] = [
+  { key: 'view',   label: 'V', color: '#4a90a4'     },
+  { key: 'edit',   label: 'E', color: COLORS.gold    },
+  { key: 'delete', label: 'D', color: COLORS.error   },
+];
+
+// ─── Initial permissions ─────────────────────────────────────────────
+function mkPerm(v = true, e = false, d = false): Perm { return { view: v, edit: e, delete: d }; }
 
 function buildInitial(): AllPerms {
   const out: AllPerms = {};
   for (const u of USERS) {
     const isDir   = u.role === 'Regional Director';
-    const canEdit = isDir || u.role === 'Portfolio Mgr' || u.role === 'Revenue Lead';
+    const canEdit = isDir || u.role === 'Portfolio Manager' || u.role === 'Revenue Lead';
     out[u.id] = {
       modules:   Object.fromEntries(MODULES.map(m  => [m,  mkPerm(true, canEdit)])),
       regions:   Object.fromEntries(REGIONS.map(r  => [r,  mkPerm(true, isDir)])),
@@ -59,18 +62,43 @@ function buildInitial(): AllPerms {
   return out;
 }
 
-const ITEM_COL_W = 130;
-const COL_W      = 82;
-
-interface AdminPrivilegesModalProps {
-  visible: boolean;
-  onClose: () => void;
+function countActive(userId: string, perms: AllPerms) {
+  const u = perms[userId];
+  let n = 0;
+  for (const scope of ['modules', 'regions', 'companies'] as PermScope[]) {
+    for (const p of Object.values(u[scope])) {
+      if (p.view)   n++;
+      if (p.edit)   n++;
+      if (p.delete) n++;
+    }
+  }
+  return n;
 }
 
-export default function AdminPrivilegesModal({ visible, onClose }: AdminPrivilegesModalProps) {
+const TOTAL = (MODULES.length + REGIONS.length + CO_NAMES.length) * 3;
+
+// ─── Sub-components ───────────────────────────────────────────────────
+function Checkbox({ checked, color, onPress }: { checked: boolean; color: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      style={[s.checkbox, checked && { backgroundColor: color, borderColor: color }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+      hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
+    >
+      {checked && <Check size={11} color="#fff" strokeWidth={3} />}
+    </TouchableOpacity>
+  );
+}
+
+// ─── Main component ──────────────────────────────────────────────────
+interface Props { visible: boolean; onClose: () => void; }
+
+export default function AdminPrivilegesModal({ visible, onClose }: Props) {
   const { width: sw, height: sh } = useWindowDimensions();
-  const [scope, setScope] = useState<ScopeKey>('modules');
-  const [perms, setPerms] = useState<AllPerms>(buildInitial);
+  const [perms,        setPerms]        = useState<AllPerms>(buildInitial);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [dropOpen,     setDropOpen]     = useState(false);
 
   const scaleAnim   = useRef(new Animated.Value(0.94)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -78,18 +106,20 @@ export default function AdminPrivilegesModal({ visible, onClose }: AdminPrivileg
   useEffect(() => {
     if (visible) {
       Animated.parallel([
-        Animated.spring(scaleAnim,   { toValue: 1, tension: 65, friction: 11, useNativeDriver: true }),
-        Animated.timing(opacityAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+        Animated.spring(scaleAnim,   { toValue: 1,    tension: 65, friction: 11, useNativeDriver: true }),
+        Animated.timing(opacityAnim, { toValue: 1,    duration: 220,            useNativeDriver: true }),
       ]).start();
     } else {
       Animated.parallel([
         Animated.timing(scaleAnim,   { toValue: 0.94, duration: 180, useNativeDriver: true }),
         Animated.timing(opacityAnim, { toValue: 0,    duration: 180, useNativeDriver: true }),
       ]).start();
+      setDropOpen(false);
     }
   }, [visible]);
 
-  const toggle = (userId: string, item: string, pk: PermKey) => {
+  // ── Toggle a single checkbox
+  const toggle = (userId: string, scope: PermScope, item: string, pk: PermKey) => {
     setPerms(prev => ({
       ...prev,
       [userId]: {
@@ -102,10 +132,31 @@ export default function AdminPrivilegesModal({ visible, onClose }: AdminPrivileg
     }));
   };
 
-  const scopeItems = scope === 'modules' ? MODULES : scope === 'regions' ? REGIONS : CO_NAMES;
-  const modalW     = Math.min(sw * 0.93, 900);
-  const modalH     = Math.min(sh * 0.88, 700);
-  const tableMinW  = ITEM_COL_W + USERS.length * COL_W + 32;
+  // ── Quick-set helpers
+  const quickSet = (mode: 'all' | 'view' | 'clear') => {
+    if (!selectedUser) return;
+    setPerms(prev => {
+      const uid  = selectedUser.id;
+      const next: UserPerms = { modules: {}, regions: {}, companies: {} };
+      for (const { scope, items } of GROUPS) {
+        for (const item of items) {
+          next[scope][item] = {
+            view:   mode !== 'clear',
+            edit:   mode === 'all',
+            delete: mode === 'all',
+          };
+        }
+      }
+      return { ...prev, [uid]: next };
+    });
+  };
+
+  const modalW    = Math.min(sw * 0.93, 880);
+  const modalH    = Math.min(sh * 0.88, 700);
+  const sideLayout = modalW >= 600;
+  const LEFT_W    = 248;
+
+  const activeCount = selectedUser ? countActive(selectedUser.id, perms) : 0;
 
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
@@ -115,127 +166,188 @@ export default function AdminPrivilegesModal({ visible, onClose }: AdminPrivileg
 
       <View style={s.centeredWrap} pointerEvents="box-none">
         <Animated.View
-          style={[
-            s.modal,
-            { width: modalW, height: modalH, opacity: opacityAnim, transform: [{ scale: scaleAnim }] },
-          ]}
+          style={[s.modal, { width: modalW, height: modalH, opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}
         >
-          {/* ── Header ─────────────────────────────────────────── */}
-          <View style={s.header}>
+          {/* ── Gradient header ────────────────────────────────── */}
+          <LinearGradient
+            colors={[COLORS.primaryDark, COLORS.primary]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={s.header}
+          >
             <View style={s.headerLeft}>
               <View style={s.headerIconWrap}>
-                <ShieldCheck size={17} color={COLORS.primary} />
+                <ShieldCheck size={17} color="#fff" />
               </View>
               <View>
                 <Text style={s.headerTitle}>User Privileges</Text>
-                <Text style={s.headerSub}>Manage access across modules, regions & companies</Text>
+                <Text style={s.headerSub}>Manage access per user across modules, regions &amp; companies</Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={s.closeBtn}
-              onPress={onClose}
-              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-            >
-              <X size={18} color={COLORS.gray600} />
+            <TouchableOpacity style={s.closeBtn} onPress={onClose} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <X size={17} color="rgba(255,255,255,0.8)" />
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
-          {/* ── Scope tabs + legend ─────────────────────────────── */}
-          <View style={s.scopeBar}>
-            {SCOPE_TABS.map(t => (
+          {/* ── Body ───────────────────────────────────────────── */}
+          <View style={[s.body, sideLayout ? s.bodyRow : s.bodyCol]}>
+
+            {/* ── Left panel: User selector ───────────────── */}
+            <View style={[s.leftPanel, sideLayout ? { width: LEFT_W } : s.leftPanelFull]}>
+              <Text style={s.leftSectionLabel}>SELECT USER</Text>
+
+              {/* Dropdown trigger */}
               <TouchableOpacity
-                key={t.key}
-                style={[s.scopeTab, scope === t.key && s.scopeTabActive]}
-                onPress={() => setScope(t.key)}
-                activeOpacity={0.7}
+                style={[s.dropTrigger, dropOpen && s.dropTriggerOpen]}
+                onPress={() => setDropOpen(v => !v)}
+                activeOpacity={0.8}
               >
-                <Text style={[s.scopeTabText, scope === t.key && s.scopeTabTextActive]}>
-                  {t.label}
+                <Text style={[s.dropTriggerText, !selectedUser && s.dropTriggerPlaceholder]} numberOfLines={1}>
+                  {selectedUser ? selectedUser.name : 'Choose a user…'}
                 </Text>
+                {dropOpen
+                  ? <ChevronUp  size={15} color={COLORS.gray500} />
+                  : <ChevronDown size={15} color={COLORS.gray500} />}
               </TouchableOpacity>
-            ))}
 
-            <View style={s.scopeSpacer} />
-
-            {(['view', 'edit', 'delete'] as PermKey[]).map(pk => (
-              <View key={pk} style={s.legendItem}>
-                <View style={[s.legendDot, { backgroundColor: PERM_COLORS[pk] }]} />
-                <Text style={s.legendText}>
-                  {pk === 'view' ? 'V = View' : pk === 'edit' ? 'E = Edit' : 'D = Delete'}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* ── Permission table ────────────────────────────────── */}
-          <ScrollView style={s.tableScroll} showsVerticalScrollIndicator={false}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={{ minWidth: tableMinW }}>
-
-                {/* Column headers */}
-                <View style={[s.colHeaderRow, { paddingLeft: ITEM_COL_W + 16 }]}>
-                  {USERS.map((u, i) => (
-                    <View key={u.id} style={[s.userHeader, { width: COL_W }]}>
-                      <View style={[s.avatar, { backgroundColor: AVATAR_COLORS[i] + '28' }]}>
-                        <Text style={[s.avatarText, { color: AVATAR_COLORS[i] }]}>{u.initials}</Text>
+              {/* Dropdown list */}
+              {dropOpen && (
+                <View style={s.dropList}>
+                  {USERS.map(u => (
+                    <TouchableOpacity
+                      key={u.id}
+                      style={[s.dropOption, selectedUser?.id === u.id && s.dropOptionActive]}
+                      onPress={() => { setSelectedUser(u); setDropOpen(false); }}
+                      activeOpacity={0.75}
+                    >
+                      <View style={[s.dropAvatar, { backgroundColor: u.color + '22' }]}>
+                        <Text style={[s.dropAvatarText, { color: u.color }]}>{u.initials}</Text>
                       </View>
-                      <Text style={s.userName} numberOfLines={1}>{u.name.split(' ')[0]}</Text>
-                      <Text style={s.userRole} numberOfLines={1}>{u.role}</Text>
-                      <View style={s.permLabelRow}>
-                        {(['view', 'edit', 'delete'] as PermKey[]).map(pk => (
-                          <Text key={pk} style={[s.permLabel, { color: PERM_COLORS[pk] }]}>
-                            {pk[0].toUpperCase()}
-                          </Text>
-                        ))}
+                      <View style={{ flex: 1 }}>
+                        <Text style={[s.dropName, selectedUser?.id === u.id && { color: COLORS.primary }]}>{u.name}</Text>
+                        <Text style={s.dropRole}>{u.role}</Text>
                       </View>
-                    </View>
+                      {selectedUser?.id === u.id && <Check size={13} color={COLORS.primary} />}
+                    </TouchableOpacity>
                   ))}
                 </View>
+              )}
 
-                {/* Data rows */}
-                {scopeItems.map((item, rowIdx) => (
-                  <View key={item} style={[s.dataRow, rowIdx % 2 === 1 && s.dataRowAlt]}>
-                    <View style={[s.itemCell, { width: ITEM_COL_W }]}>
-                      <View style={[s.itemDot, { backgroundColor: COLORS.primary }]} />
-                      <Text style={s.itemName} numberOfLines={1}>{item}</Text>
-                    </View>
-                    {USERS.map(u => {
-                      const perm = perms[u.id][scope][item];
-                      return (
-                        <View key={u.id} style={[s.toggleCell, { width: COL_W }]}>
-                          {(['view', 'edit', 'delete'] as PermKey[]).map(pk => (
-                            <TouchableOpacity
-                              key={pk}
-                              style={[
-                                s.chip,
-                                perm[pk]
-                                  ? { backgroundColor: PERM_COLORS[pk] }
-                                  : s.chipOff,
-                              ]}
-                              onPress={() => toggle(u.id, item, pk)}
-                              activeOpacity={0.65}
-                            >
-                              <Text style={[s.chipText, perm[pk] ? s.chipTextOn : s.chipTextOff]}>
-                                {pk[0].toUpperCase()}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      );
-                    })}
+              {/* Selected user chip */}
+              {selectedUser && !dropOpen && (
+                <View style={s.userChip}>
+                  <View style={[s.chipAvatar, { backgroundColor: selectedUser.color + '22' }]}>
+                    <Text style={[s.chipAvatarText, { color: selectedUser.color }]}>{selectedUser.initials}</Text>
                   </View>
-                ))}
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.chipName}>{selectedUser.name}</Text>
+                    <Text style={s.chipRole}>{selectedUser.role}</Text>
+                  </View>
+                  <View style={s.chipBadge}>
+                    <Text style={s.chipBadgeText}>{activeCount}</Text>
+                    <Text style={s.chipBadgeLabel}>active</Text>
+                  </View>
+                </View>
+              )}
 
-              </View>
-            </ScrollView>
-          </ScrollView>
+              {!selectedUser && !dropOpen && (
+                <View style={s.leftEmptyHint}>
+                  <ShieldCheck size={28} color={COLORS.gray200} />
+                  <Text style={s.leftEmptyText}>Select a user to{'\n'}manage their access</Text>
+                </View>
+              )}
+            </View>
+
+            {/* ── Right panel: Privilege table ────────────── */}
+            <View style={[s.rightPanel, sideLayout ? { flex: 1 } : s.rightPanelFull]}>
+              {selectedUser ? (
+                <>
+                  {/* Privileges header */}
+                  <View style={s.privHeader}>
+                    <View style={s.privHeaderLeft}>
+                      <ShieldCheck size={14} color={COLORS.primary} />
+                      <Text style={s.privHeaderTitle}>Add Privileges</Text>
+                      <Text style={s.privHeaderSub}>Set access level per module and section</Text>
+                    </View>
+                    <View style={s.quickSet}>
+                      <Text style={s.quickSetLabel}>Quick set:</Text>
+                      {[
+                        { label: 'All Access', mode: 'all'   as const },
+                        { label: 'View Only',  mode: 'view'  as const },
+                        { label: 'Clear All',  mode: 'clear' as const },
+                      ].map(({ label, mode }) => (
+                        <TouchableOpacity key={mode} style={s.quickBtn} onPress={() => quickSet(mode)} activeOpacity={0.7}>
+                          <Text style={s.quickBtnText}>{label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Column headers */}
+                  <View style={s.colHeader}>
+                    <Text style={[s.colHeaderItem, { flex: 1 }]}>MODULE / SECTION</Text>
+                    {PERM_META.map(pm => (
+                      <View key={pm.key} style={s.colHeaderCell}>
+                        <View style={[s.colHeaderDot, { backgroundColor: pm.color }]} />
+                        <Text style={[s.colHeaderLabel, { color: pm.color }]}>{pm.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Rows */}
+                  <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                    {GROUPS.map(({ scope, label, items, color }) => (
+                      <View key={scope}>
+                        {/* Group header */}
+                        <View style={s.groupHeader}>
+                          <View style={[s.groupDot, { backgroundColor: color }]} />
+                          <Text style={s.groupLabel}>{label.toUpperCase()}</Text>
+                          <View style={s.groupLine} />
+                          <Text style={s.groupCount}>{items.length} items</Text>
+                        </View>
+
+                        {/* Item rows */}
+                        {items.map((item, idx) => (
+                          <View key={item} style={[s.dataRow, idx % 2 === 1 && s.dataRowAlt]}>
+                            <View style={s.dataRowDot}>
+                              <View style={[s.rowDot, { backgroundColor: color }]} />
+                            </View>
+                            <Text style={s.dataRowName} numberOfLines={1}>{item}</Text>
+                            {PERM_META.map(pm => (
+                              <View key={pm.key} style={s.dataRowCell}>
+                                <Checkbox
+                                  checked={perms[selectedUser.id][scope][item][pm.key]}
+                                  color={pm.color}
+                                  onPress={() => toggle(selectedUser.id, scope, item, pm.key)}
+                                />
+                              </View>
+                            ))}
+                          </View>
+                        ))}
+                      </View>
+                    ))}
+                    <View style={{ height: 16 }} />
+                  </ScrollView>
+                </>
+              ) : (
+                <View style={s.rightEmpty}>
+                  <ShieldCheck size={40} color={COLORS.gray200} />
+                  <Text style={s.rightEmptyTitle}>No user selected</Text>
+                  <Text style={s.rightEmptyText}>Choose a user from the left panel to{'\n'}configure their access privileges.</Text>
+                </View>
+              )}
+            </View>
+          </View>
 
           {/* ── Footer ─────────────────────────────────────────── */}
           <View style={s.footer}>
-            <Text style={s.footerHint}>Changes apply immediately · In-session only</Text>
-            <TouchableOpacity style={s.saveBtn} onPress={onClose} activeOpacity={0.8}>
+            <Text style={s.footerHint}>
+              {selectedUser
+                ? `${activeCount} of ${TOTAL} privileges active for ${selectedUser.name}`
+                : 'Select a user to manage privileges'}
+            </Text>
+            <TouchableOpacity style={[s.saveBtn, !selectedUser && s.saveBtnDisabled]} onPress={onClose} activeOpacity={0.8}>
               <ShieldCheck size={13} color="#fff" />
-              <Text style={s.saveBtnText}>Save & Close</Text>
+              <Text style={s.saveBtnText}>Save &amp; Close</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -244,6 +356,7 @@ export default function AdminPrivilegesModal({ visible, onClose }: AdminPrivileg
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -260,7 +373,7 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.28,
     shadowRadius: 40,
     elevation: 24,
   },
@@ -270,11 +383,8 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.cream,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -282,195 +392,403 @@ const s = StyleSheet.create({
     gap: 12,
   },
   headerIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 11,
-    backgroundColor: COLORS.primary + '18',
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.primary + '35',
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
-    color: COLORS.dark,
+    color: '#fff',
   },
   headerSub: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'Poppins-Regular',
-    color: COLORS.gray500,
+    color: 'rgba(255,255,255,0.65)',
     marginTop: 1,
   },
   closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: COLORS.gray100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Scope bar
-  scopeBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.bg,
-  },
-  scopeSpacer: { flex: 1 },
-  scopeTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: COLORS.gray100,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  scopeTabActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  scopeTabText: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Medium',
-    color: COLORS.gray600,
-  },
-  scopeTabTextActive: {
-    color: '#fff',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 2,
-  },
-  legendText: {
-    fontSize: 10,
-    fontFamily: 'Poppins-Regular',
-    color: COLORS.gray500,
-  },
-
-  // Table
-  tableScroll: { flex: 1 },
-  colHeaderRow: {
-    flexDirection: 'row',
-    paddingTop: 14,
-    paddingBottom: 10,
-    paddingRight: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.cream,
-  },
-  userHeader: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  avatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 3,
   },
-  avatarText: {
-    fontSize: 11,
-    fontFamily: 'Poppins-Bold',
+
+  // Body layout
+  body: { flex: 1 },
+  bodyRow: { flexDirection: 'row' },
+  bodyCol: { flexDirection: 'column' },
+
+  // Left panel
+  leftPanel: {
+    backgroundColor: COLORS.bg,
+    borderRightWidth: 1,
+    borderRightColor: COLORS.border,
+    padding: 18,
+    gap: 12,
   },
-  userName: {
-    fontSize: 11,
-    fontFamily: 'Poppins-SemiBold',
-    color: COLORS.dark,
-    textAlign: 'center',
-  },
-  userRole: {
-    fontSize: 9,
-    fontFamily: 'Poppins-Regular',
-    color: COLORS.gray400,
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  permLabelRow: {
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: 4,
-  },
-  permLabel: {
-    fontSize: 10,
-    fontFamily: 'Poppins-Bold',
-    width: 22,
-    textAlign: 'center',
-  },
-  dataRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  leftPanelFull: {
+    width: '100%',
+    borderRightWidth: 0,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray100,
-    minHeight: 52,
+    borderBottomColor: COLORS.border,
+    paddingBottom: 14,
   },
-  dataRowAlt: {
-    backgroundColor: COLORS.gray100 + '60',
+  leftSectionLabel: {
+    fontSize: 10,
+    fontFamily: 'Poppins-SemiBold',
+    color: COLORS.gray500,
+    letterSpacing: 0.8,
   },
-  itemCell: {
+
+  // Dropdown
+  dropTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.cardBg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
     gap: 8,
-    paddingRight: 8,
   },
-  itemDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    opacity: 0.5,
+  dropTriggerOpen: {
+    borderColor: COLORS.primary,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
-  itemName: {
+  dropTriggerText: {
+    flex: 1,
     fontSize: 13,
     fontFamily: 'Poppins-Medium',
     color: COLORS.dark,
   },
-  toggleCell: {
+  dropTriggerPlaceholder: {
+    color: COLORS.gray400,
+  },
+  dropList: {
+    backgroundColor: COLORS.cardBg,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: COLORS.primary,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    overflow: 'hidden',
+    zIndex: 100,
+    marginTop: -12,
+  },
+  dropOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray100,
   },
-  chip: {
-    width: 22,
-    height: 20,
-    borderRadius: 4,
+  dropOptionActive: {
+    backgroundColor: COLORS.primary + '0d',
+  },
+  dropAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipOff: {
-    backgroundColor: COLORS.gray100,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  chipText: {
-    fontSize: 9,
+  dropAvatarText: {
+    fontSize: 10,
     fontFamily: 'Poppins-Bold',
   },
-  chipTextOn:  { color: '#fff' },
-  chipTextOff: { color: COLORS.gray400 },
+  dropName: {
+    fontSize: 12,
+    fontFamily: 'Poppins-SemiBold',
+    color: COLORS.dark,
+  },
+  dropRole: {
+    fontSize: 10,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.gray400,
+  },
+
+  // User chip
+  userChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 12,
+    padding: 13,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  chipAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipAvatarText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Bold',
+  },
+  chipName: {
+    fontSize: 13,
+    fontFamily: 'Poppins-SemiBold',
+    color: COLORS.dark,
+  },
+  chipRole: {
+    fontSize: 10,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.gray500,
+    marginTop: 1,
+  },
+  chipBadge: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '15',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  chipBadgeText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Bold',
+    color: COLORS.primary,
+  },
+  chipBadgeLabel: {
+    fontSize: 8,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.primary,
+  },
+
+  // Left empty state
+  leftEmptyHint: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 20,
+    gap: 10,
+  },
+  leftEmptyText: {
+    fontSize: 11,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.gray400,
+    textAlign: 'center',
+    lineHeight: 17,
+  },
+
+  // Right panel
+  rightPanel: {
+    backgroundColor: COLORS.cardBg,
+  },
+  rightPanelFull: {
+    flex: 1,
+  },
+  rightEmpty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 24,
+  },
+  rightEmptyTitle: {
+    fontSize: 15,
+    fontFamily: 'Poppins-SemiBold',
+    color: COLORS.gray500,
+  },
+  rightEmptyText: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.gray400,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+
+  // Privileges header
+  privHeader: {
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: 8,
+  },
+  privHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  privHeaderTitle: {
+    fontSize: 13,
+    fontFamily: 'Poppins-SemiBold',
+    color: COLORS.dark,
+  },
+  privHeaderSub: {
+    fontSize: 10,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.gray400,
+    flex: 1,
+  },
+  quickSet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  quickSetLabel: {
+    fontSize: 10,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.gray500,
+    marginRight: 2,
+  },
+  quickBtn: {
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.bg,
+  },
+  quickBtnText: {
+    fontSize: 11,
+    fontFamily: 'Poppins-Medium',
+    color: COLORS.gray600,
+  },
+
+  // Column headers
+  colHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    backgroundColor: COLORS.cream,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  colHeaderItem: {
+    fontSize: 10,
+    fontFamily: 'Poppins-SemiBold',
+    color: COLORS.gray500,
+    letterSpacing: 0.5,
+  },
+  colHeaderCell: {
+    width: 46,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  colHeaderDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  colHeaderLabel: {
+    fontSize: 10,
+    fontFamily: 'Poppins-Bold',
+    letterSpacing: 0.3,
+  },
+
+  // Group header
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    backgroundColor: COLORS.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: 7,
+  },
+  groupDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  groupLabel: {
+    fontSize: 10,
+    fontFamily: 'Poppins-Bold',
+    color: COLORS.gray600,
+    letterSpacing: 0.9,
+  },
+  groupLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  groupCount: {
+    fontSize: 9,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.gray400,
+  },
+
+  // Data rows
+  dataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray100,
+    minHeight: 44,
+  },
+  dataRowAlt: {
+    backgroundColor: COLORS.gray100 + '55',
+  },
+  dataRowDot: {
+    width: 16,
+    alignItems: 'center',
+  },
+  rowDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    opacity: 0.55,
+  },
+  dataRowName: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.dark,
+    paddingRight: 8,
+  },
+  dataRowCell: {
+    width: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Checkbox
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: COLORS.gray300,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
 
   // Footer
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
+    paddingHorizontal: 22,
+    paddingVertical: 13,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     backgroundColor: COLORS.cream,
@@ -479,20 +797,27 @@ const s = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'Poppins-Regular',
     color: COLORS.gray400,
+    flex: 1,
+    marginRight: 16,
   },
   saveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
     borderRadius: 10,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.28,
     shadowRadius: 6,
-    elevation: 4,
+    elevation: 3,
+  },
+  saveBtnDisabled: {
+    backgroundColor: COLORS.gray300,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   saveBtnText: {
     fontSize: 13,

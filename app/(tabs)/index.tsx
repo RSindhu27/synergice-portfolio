@@ -115,14 +115,17 @@ function HeaderBtn({ icon, label, onPress }: { icon: React.ReactNode; label: str
   const expand = useRef(new Animated.Value(0)).current;
   const animate = (to: number) =>
     Animated.timing(expand, { toValue: to, duration: 170, useNativeDriver: false }).start();
-  const btnWidth = expand.interpolate({ inputRange: [0, 1], outputRange: [34, 42 + label.length * 8] });
+  // Label slides in from width 0; icon lives OUTSIDE the clipped wrapper so SVG always renders
+  const labelW = expand.interpolate({ inputRange: [0, 1], outputRange: [0, label.length * 8 + 10] });
 
   return (
     <PH onPress={onPress} onHoverIn={() => animate(1)} onHoverOut={() => animate(0)}>
-      <Animated.View style={[styles.headerBtn, { width: btnWidth }]}>
-        {icon}
-        <Text style={styles.headerBtnText} numberOfLines={1}>{label}</Text>
-      </Animated.View>
+      <View style={styles.headerBtnOuter}>
+        <View style={styles.headerBtnIconWrap}>{icon}</View>
+        <Animated.View style={{ width: labelW, overflow: 'hidden' }}>
+          <Text style={styles.headerBtnText} numberOfLines={1}>{label}</Text>
+        </Animated.View>
+      </View>
     </PH>
   );
 }
@@ -421,23 +424,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  headerBtn: {
+  headerBtnOuter: {
     height: 34,
     borderRadius: 17,
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.22)',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 9,
-    paddingRight: 6,
-    gap: 5,
-    overflow: 'hidden',
+    paddingHorizontal: 9,
+  },
+  headerBtnIconWrap: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerBtnText: {
     fontSize: 12,
     fontFamily: 'Poppins-Medium',
     color: '#fff',
+    paddingLeft: 5,
   },
   headerGoldLine: {
     height: 2,
