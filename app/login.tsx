@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Eye, EyeOff, LogIn, Building2, Lock, User, ArrowRight } from 'lucide-react-native';
 import { COLORS } from '@/data/theme';
+import { setAuthenticated } from '@/hooks/useAuth';
 
 function Orb({ size, style, color, delay }: { size: number; style: object; color: string; delay: number }) {
   const anim = useRef(new Animated.Value(0)).current;
@@ -104,6 +105,7 @@ export default function LoginScreen() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+      setAuthenticated(true);
       router.replace('/(tabs)');
     }, 900);
   };
@@ -112,6 +114,7 @@ export default function LoginScreen() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+      setAuthenticated(true);
       router.replace('/(tabs)');
     }, 900);
   };

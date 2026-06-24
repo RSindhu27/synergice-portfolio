@@ -1,8 +1,9 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Tabs, useRouter } from 'expo-router';
 import { LayoutDashboard, Layers, Globe, DollarSign, Activity, ChartBar as BarChart2, ShieldAlert, Database } from 'lucide-react-native';
 import { COLORS } from '@/data/mockData';
 import CustomTabBar from '@/components/ui/CustomTabBar';
+import { getIsAuthenticated } from '@/hooks/useAuth';
 
 const ICON_SIZE = 16;
 
@@ -50,6 +51,14 @@ const TAB_DEFINITIONS = [
 ];
 
 export default function TabLayout() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!getIsAuthenticated()) {
+      router.replace('/login');
+    }
+  }, []);
+
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
