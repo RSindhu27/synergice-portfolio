@@ -75,16 +75,12 @@ export default function LoginScreen() {
 
   const cardY = useRef(new Animated.Value(40)).current;
   const cardOp = useRef(new Animated.Value(0)).current;
-  const logoScale = useRef(new Animated.Value(0.7)).current;
-  const logoOp = useRef(new Animated.Value(0)).current;
   const btnScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(cardY, { toValue: 0, tension: 55, friction: 11, delay: 100, useNativeDriver: true }),
       Animated.timing(cardOp, { toValue: 1, duration: 600, delay: 100, useNativeDriver: true }),
-      Animated.spring(logoScale, { toValue: 1, tension: 60, friction: 10, delay: 250, useNativeDriver: true }),
-      Animated.timing(logoOp, { toValue: 1, duration: 500, delay: 250, useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -148,19 +144,7 @@ export default function LoginScreen() {
             <View style={s.cardTopGlow} />
 
             <View style={s.cardHeader}>
-              <Animated.View style={{ transform: [{ scale: logoScale }], opacity: logoOp, marginBottom: 16 }}>
-                <View style={s.logoRing}>
-                  <LinearGradient
-                    colors={[COLORS.primaryLight, COLORS.primary, COLORS.primaryDark]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={s.logoGradient}
-                  >
-                    <Text style={s.logoLetter}>S</Text>
-                  </LinearGradient>
-                </View>
-              </Animated.View>
               <Text style={s.brandName}>SYNERGICE</Text>
-              <Text style={s.brandTag}>Pharma Intelligence Platform</Text>
               <View style={s.divider} />
               <Text style={s.welcomeTitle}>Welcome back</Text>
               <Text style={s.welcomeSub}>Sign in to access your dashboard</Text>
@@ -269,28 +253,24 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 40, shadowOffset: { width: 0, height: 20 },
   },
   cardTopGlow: { position: 'absolute', top: 0, left: 0, right: 0, height: 1, backgroundColor: 'rgba(157,192,139,0.45)' },
-  cardHeader: { alignItems: 'center', paddingTop: 34, paddingHorizontal: 28, paddingBottom: 22 },
-  logoRing: { width: 62, height: 62, borderRadius: 17, padding: 2, backgroundColor: 'rgba(255,255,255,0.1)', overflow: 'hidden' },
-  logoGradient: { flex: 1, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  logoLetter: { fontSize: 25, fontFamily: 'Poppins-Bold', color: '#fff' },
+  cardHeader: { alignItems: 'center', paddingTop: 24, paddingHorizontal: 28, paddingBottom: 16 },
   brandName: { fontSize: 17, fontFamily: 'Poppins-Bold', color: '#fff', letterSpacing: 4.5 },
-  brandTag: { fontSize: 10, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.38)', letterSpacing: 1.6, textTransform: 'uppercase', marginTop: 3 },
-  divider: { width: 36, height: 1, backgroundColor: 'rgba(157,192,139,0.45)', marginTop: 16, marginBottom: 14 },
-  welcomeTitle: { fontSize: 21, fontFamily: 'Poppins-Bold', color: '#fff', letterSpacing: -0.3 },
-  welcomeSub: { fontSize: 12, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.4)', marginTop: 4 },
+  divider: { width: 36, height: 1, backgroundColor: 'rgba(157,192,139,0.45)', marginTop: 10, marginBottom: 10 },
+  welcomeTitle: { fontSize: 20, fontFamily: 'Poppins-Bold', color: '#fff', letterSpacing: -0.3 },
+  welcomeSub: { fontSize: 12, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.4)', marginTop: 3 },
   form: { paddingHorizontal: 26, paddingBottom: 6 },
-  fieldWrap: { marginBottom: 14 },
+  fieldWrap: { marginBottom: 12 },
   fieldLabel: { fontSize: 10, fontFamily: 'Poppins-SemiBold', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 6 },
   inputRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: 'rgba(255,255,255,0.065)', borderRadius: 11,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.09)',
-    paddingHorizontal: 13, paddingVertical: 12,
+    paddingHorizontal: 13, paddingVertical: 10,
   },
   inputError: { borderColor: 'rgba(192,57,43,0.7)' },
   input: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Regular', color: '#fff' },
   eyeBtn: { padding: 2 },
-  forgotRow: { alignItems: 'flex-end', marginBottom: 18, marginTop: -4 },
+  forgotRow: { alignItems: 'flex-end', marginBottom: 14, marginTop: -2 },
   forgotText: { fontSize: 11, fontFamily: 'Poppins-Medium', color: COLORS.primaryLight },
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -305,7 +285,7 @@ const s = StyleSheet.create({
     shadowColor: COLORS.primary, shadowOpacity: 0.55, shadowRadius: 14, shadowOffset: { width: 0, height: 5 },
     marginBottom: 18,
   },
-  loginBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 20, minHeight: 48 },
+  loginBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 20, minHeight: 44 },
   loginText: { fontSize: 14, fontFamily: 'Poppins-SemiBold', color: '#fff', flex: 1, textAlign: 'center' },
   orRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
   orLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.09)' },
@@ -317,6 +297,6 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.04)', marginBottom: 4,
   },
   ssoText: { fontSize: 13, fontFamily: 'Poppins-Medium', color: 'rgba(255,255,255,0.7)' },
-  footer: { paddingVertical: 13, paddingHorizontal: 26, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', alignItems: 'center', marginTop: 8 },
+  footer: { paddingVertical: 10, paddingHorizontal: 26, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', alignItems: 'center', marginTop: 4 },
   footerText: { fontSize: 10, fontFamily: 'Poppins-Regular', color: 'rgba(255,255,255,0.22)', letterSpacing: 0.4 },
 });

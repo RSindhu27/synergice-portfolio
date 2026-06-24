@@ -9,9 +9,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '@/data/theme';
 
 // ─── Types ────────────────────────────────────────────────────────────
-type PermKey  = 'view' | 'edit' | 'delete';
+type PermKey   = 'view' | 'edit' | 'delete';
 type PermScope = 'modules' | 'regions' | 'companies';
-type Perm     = Record<PermKey, boolean>;
+type Perm      = Record<PermKey, boolean>;
 type UserPerms = Record<PermScope, Record<string, Perm>>;
 type AllPerms  = Record<string, UserPerms>;
 
@@ -33,16 +33,16 @@ const MODULES  = ['Overview', 'Portfolio', 'Geo Intel', 'Revenue', 'Pipeline', '
 const REGIONS  = ['Region A', 'Region B', 'Region C', 'Region D', 'Region E'];
 const CO_NAMES = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
 
-const GROUPS: { scope: PermScope; label: string; items: string[]; color: string }[] = [
-  { scope: 'modules',   label: 'Modules',   items: MODULES,  color: COLORS.primary },
-  { scope: 'regions',   label: 'Regions',   items: REGIONS,  color: '#4a90a4'      },
-  { scope: 'companies', label: 'Companies', items: CO_NAMES, color: COLORS.accent  },
+const GROUPS: { scope: PermScope; label: string; items: string[] }[] = [
+  { scope: 'modules',   label: 'Modules',   items: MODULES  },
+  { scope: 'regions',   label: 'Regions',   items: REGIONS  },
+  { scope: 'companies', label: 'Companies', items: CO_NAMES },
 ];
 
-const PERM_META: { key: PermKey; label: string; color: string }[] = [
-  { key: 'view',   label: 'V', color: '#4a90a4'     },
-  { key: 'edit',   label: 'E', color: COLORS.gold    },
-  { key: 'delete', label: 'D', color: COLORS.error   },
+const PERM_META: { key: PermKey; label: string; full: string }[] = [
+  { key: 'view',   label: 'View',   full: 'View'   },
+  { key: 'edit',   label: 'Edit',   full: 'Edit'   },
+  { key: 'delete', label: 'Delete', full: 'Delete' },
 ];
 
 // ─── Initial permissions ─────────────────────────────────────────────
@@ -75,16 +75,26 @@ function countActive(userId: string, perms: AllPerms) {
   return n;
 }
 
+function countScopeActive(userId: string, scope: PermScope, perms: AllPerms) {
+  let n = 0;
+  for (const p of Object.values(perms[userId][scope])) {
+    if (p.view)   n++;
+    if (p.edit)   n++;
+    if (p.delete) n++;
+  }
+  return n;
+}
+
 const TOTAL = (MODULES.length + REGIONS.length + CO_NAMES.length) * 3;
 
 // ─── Sub-components ───────────────────────────────────────────────────
-function Checkbox({ checked, color, onPress }: { checked: boolean; color: string; onPress: () => void }) {
+function Checkbox({ checked, onPress }: { checked: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity
-      style={[s.checkbox, checked && { backgroundColor: color, borderColor: color }]}
+      style={[s.checkbox, checked && s.checkboxChecked]}
       onPress={onPress}
       activeOpacity={0.7}
-      hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
+      hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
     >
       {checked && <Check size={11} color="#fff" strokeWidth={3} />}
     </TouchableOpacity>
@@ -99,6 +109,7 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
   const [perms,        setPerms]        = useState<AllPerms>(buildInitial);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [dropOpen,     setDropOpen]     = useState(false);
+  const [activeTab,    setActiveTab]    = useState<PermScope>('modules');
 
   const scaleAnim   = useRef(new Animated.Value(0.94)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -118,7 +129,6 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
     }
   }, [visible]);
 
-  // ── Toggle a single checkbox
   const toggle = (userId: string, scope: PermScope, item: string, pk: PermKey) => {
     setPerms(prev => ({
       ...prev,
@@ -132,7 +142,6 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
     }));
   };
 
-  // ── Quick-set helpers
   const quickSet = (mode: 'all' | 'view' | 'clear') => {
     if (!selectedUser) return;
     setPerms(prev => {
@@ -151,12 +160,13 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
     });
   };
 
-  const modalW    = Math.min(sw * 0.93, 880);
-  const modalH    = Math.min(sh * 0.88, 700);
+  const modalW     = Math.min(sw * 0.95, 1020);
+  const modalH     = Math.min(sh * 0.88, 680);
   const sideLayout = modalW >= 600;
-  const LEFT_W    = 248;
+  const LEFT_W     = 260;
 
   const activeCount = selectedUser ? countActive(selectedUser.id, perms) : 0;
+  const activeGroup = GROUPS.find(g => g.scope === activeTab)!;
 
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
@@ -168,7 +178,7 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
         <Animated.View
           style={[s.modal, { width: modalW, height: modalH, opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}
         >
-          {/* ── Gradient header ────────────────────────────────── */}
+          {/* ── Gradient header ──────────────────────────────────── */}
           <LinearGradient
             colors={[COLORS.primaryDark, COLORS.primary]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -188,14 +198,13 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
             </TouchableOpacity>
           </LinearGradient>
 
-          {/* ── Body ───────────────────────────────────────────── */}
+          {/* ── Body ─────────────────────────────────────────────── */}
           <View style={[s.body, sideLayout ? s.bodyRow : s.bodyCol]}>
 
-            {/* ── Left panel: User selector ───────────────── */}
+            {/* ── Left panel: User selector ─────────────────── */}
             <View style={[s.leftPanel, sideLayout ? { width: LEFT_W } : s.leftPanelFull]}>
               <Text style={s.leftSectionLabel}>SELECT USER</Text>
 
-              {/* Dropdown trigger */}
               <TouchableOpacity
                 style={[s.dropTrigger, dropOpen && s.dropTriggerOpen]}
                 onPress={() => setDropOpen(v => !v)}
@@ -209,7 +218,6 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
                   : <ChevronDown size={15} color={COLORS.gray500} />}
               </TouchableOpacity>
 
-              {/* Dropdown list */}
               {dropOpen && (
                 <View style={s.dropList}>
                   {USERS.map(u => (
@@ -232,7 +240,6 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
                 </View>
               )}
 
-              {/* Selected user chip */}
               {selectedUser && !dropOpen && (
                 <View style={s.userChip}>
                   <View style={[s.chipAvatar, { backgroundColor: selectedUser.color + '22' }]}>
@@ -257,24 +264,24 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
               )}
             </View>
 
-            {/* ── Right panel: Privilege table ────────────── */}
+            {/* ── Right panel: Privilege table ──────────────── */}
             <View style={[s.rightPanel, sideLayout ? { flex: 1 } : s.rightPanelFull]}>
               {selectedUser ? (
                 <>
-                  {/* Privileges header */}
+                  {/* Top bar: title + quick-set */}
                   <View style={s.privHeader}>
                     <View style={s.privHeaderLeft}>
                       <ShieldCheck size={14} color={COLORS.primary} />
-                      <Text style={s.privHeaderTitle}>Add Privileges</Text>
-                      <Text style={s.privHeaderSub}>Set access level per module and section</Text>
+                      <Text style={s.privHeaderTitle}>Access Privileges</Text>
+                      <Text style={s.privHeaderSub}>Set permissions per section</Text>
                     </View>
                     <View style={s.quickSet}>
                       <Text style={s.quickSetLabel}>Quick set:</Text>
-                      {[
+                      {([
                         { label: 'All Access', mode: 'all'   as const },
                         { label: 'View Only',  mode: 'view'  as const },
                         { label: 'Clear All',  mode: 'clear' as const },
-                      ].map(({ label, mode }) => (
+                      ]).map(({ label, mode }) => (
                         <TouchableOpacity key={mode} style={s.quickBtn} onPress={() => quickSet(mode)} activeOpacity={0.7}>
                           <Text style={s.quickBtnText}>{label}</Text>
                         </TouchableOpacity>
@@ -282,50 +289,56 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
                     </View>
                   </View>
 
+                  {/* Tab bar */}
+                  <View style={s.tabBar}>
+                    {GROUPS.map(({ scope, label, items }) => {
+                      const isActive  = activeTab === scope;
+                      const scopeActive = countScopeActive(selectedUser.id, scope, perms);
+                      const scopeTotal  = items.length * 3;
+                      return (
+                        <TouchableOpacity
+                          key={scope}
+                          style={[s.tab, isActive && s.tabActive]}
+                          onPress={() => setActiveTab(scope)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[s.tabLabel, isActive && s.tabLabelActive]}>{label}</Text>
+                          <View style={[s.tabBadge, isActive && s.tabBadgeActive]}>
+                            <Text style={[s.tabBadgeText, isActive && s.tabBadgeTextActive]}>
+                              {scopeActive}/{scopeTotal}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
                   {/* Column headers */}
                   <View style={s.colHeader}>
-                    <Text style={[s.colHeaderItem, { flex: 1 }]}>MODULE / SECTION</Text>
+                    <Text style={s.colHeaderItem}>NAME</Text>
                     {PERM_META.map(pm => (
                       <View key={pm.key} style={s.colHeaderCell}>
-                        <View style={[s.colHeaderDot, { backgroundColor: pm.color }]} />
-                        <Text style={[s.colHeaderLabel, { color: pm.color }]}>{pm.label}</Text>
+                        <Text style={s.colHeaderLabel}>{pm.label}</Text>
                       </View>
                     ))}
                   </View>
 
-                  {/* Rows */}
+                  {/* Rows for active tab */}
                   <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-                    {GROUPS.map(({ scope, label, items, color }) => (
-                      <View key={scope}>
-                        {/* Group header */}
-                        <View style={s.groupHeader}>
-                          <View style={[s.groupDot, { backgroundColor: color }]} />
-                          <Text style={s.groupLabel}>{label.toUpperCase()}</Text>
-                          <View style={s.groupLine} />
-                          <Text style={s.groupCount}>{items.length} items</Text>
-                        </View>
-
-                        {/* Item rows */}
-                        {items.map((item, idx) => (
-                          <View key={item} style={[s.dataRow, idx % 2 === 1 && s.dataRowAlt]}>
-                            <View style={s.dataRowDot}>
-                              <View style={[s.rowDot, { backgroundColor: color }]} />
-                            </View>
-                            <Text style={s.dataRowName} numberOfLines={1}>{item}</Text>
-                            {PERM_META.map(pm => (
-                              <View key={pm.key} style={s.dataRowCell}>
-                                <Checkbox
-                                  checked={perms[selectedUser.id][scope][item][pm.key]}
-                                  color={pm.color}
-                                  onPress={() => toggle(selectedUser.id, scope, item, pm.key)}
-                                />
-                              </View>
-                            ))}
+                    {activeGroup.items.map((item, idx) => (
+                      <View key={item} style={[s.dataRow, idx % 2 === 1 && s.dataRowAlt]}>
+                        <Text style={s.dataRowName} numberOfLines={1}>{item}</Text>
+                        {PERM_META.map(pm => (
+                          <View key={pm.key} style={s.dataRowCell}>
+                            <Checkbox
+                              checked={perms[selectedUser.id][activeTab][item][pm.key]}
+                              onPress={() => toggle(selectedUser.id, activeTab, item, pm.key)}
+                            />
                           </View>
                         ))}
                       </View>
                     ))}
-                    <View style={{ height: 16 }} />
+                    <View style={{ height: 12 }} />
                   </ScrollView>
                 </>
               ) : (
@@ -338,7 +351,7 @@ export default function AdminPrivilegesModal({ visible, onClose }: Props) {
             </View>
           </View>
 
-          {/* ── Footer ─────────────────────────────────────────── */}
+          {/* ── Footer ───────────────────────────────────────────── */}
           <View style={s.footer}>
             <Text style={s.footerHint}>
               {selectedUser
@@ -383,7 +396,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 22,
+    paddingHorizontal: 24,
     paddingVertical: 16,
   },
   headerLeft: {
@@ -429,8 +442,8 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.bg,
     borderRightWidth: 1,
     borderRightColor: COLORS.border,
-    padding: 18,
-    gap: 12,
+    padding: 20,
+    gap: 14,
   },
   leftPanelFull: {
     width: '100%',
@@ -482,7 +495,7 @@ const s = StyleSheet.create({
     borderBottomRightRadius: 10,
     overflow: 'hidden',
     zIndex: 100,
-    marginTop: -12,
+    marginTop: -14,
   },
   dropOption: {
     flexDirection: 'row',
@@ -619,10 +632,14 @@ const s = StyleSheet.create({
 
   // Privileges header
   privHeader: {
-    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    flexWrap: 'wrap',
     gap: 8,
   },
   privHeaderLeft: {
@@ -639,13 +656,11 @@ const s = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'Poppins-Regular',
     color: COLORS.gray400,
-    flex: 1,
   },
   quickSet: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flexWrap: 'wrap',
   },
   quickSetLabel: {
     fontSize: 10,
@@ -654,8 +669,8 @@ const s = StyleSheet.create({
     marginRight: 2,
   },
   quickBtn: {
-    paddingHorizontal: 11,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -667,105 +682,106 @@ const s = StyleSheet.create({
     color: COLORS.gray600,
   },
 
+  // Tab bar
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.bg,
+    paddingHorizontal: 20,
+    gap: 4,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    marginBottom: -1,
+  },
+  tabActive: {
+    borderBottomColor: COLORS.primary,
+  },
+  tabLabel: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Medium',
+    color: COLORS.gray500,
+  },
+  tabLabelActive: {
+    color: COLORS.primary,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  tabBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: COLORS.gray100,
+  },
+  tabBadgeActive: {
+    backgroundColor: COLORS.primary + '18',
+  },
+  tabBadgeText: {
+    fontSize: 9,
+    fontFamily: 'Poppins-Medium',
+    color: COLORS.gray400,
+  },
+  tabBadgeTextActive: {
+    color: COLORS.primary,
+  },
+
   // Column headers
   colHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 9,
     backgroundColor: COLORS.cream,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   colHeaderItem: {
+    flex: 1,
     fontSize: 10,
     fontFamily: 'Poppins-SemiBold',
     color: COLORS.gray500,
     letterSpacing: 0.5,
   },
   colHeaderCell: {
-    width: 46,
+    width: 72,
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
-    gap: 3,
-  },
-  colHeaderDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   colHeaderLabel: {
     fontSize: 10,
-    fontFamily: 'Poppins-Bold',
-    letterSpacing: 0.3,
-  },
-
-  // Group header
-  groupHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    backgroundColor: COLORS.bg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    gap: 7,
-  },
-  groupDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  groupLabel: {
-    fontSize: 10,
-    fontFamily: 'Poppins-Bold',
-    color: COLORS.gray600,
-    letterSpacing: 0.9,
-  },
-  groupLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  groupCount: {
-    fontSize: 9,
-    fontFamily: 'Poppins-Regular',
-    color: COLORS.gray400,
+    fontFamily: 'Poppins-SemiBold',
+    color: COLORS.gray500,
+    letterSpacing: 0.5,
   },
 
   // Data rows
   dataRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 9,
+    paddingHorizontal: 20,
+    paddingVertical: 0,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray100,
-    minHeight: 44,
+    minHeight: 48,
   },
   dataRowAlt: {
-    backgroundColor: COLORS.gray100 + '55',
-  },
-  dataRowDot: {
-    width: 16,
-    alignItems: 'center',
-  },
-  rowDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    opacity: 0.55,
+    backgroundColor: COLORS.gray100 + '60',
   },
   dataRowName: {
     flex: 1,
     fontSize: 13,
     fontFamily: 'Poppins-Regular',
     color: COLORS.dark,
-    paddingRight: 8,
+    paddingRight: 12,
   },
   dataRowCell: {
-    width: 46,
+    width: 72,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -781,13 +797,17 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#fff',
   },
+  checkboxChecked: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
 
   // Footer
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 22,
+    paddingHorizontal: 24,
     paddingVertical: 13,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
@@ -805,8 +825,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 9,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 10,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
